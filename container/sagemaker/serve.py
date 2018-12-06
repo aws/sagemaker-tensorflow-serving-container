@@ -116,7 +116,7 @@ class ServiceManager(object):
             return template
 
     def _start_tfs(self):
-        subprocess.check_call('tensorflow_model_server --version'.split())
+        self._log_version('tensorflow_model_server --version', 'tensorflow version info:')
         tfs_config_path = '/sagemaker/model-config.cfg'
         cmd = "tensorflow_model_server --port={} --rest_api_port={} --model_config_file={}".format(
             self._tfs_grpc_port, self._tfs_rest_port, tfs_config_path)
@@ -126,10 +126,19 @@ class ServiceManager(object):
         self._tfs = p
 
     def _start_nginx(self):
-        subprocess.check_call('/usr/sbin/nginx -V'.split())
+        self._log_version('/usr/sbin/nginx -V', 'nginx version info:')
         p = subprocess.Popen('/usr/sbin/nginx -c /sagemaker/nginx.conf'.split())
         log.info('started nginx (pid: %d)', p.pid)
         self._nginx = p
+
+    def _log_version(self, command, message):
+        try:
+            output = subprocess.check_output(
+                command.split(),
+                stderr=subprocess.STDOUT).decode('utf-8', 'backslashreplace').strip()
+            log.info('{}\n{}'.format(message, output))
+        except subprocess.CalledProcessError:
+            log.warning('failed to run command: %s', command)
 
     def _stop(self, *args):
         self._state = 'stopping'
