@@ -18,7 +18,7 @@ function ping(r) {
         return ping_tfs_1_11(r)
     }
 
-    var uri = remove_tfs_method(make_tfs_uri(r))
+    var uri = make_tfs_uri(r, false)
 
     function callback (reply) {
         if (reply.status == 200 && reply.responseBody.includes('"AVAILABLE"')) {
@@ -38,7 +38,7 @@ function ping_tfs_1_11(r) {
     // if response is 400, the model is ok (but input was bad), so return 200
     // also return 200 in unlikely case our request was really valid
 
-    var uri = make_tfs_uri(r)
+    var uri = make_tfs_uri(r, true)
     var options = {
         method: 'POST',
         body: '{"instances": "invalid"}'
@@ -56,11 +56,6 @@ function ping_tfs_1_11(r) {
     r.subrequest(uri, options, callback)
 }
 
-function remove_tfs_method(uri) {
-    // strip ':predict' etc from uri so it can be used for ModelStatus request
-    return uri.substr(0, uri.lastIndexOf(':'))
-}
-
 function return_error(r, code, message) {
     if (message) {
         r.return(code, '{"error": "' + message + '"}')
@@ -70,7 +65,7 @@ function return_error(r, code, message) {
 }
 
 function tfs_json_request(r, json) {
-    var uri = make_tfs_uri(r)
+    var uri = make_tfs_uri(r, true)
     var options = {
         method: 'POST',
         body: json
@@ -89,14 +84,18 @@ function tfs_json_request(r, json) {
     r.subrequest(uri, options, callback)
 }
 
-function make_tfs_uri(r) {
+function make_tfs_uri(r, with_method) {
     var attributes = parse_custom_attributes(r)
 
     var uri = tfs_base_uri + (attributes['tfs-model-name'] || r.variables.default_tfs_model)
     if ('tfs-model-version' in attributes) {
         uri += '/versions/' + attributes['tfs-model-version']
     }
-    uri += ':' + (attributes['tfs-method'] || 'predict')
+
+    if (with_method) {
+        uri += ':' + (attributes['tfs-method'] || 'predict')
+    }
+
     return uri
 }
 
