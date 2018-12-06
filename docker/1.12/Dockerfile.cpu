@@ -1,4 +1,4 @@
-FROM tensorflow/serving:1.11.1 as tfs
+FROM tensorflow/serving:1.12.0 as tfs
 FROM ubuntu:16.04
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
@@ -16,5 +16,5 @@ RUN \
 
 COPY ./ /
 
-ENV SAGEMAKER_TFS_VERSION "1.11"
+ENV SAGEMAKER_TFS_VERSION "1.12"
 ENV PATH "$PATH:/sagemaker"

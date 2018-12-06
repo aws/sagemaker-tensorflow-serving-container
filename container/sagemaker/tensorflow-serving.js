@@ -14,12 +14,31 @@ function invocations(r) {
 }
 
 function ping(r) {
-    // TODO replace with call to Model Status API when Tensorflow Serving 1.12 is available
+    if ('1.11' == r.variables.tfs_version) {
+        return ping_tfs_1_11(r)
+    }
+
+    var uri = make_tfs_uri(r, false)
+
+    function callback (reply) {
+        if (reply.status == 200 && reply.responseBody.includes('"AVAILABLE"')) {
+            r.return(200)
+        } else {
+            r.error('failed ping' + reply.responseBody)
+            r.return(502)
+        }
+    }
+
+    r.subrequest(uri, callback)
+}
+
+function ping_tfs_1_11(r) {
     // hack for TF 1.11
     // send an arbitrary fixed request to the default model.
     // if response is 400, the model is ok (but input was bad), so return 200
     // also return 200 in unlikely case our request was really valid
-    var uri = make_tfs_uri(r)
+
+    var uri = make_tfs_uri(r, true)
     var options = {
         method: 'POST',
         body: '{"instances": "invalid"}'
@@ -46,7 +65,7 @@ function return_error(r, code, message) {
 }
 
 function tfs_json_request(r, json) {
-    var uri = make_tfs_uri(r)
+    var uri = make_tfs_uri(r, true)
     var options = {
         method: 'POST',
         body: json
@@ -65,14 +84,18 @@ function tfs_json_request(r, json) {
     r.subrequest(uri, options, callback)
 }
 
-function make_tfs_uri(r) {
+function make_tfs_uri(r, with_method) {
     var attributes = parse_custom_attributes(r)
 
     var uri = tfs_base_uri + (attributes['tfs-model-name'] || r.variables.default_tfs_model)
     if ('tfs-model-version' in attributes) {
         uri += '/versions/' + attributes['tfs-model-version']
     }
-    uri += ':' + (attributes['tfs-method'] || 'predict')
+
+    if (with_method) {
+        uri += ':' + (attributes['tfs-method'] || 'predict')
+    }
+
     return uri
 }
 
