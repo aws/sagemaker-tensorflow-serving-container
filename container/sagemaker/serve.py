@@ -26,9 +26,9 @@ class ServiceManager(object):
         self._state = 'initializing'
         self._nginx = None
         self._tfs = None
+        self._tfs_version = os.environ.get('SAGEMAKER_TFS_VERSION', '1.12')
         self._nginx_http_port = os.environ.get('SAGEMAKER_BIND_TO_PORT', '8080')
         self._nginx_loglevel = os.environ.get('SAGEMAKER_TFS_NGINX_LOGLEVEL', 'error')
-
         self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', None)
 
         if 'SAGEMAKER_SAFE_PORT_RANGE' in os.environ:
@@ -94,6 +94,7 @@ class ServiceManager(object):
         template = self._read_nginx_template()
         pattern = re.compile(r'%(\w+)%')
         template_values = {
+            'TFS_VERSION': self._tfs_version,
             'TFS_REST_PORT': self._tfs_rest_port,
             'TFS_DEFAULT_MODEL_NAME': self._tfs_default_model_name,
             'NGINX_HTTP_PORT': self._nginx_http_port,
@@ -115,6 +116,7 @@ class ServiceManager(object):
             return template
 
     def _start_tfs(self):
+        subprocess.check_call('tensorflow_model_server --version'.split())
         tfs_config_path = '/sagemaker/model-config.cfg'
         cmd = "tensorflow_model_server --port={} --rest_api_port={} --model_config_file={}".format(
             self._tfs_grpc_port, self._tfs_rest_port, tfs_config_path)
@@ -124,6 +126,7 @@ class ServiceManager(object):
         self._tfs = p
 
     def _start_nginx(self):
+        subprocess.check_call('/usr/sbin/nginx -V'.split())
         p = subprocess.Popen('/usr/sbin/nginx -c /sagemaker/nginx.conf'.split())
         log.info('started nginx (pid: %d)', p.pid)
         self._nginx = p
@@ -148,7 +151,6 @@ class ServiceManager(object):
         self._state = 'starting'
         signal.signal(signal.SIGTERM, self._stop)
 
-        # TODO set env vars for ports etc
         self._create_tfs_config()
         self._create_nginx_config()
 

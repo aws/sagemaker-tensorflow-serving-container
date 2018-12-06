@@ -14,11 +14,30 @@ function invocations(r) {
 }
 
 function ping(r) {
-    // TODO replace with call to Model Status API when Tensorflow Serving 1.12 is available
+    if ('1.11' == r.variables.tfs_version) {
+        return ping_tfs_1_11(r)
+    }
+
+    var uri = remove_tfs_method(make_tfs_uri(r))
+
+    function callback (reply) {
+        if (reply.status == 200 && reply.responseBody.includes('"AVAILABLE"')) {
+            r.return(200)
+        } else {
+            r.error('failed ping' + reply.responseBody)
+            r.return(502)
+        }
+    }
+
+    r.subrequest(uri, callback)
+}
+
+function ping_tfs_1_11(r) {
     // hack for TF 1.11
     // send an arbitrary fixed request to the default model.
     // if response is 400, the model is ok (but input was bad), so return 200
     // also return 200 in unlikely case our request was really valid
+
     var uri = make_tfs_uri(r)
     var options = {
         method: 'POST',
@@ -35,6 +54,10 @@ function ping(r) {
     }
 
     r.subrequest(uri, options, callback)
+}
+
+function remove_tfs_method(uri) {
+    return uri.substr(0, uri.lastIndexOf(':'))
 }
 
 function return_error(r, code, message) {
