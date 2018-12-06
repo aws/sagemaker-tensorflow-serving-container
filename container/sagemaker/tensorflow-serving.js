@@ -57,6 +57,7 @@ function ping_tfs_1_11(r) {
 }
 
 function remove_tfs_method(uri) {
+    // strip ':predict' etc from uri so it can be used for ModelStatus request
     return uri.substr(0, uri.lastIndexOf(':'))
 }
 
