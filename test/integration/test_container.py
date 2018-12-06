@@ -23,8 +23,8 @@ import requests
 BASE_URL = 'http://localhost:8080/invocations'
 
 
-@pytest.fixture(scope='module', autouse=True)
-def container():
+@pytest.fixture(scope='module', autouse=True, params=['1.11', '1.12'])
+def container(request):
     model_dir = os.path.abspath('test/resources/models')
     command = 'docker run --name sagemaker-tensorflow-serving-test -v {}:/opt/ml/model:ro -p 8080:8080'.format(
         model_dir)
@@ -32,7 +32,7 @@ def container():
     command += ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
     command += ' -e SAGEMAKER_BIND_TO_PORT=8080'
     command += ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
-    command += ' sagemaker-tensorflow-serving:1.11.1-cpu serve'
+    command += ' sagemaker-tensorflow-serving:{}-cpu serve'.format(request.param)
     proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
     attempts = 0
@@ -56,7 +56,7 @@ def make_request(data, content_type='application/json', method='predict'):
             'tfs-model-name=half_plus_three,tfs-method=%s' % method
     }
     response = requests.post(BASE_URL, data=data, headers=headers)
-    return json.loads(response.content)
+    return json.loads(response.content.decode('utf-8'))
 
 
 def test_predict():
