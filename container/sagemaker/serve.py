@@ -37,8 +37,8 @@ class ServiceManager(object):
             low = int(parts[0])
             hi = int(parts[1])
             if low + 1 > hi:
-                raise ValueError('not enough ports available in SAGEMAKER_SAFE_PORT_RANGE ({})',
-                                 port_range)
+                raise ValueError('not enough ports available in SAGEMAKER_SAFE_PORT_RANGE ({})'
+                                 .format(port_range))
             self._tfs_grpc_port = str(low)
             self._tfs_rest_port = str(low + 1)
         else:
@@ -76,7 +76,7 @@ class ServiceManager(object):
         models = []
         for f in self._find_saved_model_files(base_path):
             parts = f.split('/')
-            if len(parts) >= 6 and re.match('^\d+$', parts[-2]):
+            if len(parts) >= 6 and re.match(r'^\d+$', parts[-2]):
                 model_path = '/'.join(parts[0:-2])
                 if model_path not in models:
                     models.append(model_path)
@@ -140,7 +140,7 @@ class ServiceManager(object):
         except subprocess.CalledProcessError:
             log.warning('failed to run command: %s', command)
 
-    def _stop(self, *args):
+    def _stop(self, *args):  # pylint: disable=W0613
         self._state = 'stopping'
         log.info('stopping services')
         try:

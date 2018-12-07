@@ -30,9 +30,10 @@ development machine:
 
 For testing, you will also need:
 
-- [Python 3.5+](https://www.python.org/)
-- [pytest](https://docs.pytest.org/en/latest/)
-- The Python [requests](http://docs.python-requests.org/en/master/) library
+- [Python 3.6](https://www.python.org/)
+- [tox](https://tox.readthedocs.io/en/latest/)
+- [npm](https://npmjs.org/)
+- [jshint](https://jshint.com/about/)
 
 To test GPU images locally, you will also need:
 
@@ -97,11 +98,12 @@ Additional `curl` examples can be found in `./scripts/curl.sh`.
 
 ## Running the tests
 
-The package includes some automated unit and integration tests. These tests use Docker to run
-your image locally, and do not access resources in AWS. You can run them using `pytest`:
+The package includes automated tests and code checks. The tests use Docker to run the container 
+image locally, and do not access resources in AWS. You can run the tests and static code 
+checkers using `tox`:
 
 ```bash
-pytest ./test
+tox
 ```
 
 ## Contributing
