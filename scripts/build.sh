@@ -8,6 +8,14 @@ source scripts/shared.sh
 
 parse_std_args "$@"
 
-docker build -f docker/$major_version/Dockerfile.$arch \
+echo "pulling previous image for layer cache... "
+$(aws ecr get-login --no-include-email --registry-id $aws_account) &>/dev/null || echo 'warning: ecr login failed'
+docker pull $aws_account.dkr.ecr.$aws_region.amazonaws.com/sagemaker-tensorflow-serving:$minor_version-$arch &>/dev/null || echo 'warning: pull failed'
+docker logout https://$aws_account.dkr.ecr.$aws_region.amazonaws.com &>/dev/null
+
+echo "building image... "
+docker build \
+    --cache-from $aws_account.dkr.ecr.$aws_region.amazonaws.com/sagemaker-tensorflow-serving:$minor_version-$arch \
+    -f docker/$major_version/Dockerfile.$arch \
     -t sagemaker-tensorflow-serving:$minor_version-$arch \
     -t sagemaker-tensorflow-serving:$major_version-$arch container

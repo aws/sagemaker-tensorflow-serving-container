@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - start-dockerd.sh
+
+      # fix permissions dropped by CodePipeline
+      - chmod +x ./scripts/*.sh
+      - chmod +x ./container/sagemaker/serve
+  build:
+    commands:
+      - tox -e flake8,pylint,jshint
+
+      # build images
+      - ./scripts/build.sh --version 1.11 --arch cpu
+      - ./scripts/build.sh --version 1.11 --arch gpu
+      - ./scripts/build.sh --version 1.12 --arch cpu
+      - ./scripts/build.sh --version 1.12 --arch gpu
+
+      # run tests
+      - tox -e py36

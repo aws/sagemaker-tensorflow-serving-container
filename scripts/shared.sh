@@ -17,7 +17,11 @@ function get_minor_version() {
 }
 
 function get_default_region() {
-    aws configure get region
+    if [ -n "${AWS_DEFAULT_REGION:-}" ]; then
+        echo "$AWS_DEFAULT_REGION"
+    else
+        aws configure get region
+    fi
 }
 
 function get_aws_account() {
@@ -29,6 +33,7 @@ function parse_std_args() {
     arch='cpu'
     major_version=$(get_latest_major_version)
     aws_region=$(get_default_region)
+    aws_account=$(get_aws_account)
 
     while [[ $# -gt 0 ]]; do
     key="$1"
