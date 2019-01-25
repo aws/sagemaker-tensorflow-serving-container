@@ -23,30 +23,46 @@ import requests
 BASE_URL = 'http://localhost:8080/invocations'
 
 
+@pytest.fixture(scope='session', autouse=True)
+def volume():
+    try:
+        model_dir = os.path.abspath('test/resources/models')
+        subprocess.check_call(
+            'docker volume create --name model_volume --opt type=none '
+            '--opt device={} --opt o=bind'.format(model_dir).split())
+        yield model_dir
+    finally:
+        subprocess.check_call('docker volume rm model_volume'.split())
+
+
 @pytest.fixture(scope='module', autouse=True, params=['1.11', '1.12'])
 def container(request):
-    model_dir = os.path.abspath('test/resources/models')
-    command = 'docker run --name sagemaker-tensorflow-serving-test -v {}:/opt/ml/model:ro -p 8080:8080'.format(
-        model_dir)
-    command += ' -e SAGEMAKER_TFS_DEFAULT_MODEL_NAME=half_plus_three'
-    command += ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
-    command += ' -e SAGEMAKER_BIND_TO_PORT=8080'
-    command += ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
-    command += ' sagemaker-tensorflow-serving:{}-cpu serve'.format(request.param)
-    proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
+    try:
+        command = (
+            'docker run --name sagemaker-tensorflow-serving-test -p 8080:8080'
+            ' --mount type=volume,source=model_volume,target=/opt/ml/model,readonly'
+            ' -e SAGEMAKER_TFS_DEFAULT_MODEL_NAME=half_plus_three'
+            ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
+            ' -e SAGEMAKER_BIND_TO_PORT=8080'
+            ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
+            ' sagemaker-tensorflow-serving:{}-cpu serve'
+        ).format(request.param)
 
-    attempts = 0
-    while attempts < 5:
-        time.sleep(3)
-        try:
-            requests.get('http://localhost:8080/ping')
-            break
-        except:
-            attempts += 1
-            pass
+        proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
-    yield proc.pid
-    subprocess.check_call('docker rm -f sagemaker-tensorflow-serving-test'.split())
+        attempts = 0
+        while attempts < 5:
+            time.sleep(3)
+            try:
+                requests.get('http://localhost:8080/ping')
+                break
+            except:
+                attempts += 1
+                pass
+
+        yield proc.pid
+    finally:
+        subprocess.check_call('docker rm -f sagemaker-tensorflow-serving-test'.split())
 
 
 def make_request(data, content_type='application/json', method='predict'):
@@ -93,6 +109,7 @@ def test_predict_jsons():
     x = '[1.0, 2.0, 5.0]\n[1.0, 2.0, 5.0]'
     y = make_request(x, 'application/jsons')
     assert y == {'predictions': [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]}
+
 
 def test_predict_jsons_2():
     x = '{"x": [1.0, 2.0, 5.0]}\n{"x": [1.0, 2.0, 5.0]}'
