@@ -23,4 +23,4 @@ $docker_command run \
     -e "SAGEMAKER_TFS_NGINX_LOGLEVEL=error" \
     -e "SAGEMAKER_BIND_TO_PORT=8080" \
     -e "SAGEMAKER_SAFE_PORT_RANGE=9000-9999" \
-    sagemaker-tensorflow-serving:$minor_version-$arch serve > log.txt 2>&1 &
+    sagemaker-tensorflow-serving:$full_version-$arch serve > log.txt 2>&1 &
