@@ -8,20 +8,20 @@ function error() {
     exit 1
 }
 
-function get_latest_major_version() {
-    ls -1 docker/ | sort -r -n -t.  -k 1,1 -k 2,2 -k 3 | head -1
-}
-
-function get_minor_version() {
-    grep 'tensorflow/serving:' docker/$1/Dockerfile.cpu | sed 's#^.*:\([0-9][0-9\.]*\) .*#\1#'
-}
-
 function get_default_region() {
     if [ -n "${AWS_DEFAULT_REGION:-}" ]; then
         echo "$AWS_DEFAULT_REGION"
     else
         aws configure get region
     fi
+}
+
+function get_full_version() {
+    echo $1 | sed 's#^\([0-9][0-9]*\.[0-9][0-9]*\)$#\1.0#'
+}
+
+function get_short_version() {
+    echo $1 | sed 's#\([0-9][0-9]*\.[0-9][0-9]*\)\.[0-9][0-9]*#\1#'
 }
 
 function get_aws_account() {
@@ -31,7 +31,8 @@ function get_aws_account() {
 function parse_std_args() {
     # defaults
     arch='cpu'
-    major_version=$(get_latest_major_version)
+    version='1.12.0'
+
     aws_region=$(get_default_region)
     aws_account=$(get_aws_account)
 
@@ -40,7 +41,7 @@ function parse_std_args() {
 
     case $key in
         -v|--version)
-        major_version="$2"
+        version="$2"
         shift
         shift
         ;;
@@ -61,11 +62,12 @@ function parse_std_args() {
     esac
     done
 
-    [[ -z "${major_version// }" ]] && error 'missing version'
+    [[ -z "${version// }" ]] && error 'missing version'
     [[ "$arch" =~ ^(cpu|gpu)$ ]] || error "invalid arch: $arch"
     [[ -z "${aws_region// }" ]] && error 'missing aws region'
 
-    minor_version=$(get_minor_version $major_version)
+    full_version=$(get_full_version $version)
+    short_version=$(get_short_version $version)
 
     true
 }

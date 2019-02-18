@@ -3,20 +3,44 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - start-dockerd.sh
+      - start-dockerd
 
       # fix permissions dropped by CodePipeline
       - chmod +x ./scripts/*.sh
       - chmod +x ./container/sagemaker/serve
   build:
     commands:
+      # prepare the release (update versions, changelog etc.)
+      - if-release-build git-release --prepare
+
       - tox -e flake8,pylint,jshint
 
       # build images
-      - ./scripts/build.sh --version 1.11 --arch cpu
-      - ./scripts/build.sh --version 1.11 --arch gpu
-      - ./scripts/build.sh --version 1.12 --arch cpu
-      - ./scripts/build.sh --version 1.12 --arch gpu
+      - ./scripts/build.sh --version 1.11.1 --arch cpu
+      - ./scripts/build.sh --version 1.11.1 --arch gpu
+      - ./scripts/build.sh --version 1.12.0 --arch cpu
+      - ./scripts/build.sh --version 1.12.0 --arch gpu
 
       # run tests
       - tox -e py36
+
+      # push docker images to ECR
+      - if-release-build ./scripts/publish.sh --version 1.11.1 --arch cpu
+      - if-release-build ./scripts/publish.sh --version 1.11.1 --arch gpu
+      - if-release-build ./scripts/publish.sh --version 1.12.0 --arch cpu
+      - if-release-build ./scripts/publish.sh --version 1.12.0 --arch gpu
+
+      # write images to manifest (used by deploy step)
+      - if-release-build create-manifest docker
+            --images
+              sagemaker-tensorflow-serving:1.11.1-cpu
+              sagemaker-tensorflow-serving:1.11.1-gpu
+              sagemaker-tensorflow-serving:1.12.0-cpu
+              sagemaker-tensorflow-serving:1.12.0-gpu
+
+      # publish the release to github
+      - if-release-build git-release --publish
+
+artifacts:
+  files:
+    - release-manifest.json

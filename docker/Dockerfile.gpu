@@ -1,4 +1,6 @@
-FROM tensorflow/serving:1.12.0-gpu as tfs
+ARG TFS_VERSION
+
+FROM tensorflow/serving:${TFS_VERSION}-gpu as tfs
 FROM nvidia/cuda:9.0-base-ubuntu16.04
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
@@ -55,5 +57,7 @@ RUN \
 
 COPY ./ /
 
-ENV SAGEMAKER_TFS_VERSION "1.12"
+
+ARG TFS_SHORT_VERSION
+ENV SAGEMAKER_TFS_VERSION "${TFS_SHORT_VERSION}"
 ENV PATH "$PATH:/sagemaker"
