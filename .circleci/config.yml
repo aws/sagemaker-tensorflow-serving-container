@@ -1,0 +1,99 @@
+version: 2
+
+jobs:
+  build-cpu:
+    environment:
+      IMAGE_NAME: jonathancardoso/building-on-ci
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker image
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --arch cpu
+
+  build-gpu:
+    environment:
+      IMAGE_NAME: jonathancardoso/building-on-ci
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker image
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --arch gpu
+
+  publish-cpu:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --push --arch cpu
+
+  publish-gpu:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Publish Docker Image to Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --push --arch gpu
+
+
+workflows:
+  version: 2
+
+  build:
+    jobs:
+      - build-gpu:
+          filters:
+            branches:
+              ignore: master
+      - build-cpu:
+          filters:
+            branches:
+              ignore: master
+
+  build_master:
+    jobs:
+      - publish-cpu:
+          filters:
+            branches:
+              only: master
+      - publish-gpu:
+          filters:
+            branches:
+              only: master
+
+  daily_publish:
+    triggers:
+      - schedule:
+          # Build at UTC 10:30pm- should be after nightly build of tensorflow/server.
+          cron: "30 20 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - publish-cpu:
+          filters:
+            branches:
+              only: master
+      - publish-gpu:
+          filters:
+            branches:
+              only: master
