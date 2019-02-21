@@ -2,8 +2,6 @@ version: 2
 
 jobs:
   build-cpu:
-    environment:
-      IMAGE_NAME: jonathancardoso/building-on-ci
     docker:
       - image: circleci/buildpack-deps:stretch
     steps:
@@ -16,8 +14,6 @@ jobs:
             ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --arch cpu
 
   build-gpu:
-    environment:
-      IMAGE_NAME: jonathancardoso/building-on-ci
     docker:
       - image: circleci/buildpack-deps:stretch
     steps:
