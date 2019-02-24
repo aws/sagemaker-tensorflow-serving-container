@@ -11,7 +11,7 @@ jobs:
           name: Build Docker image
           command: |
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --arch cpu
+            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --arch cpu | cat
 
   build-gpu:
     docker:
@@ -23,7 +23,7 @@ jobs:
           name: Build Docker image
           command: |
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --arch gpu
+            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --arch gpu | cat
 
   publish-cpu:
     docker:
@@ -35,7 +35,7 @@ jobs:
           name: Publish Docker Image to Docker Hub
           command: |
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --push --arch cpu
+            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --push --arch cpu | cat
 
   publish-gpu:
     docker:
@@ -47,7 +47,7 @@ jobs:
           name: Publish Docker Image to Docker Hub
           command: |
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --push --arch gpu
+            ./scripts/docker_hub.sh --hub_user "$DOCKERHUB_USERNAME" --push --arch gpu | cat
 
 
 workflows:
