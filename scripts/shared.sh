@@ -4,7 +4,7 @@
 
 function error() {
     >&2 echo $1
-    >&2 echo "usage: $0 [--version <major-version>] [--arch (cpu*|gpu)] [--region <aws-region>]"
+    >&2 echo "usage: $0 [--version <major-version>] [--arch (cpu*|gpu|ei)] [--region <aws-region>]"
     exit 1
 }
 
@@ -32,6 +32,7 @@ function parse_std_args() {
     # defaults
     arch='cpu'
     version='1.12.0'
+    model='AmazonEI_TensorFlow_Serving_v1.12_v1'
 
     aws_region=$(get_default_region)
     aws_account=$(get_aws_account)
@@ -55,6 +56,11 @@ function parse_std_args() {
         shift
         shift
         ;;
+        -m|--model)
+        model="$2"
+        shift
+        shift
+        ;;
         *) # unknown option
         error "unknown option: $1"
         shift
@@ -63,7 +69,7 @@ function parse_std_args() {
     done
 
     [[ -z "${version// }" ]] && error 'missing version'
-    [[ "$arch" =~ ^(cpu|gpu)$ ]] || error "invalid arch: $arch"
+    [[ "$arch" =~ ^(cpu|gpu|ei)$ ]] || error "invalid arch: $arch"
     [[ -z "${aws_region// }" ]] && error 'missing aws region'
 
     full_version=$(get_full_version $version)

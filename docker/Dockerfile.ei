@@ -1,0 +1,10 @@
+ARG TFS_VERSION
+
+FROM 520713654638.dkr.ecr.us-west-2.amazonaws.com/sagemaker-tensorflow-serving:${TFS_VERSION}-cpu
+
+ARG TENSORFLOW_MODEL_SERVER
+
+# Validate the argument is specified
+RUN test $TENSORFLOW_MODEL_SERVER || exit 1
+
+COPY ./$TENSORFLOW_MODEL_SERVER /usr/bin/tensorflow_model_server
