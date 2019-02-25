@@ -8,7 +8,7 @@ source scripts/shared.sh
 
 parse_std_args "$@"
 
-# Dockfile.ei needs to login 520713654638 to pull the cpu image
+# Dockerfile.ei needs to login 520713654638 to pull the cpu image
 if [ "$arch" = "ei" ]; then
     echo "pulling cpu image..."
     $(aws ecr get-login --no-include-email --registry-id 520713654638) &>/dev/null || echo 'warning: ecr login failed'
