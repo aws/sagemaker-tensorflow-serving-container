@@ -7,7 +7,10 @@ set -euo pipefail
 source scripts/shared.sh
 
 parse_std_args "$@"
-get_tfs_executable
+
+if [ $arch = 'ei' ]; then
+    get_tfs_executable
+fi
 
 echo "pulling previous image for layer cache... "
 $(aws ecr get-login --no-include-email --registry-id $aws_account) &>/dev/null || echo 'warning: ecr login failed'
