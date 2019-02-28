@@ -28,11 +28,25 @@ function get_aws_account() {
     aws sts get-caller-identity --query 'Account' --output text
 }
 
+function get_tfs_executable() {
+    # default to v1.12 in accordance with defaults below
+    s3_object='tfs_ei_v1_12_ubuntu'
+    unzipped='v1_12_Ubuntu'
+
+    if [ ${version} = '1.11' ]; then
+        s3_object='Ubuntu'
+        unzipped='Ubuntu'
+    fi
+
+    aws s3 cp 's3://amazonei-tensorflow/Tensorflow Serving/v'${version}'/Ubuntu/'${s3_object}'.zip' .
+    unzip ${s3_object} && mv ${unzipped}/AmazonEI_Tensorflow_Serving_v${version}_v1 container/
+    rm ${s3_object}.zip && rm -rf ${unzipped}
+}
+
 function parse_std_args() {
     # defaults
     arch='cpu'
     version='1.12.0'
-    model='AmazonEI_TensorFlow_Serving_v1.12_v1'
 
     aws_region=$(get_default_region)
     aws_account=$(get_aws_account)
@@ -53,11 +67,6 @@ function parse_std_args() {
         ;;
         -r|--region)
         aws_region="$2"
-        shift
-        shift
-        ;;
-        -m|--model)
-        model="$2"
         shift
         shift
         ;;

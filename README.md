@@ -50,13 +50,14 @@ The Docker images are built from the Dockerfiles in
 [docker/](https://github.com/aws/sagemaker-tensorflow-serving-container/tree/master/docker>).
 
 The Dockerfiles are grouped based on the version of TensorFlow Serving they support. Each supported
-processor type (e.g. "cpu", "gpu") has a different Dockerfile in each group.  
+processor type (e.g. "cpu", "gpu", "ei") has a different Dockerfile in each group.  
 
 To build an image, run the `./scripts/build.sh` script:
 
 ```bash
 ./scripts/build.sh --version 1.11 --arch cpu
 ./scripts/build.sh --version 1.11 --arch gpu
+./scripts/build.sh --version 1.11 --arch ei
 ```
 
 
@@ -67,6 +68,7 @@ in SageMaker, you need to publish it to an ECR repository in your account. The
 ```bash
 ./scripts/publish.sh --version 1.11 --arch cpu
 ./scripts/publish.sh --version 1.11 --arch gpu
+./scripts/publish.sh --version 1.11 --arch ei
 ```
 
 Note: this will publish to ECR in your default region. Use the `--region` argument to 
@@ -80,8 +82,8 @@ GPU images) will work for this, or you can use the provided `start.sh`
 and `stop.sh` scripts:
 
 ```bash
-./scripts/start.sh [--version x.xx] [--arch cpu|gpu|...]
-./scripts/stop.sh [--version x.xx] [--arch cpu|gpu|...]
+./scripts/start.sh [--version x.xx] [--arch cpu|gpu|ei|...]
+./scripts/stop.sh [--version x.xx] [--arch cpu|gpu|ei|...]
 ```
 
 When the container is running, you can send test requests to it using any HTTP client. Here's
@@ -105,6 +107,15 @@ checkers using `tox`:
 ```bash
 tox
 ```
+
+To test Elastic Inference with Accelerator, you will need an AWS account, publish your built image to ECR repository and run the following command:
+
+    pytest test/functional/test_elastic_inference.py --aws-id <aws_account> \
+                                                      --docker-base-name <ECR_repository_name> \
+                                                      --instance-type <instance_type> \
+                                                      --accelerator-type <accelerator_type> \
+                                                      --tag <image_tag>   
+
 
 ## Contributing
 
