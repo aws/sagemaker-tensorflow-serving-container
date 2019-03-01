@@ -3,7 +3,7 @@ LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
 ARG TFS_SHORT_VERSION
 
-COPY AmazonEI_Tensorflow_Serving_v${TFS_SHORT_VERSION}_v1 /usr/bin/tensorflow_model_server
+COPY AmazonEI_TensorFlow_Serving_v${TFS_SHORT_VERSION}_v1 /usr/bin/tensorflow_model_server
 
 # downloaded 1.12 version is not executable
 RUN chmod +x /usr/bin/tensorflow_model_server
@@ -19,7 +19,7 @@ RUN \
     apt-get clean
 
 COPY ./ /
-RUN rm AmazonEI_Tensorflow_Serving_v${TFS_SHORT_VERSION}_v1
+RUN rm AmazonEI_TensorFlow_Serving_v${TFS_SHORT_VERSION}_v1
 
 ENV SAGEMAKER_TFS_VERSION "${TFS_SHORT_VERSION}"
 ENV PATH "$PATH:/sagemaker"

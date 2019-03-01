@@ -110,7 +110,7 @@ tox
 
 To test Elastic Inference with Accelerator, you will need an AWS account, publish your built image to ECR repository and run the following command:
 
-    pytest test/functional/test_elastic_inference.py --aws-id <aws_account> \
+    pytest test/sagemaker/test_elastic_inference.py --aws-id <aws_account> \
                                                       --docker-base-name <ECR_repository_name> \
                                                       --instance-type <instance_type> \
                                                       --accelerator-type <accelerator_type> \

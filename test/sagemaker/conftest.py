@@ -28,7 +28,7 @@ logging.getLogger('connectionpool.py').setLevel(logging.INFO)
 
 def pytest_addoption(parser):
     parser.addoption('--aws-id')
-    parser.addoption('--docker-base-name', default='sagemaker-tensorflow-serving')
+    parser.addoption('--docker-base-name', default='functional-tensorflow-serving')
     parser.addoption('--instance-type')
     parser.addoption('--accelerator-type', default=None)
     parser.addoption('--region', default='us-west-2')
@@ -94,7 +94,3 @@ def docker_image_uri(docker_registry, docker_image):
     uri = '{}/{}'.format(docker_registry, docker_image)
     return uri
 
-
-@pytest.fixture(scope='session')
-def sagemaker_session(region):
-    return Session(boto_session=boto3.Session(region_name=region))
