@@ -28,7 +28,7 @@ logging.getLogger('connectionpool.py').setLevel(logging.INFO)
 
 def pytest_addoption(parser):
     parser.addoption('--aws-id')
-    parser.addoption('--docker-base-name', default='functional-tensorflow-serving')
+    parser.addoption('--docker-base-name', default='sagemaker-tensorflow-serving')
     parser.addoption('--instance-type')
     parser.addoption('--accelerator-type', default=None)
     parser.addoption('--region', default='us-west-2')
@@ -75,7 +75,7 @@ def processor(request):
 @pytest.fixture(scope='session')
 def tag(request, framework_version, processor):
     provided_tag = request.config.getoption('--tag')
-    default_tag = '{}-{}-py2'.format(framework_version, processor)
+    default_tag = '{}-{}'.format(framework_version, processor)
     return provided_tag if provided_tag is not None else default_tag
 
 

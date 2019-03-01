@@ -108,14 +108,21 @@ checkers using `tox`:
 tox
 ```
 
-To test Elastic Inference with Accelerator, you will need an AWS account, publish your built image to ECR repository and run the following command:
+To test against Elastic Inference with Accelerator, you will need an AWS account, publish your built image to ECR repository and run the following command:
 
     pytest test/sagemaker/test_elastic_inference.py --aws-id <aws_account> \
-                                                      --docker-base-name <ECR_repository_name> \
-                                                      --instance-type <instance_type> \
-                                                      --accelerator-type <accelerator_type> \
-                                                      --tag <image_tag>   
+                                                    --docker-base-name <ECR_repository_name> \
+                                                    --instance-type <instance_type> \
+                                                    --accelerator-type <accelerator_type> \
+                                                    --tag <image_tag>   
 
+For example:
+    
+    pytest test/sagemaker/test_elastic_inference.py --aws-id 0123456789012 \
+                                                    --docker-base-name sagemaker-tensorflow-serving \
+                                                    --instance_type ml.m4.xlarge \
+                                                    --accelerator-type ml.eia1.large \
+                                                    --tag 1.12.0-ei
 
 ## Contributing
 
