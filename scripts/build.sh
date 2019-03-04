@@ -8,6 +8,10 @@ source scripts/shared.sh
 
 parse_std_args "$@"
 
+if [ $arch = 'ei' ]; then
+    get_tfs_executable
+fi
+
 echo "pulling previous image for layer cache... "
 $(aws ecr get-login --no-include-email --registry-id $aws_account) &>/dev/null || echo 'warning: ecr login failed'
 docker pull $aws_account.dkr.ecr.$aws_region.amazonaws.com/sagemaker-tensorflow-serving:$full_version-$arch &>/dev/null || echo 'warning: pull failed'

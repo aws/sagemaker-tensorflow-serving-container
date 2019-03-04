@@ -4,7 +4,7 @@
 
 function error() {
     >&2 echo $1
-    >&2 echo "usage: $0 [--version <major-version>] [--arch (cpu*|gpu)] [--region <aws-region>]"
+    >&2 echo "usage: $0 [--version <major-version>] [--arch (cpu*|gpu|ei)] [--region <aws-region>]"
     exit 1
 }
 
@@ -26,6 +26,17 @@ function get_short_version() {
 
 function get_aws_account() {
     aws sts get-caller-identity --query 'Account' --output text
+}
+
+function get_tfs_executable() {
+    zip_file=$(aws s3 ls 's3://amazonei-tensorflow/Tensorflow Serving/v'${version}'/Ubuntu/' | awk '{print $4}')
+    aws s3 cp 's3://amazonei-tensorflow/Tensorflow Serving/v'${version}'/Ubuntu/'${zip_file} .
+
+    mkdir exec_dir
+    unzip ${zip_file} -d exec_dir
+
+    find . -name AmazonEI_TensorFlow_Serving_v${version}_v1* -exec mv {} container/ \;
+    rm ${zip_file} && rm -rf exec_dir
 }
 
 function parse_std_args() {
@@ -63,7 +74,7 @@ function parse_std_args() {
     done
 
     [[ -z "${version// }" ]] && error 'missing version'
-    [[ "$arch" =~ ^(cpu|gpu)$ ]] || error "invalid arch: $arch"
+    [[ "$arch" =~ ^(cpu|gpu|ei)$ ]] || error "invalid arch: $arch"
     [[ -z "${aws_region// }" ]] && error 'missing aws region'
 
     full_version=$(get_full_version $version)
