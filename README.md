@@ -119,10 +119,10 @@ To test against Elastic Inference with Accelerator, you will need an AWS account
 For example:
     
     pytest test/integrationsagemaker/test_elastic_inference.py --aws-id 0123456789012 \
-                                                               --docker-base-name sagemaker-tensorflow-serving \
+                                                               --docker-base-name sagemaker-tensorflow-serving-eia \
                                                                --instance_type ml.m4.xlarge \
                                                                --accelerator-type ml.eia1.large \
-                                                               --tag 1.12.0-ei
+                                                               --tag 1.12.0-cpu
 
 ## Contributing
 

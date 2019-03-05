@@ -39,6 +39,22 @@ function get_tfs_executable() {
     rm ${zip_file} && rm -rf exec_dir
 }
 
+function get_device_type() {
+    if [ $1 = 'gpu' ]; then
+        echo 'gpu'
+    else
+        echo 'cpu'
+    fi
+}
+
+function get_repository_name() {
+    if [ $1 = 'ei' ]; then
+        echo 'sagemaker-tensorflow-serving-eia'
+    else
+        echo 'sagemaker-tensorflow-serving'
+    fi
+}
+
 function parse_std_args() {
     # defaults
     arch='cpu'
@@ -79,6 +95,8 @@ function parse_std_args() {
 
     full_version=$(get_full_version $version)
     short_version=$(get_short_version $version)
+    device=$(get_device_type $arch)
+    repository=$(get_repository_name $arch)
 
     true
 }
