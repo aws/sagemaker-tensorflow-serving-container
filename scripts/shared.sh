@@ -4,7 +4,7 @@
 
 function error() {
     >&2 echo $1
-    >&2 echo "usage: $0 [--version <major-version>] [--arch (cpu*|gpu|ei)] [--region <aws-region>]"
+    >&2 echo "usage: $0 [--version <major-version>] [--arch (cpu*|gpu|eia)] [--region <aws-region>]"
     exit 1
 }
 
@@ -40,18 +40,10 @@ function get_tfs_executable() {
 }
 
 function get_device_type() {
-    if [ $1 = 'gpu' ]; then
-        echo 'gpu'
-    else
+    if [ $1 = 'eia' ]; then
         echo 'cpu'
-    fi
-}
-
-function get_repository_name() {
-    if [ $1 = 'ei' ]; then
-        echo 'sagemaker-tensorflow-serving-eia'
     else
-        echo 'sagemaker-tensorflow-serving'
+        echo $1
     fi
 }
 
@@ -59,6 +51,7 @@ function parse_std_args() {
     # defaults
     arch='cpu'
     version='1.12.0'
+    repository='sagemaker-tensorflow-serving'
 
     aws_region=$(get_default_region)
     aws_account=$(get_aws_account)
@@ -90,13 +83,14 @@ function parse_std_args() {
     done
 
     [[ -z "${version// }" ]] && error 'missing version'
-    [[ "$arch" =~ ^(cpu|gpu|ei)$ ]] || error "invalid arch: $arch"
+    [[ "$arch" =~ ^(cpu|gpu|eia)$ ]] || error "invalid arch: $arch"
     [[ -z "${aws_region// }" ]] && error 'missing aws region'
+
+    [[ "$arch" = eia ]] && repository=$repository'-'$arch
 
     full_version=$(get_full_version $version)
     short_version=$(get_short_version $version)
     device=$(get_device_type $arch)
-    repository=$(get_repository_name $arch)
 
     true
 }

@@ -57,7 +57,7 @@ To build an image, run the `./scripts/build.sh` script:
 ```bash
 ./scripts/build.sh --version 1.11 --arch cpu
 ./scripts/build.sh --version 1.11 --arch gpu
-./scripts/build.sh --version 1.11 --arch ei
+./scripts/build.sh --version 1.11 --arch eia
 ```
 
 
@@ -68,7 +68,7 @@ in SageMaker, you need to publish it to an ECR repository in your account. The
 ```bash
 ./scripts/publish.sh --version 1.11 --arch cpu
 ./scripts/publish.sh --version 1.11 --arch gpu
-./scripts/publish.sh --version 1.11 --arch ei
+./scripts/publish.sh --version 1.11 --arch eia
 ```
 
 Note: this will publish to ECR in your default region. Use the `--region` argument to 
@@ -82,8 +82,8 @@ GPU images) will work for this, or you can use the provided `start.sh`
 and `stop.sh` scripts:
 
 ```bash
-./scripts/start.sh [--version x.xx] [--arch cpu|gpu|ei|...]
-./scripts/stop.sh [--version x.xx] [--arch cpu|gpu|ei|...]
+./scripts/start.sh [--version x.xx] [--arch cpu|gpu|eia|...]
+./scripts/stop.sh [--version x.xx] [--arch cpu|gpu|eia|...]
 ```
 
 When the container is running, you can send test requests to it using any HTTP client. Here's
@@ -118,11 +118,11 @@ To test against Elastic Inference with Accelerator, you will need an AWS account
 
 For example:
     
-    pytest test/integrationsagemaker/test_elastic_inference.py --aws-id 0123456789012 \
-                                                               --docker-base-name sagemaker-tensorflow-serving-eia \
-                                                               --instance_type ml.m4.xlarge \
-                                                               --accelerator-type ml.eia1.large \
-                                                               --tag 1.12.0-cpu
+    pytest test/integration/sagemaker/test_elastic_inference.py --aws-id 0123456789012 \
+                                                                --docker-base-name sagemaker-tensorflow-serving-eia \
+                                                                --instance_type ml.m4.xlarge \
+                                                                --accelerator-type ml.eia1.medium \
+                                                                --tag 1.12.0-cpu
 
 ## Contributing
 

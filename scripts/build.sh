@@ -8,7 +8,7 @@ source scripts/shared.sh
 
 parse_std_args "$@"
 
-if [ $arch = 'ei' ]; then
+if [ $arch = 'eia' ]; then
     get_tfs_executable
 fi
 
