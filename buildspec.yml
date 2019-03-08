@@ -40,16 +40,16 @@ phases:
           "repository": "sagemaker-tensorflow-serving",
           "tags": [{
             "source": "1.11.1-cpu",
-            "dest": ["1.11.1-cpu", "1.11-cpu"]
+            "dest": ["1.11.1-cpu", "1.11-cpu", , "1.11.1-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
           },{
             "source": "1.11.1-gpu",
-            "dest": ["1.11.1-gpu", "1.11-gpu"]
+            "dest": ["1.11.1-gpu", "1.11-gpu", "1.11.1-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
           },{
             "source": "1.12.0-cpu",
-            "dest": ["1.12.0-cpu", "1.12-cpu"]
+            "dest": ["1.12.0-cpu", "1.12-cpu", "1.12.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
           },{
             "source": "1.12.0-gpu",
-            "dest": ["1.12.0-gpu", "1.12-gpu"]
+            "dest": ["1.12.0-gpu", "1.12-gpu", "1.12.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
           }]
         }]' > deployments.json
         fi
