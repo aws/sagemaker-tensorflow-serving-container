@@ -29,13 +29,18 @@ function get_aws_account() {
 }
 
 function get_tfs_executable() {
-    zip_file=$(aws s3 ls 's3://amazonei-tensorflow/Tensorflow Serving/v'${version}'/Ubuntu/' | awk '{print $4}')
-    aws s3 cp 's3://amazonei-tensorflow/Tensorflow Serving/v'${version}'/Ubuntu/'${zip_file} .
+    if [[ -z $(aws s3 ls 's3://amazonei-tensorflow/Tensorflow Serving/v'${short_version}'/Ubuntu/') ]]; then
+        echo 'ERROR: cannot find this version in S3 bucket.'
+        exit 1
+    fi
+
+    zip_file=$(aws s3 ls 's3://amazonei-tensorflow/Tensorflow Serving/v'${short_version}'/Ubuntu/' | awk '{print $4}')
+    aws s3 cp 's3://amazonei-tensorflow/Tensorflow Serving/v'${short_version}'/Ubuntu/'${zip_file} .
 
     mkdir exec_dir
     unzip ${zip_file} -d exec_dir
 
-    find . -name AmazonEI_TensorFlow_Serving_v${version}_v1* -exec mv {} container/ \;
+    find . -name AmazonEI_TensorFlow_Serving_v${short_version}_v1* -exec mv {} container/ \;
     rm ${zip_file} && rm -rf exec_dir
 }
 
