@@ -13,13 +13,15 @@ phases:
       # prepare the release (update versions, changelog etc.)
       - if is-release-build; then git-release --prepare; fi
 
-      - tox -e flake8,pylint,jshint
+      - tox -e jshint,flake8,pylint
 
       # build images
       - ./scripts/build.sh --version 1.11.1 --arch cpu
       - ./scripts/build.sh --version 1.11.1 --arch gpu
       - ./scripts/build.sh --version 1.12.0 --arch cpu
       - ./scripts/build.sh --version 1.12.0 --arch gpu
+      - ./scripts/build.sh --version 1.11 --arch eia
+      - ./scripts/build.sh --version 1.12 --arch eia
 
       # run tests
       - tox -e py36
@@ -31,9 +33,13 @@ phases:
           ./scripts/publish.sh --version 1.11.1 --arch gpu
           ./scripts/publish.sh --version 1.12.0 --arch cpu
           ./scripts/publish.sh --version 1.12.0 --arch gpu
+          ./scripts/publish.sh --version 1.11 --arch eia
+          ./scripts/publish.sh --version 1.12 --arch eia
         fi
 
       # write deployment details to file
+      # todo sort out eia versioning
+      # todo add non-eia tests
       - |
         if is-release-build; then
           echo '[{
@@ -51,6 +57,19 @@ phases:
             "source": "1.12.0-gpu",
             "dest": ["1.12.0-gpu", "1.12-gpu", "1.12.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
           }]
+        }, {
+          "repository": "jesterhazy-sagemaker-tensorflow-serving-eia",
+          "tags": [{
+            "source": "1.11-cpu",
+            "dest": ["1.11.0-cpu", "1.11.1-cpu", "1.11-cpu", "1.11.1-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.12-cpu",
+            "dest": ["1.12.0-cpu", "1.12-cpu", "1.12.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          }],
+          "test": [
+            "tox -e py36 -- test/integration/sagemaker/test_elastic_inference.py --region {region} --registry-id 520713654638 --docker-base-name tensorflow-serving-eia --instance-type ml.m5.xlarge --accelerator-type ml.eia1.medium --tag 1.12-cpu",
+            "tox -e py36 -- test/integration/sagemaker/test_elastic_inference.py --region {region} --registry-id 520713654638 --docker-base-name tensorflow-serving-eia --instance-type ml.m5.xlarge --accelerator-type ml.eia1.medium --tag 1.11-cpu"
+          ]
         }]' > deployments.json
         fi
 
@@ -60,4 +79,4 @@ phases:
 artifacts:
   files:
     - deployments.json
-  name: artifact1
+  name: ARTIFACT_1

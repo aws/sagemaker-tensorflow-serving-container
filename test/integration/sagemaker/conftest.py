@@ -13,10 +13,8 @@
 
 import logging
 
-import boto3
 import pytest
-from sagemaker import Session
-from sagemaker.tensorflow import TensorFlow
+
 
 logger = logging.getLogger(__name__)
 logging.getLogger('boto').setLevel(logging.INFO)
@@ -27,19 +25,18 @@ logging.getLogger('connectionpool.py').setLevel(logging.INFO)
 
 
 def pytest_addoption(parser):
-    parser.addoption('--aws-id')
+    parser.addoption('--registry-id')
     parser.addoption('--docker-base-name', default='sagemaker-tensorflow-serving')
     parser.addoption('--instance-type')
     parser.addoption('--accelerator-type', default=None)
     parser.addoption('--region', default='us-west-2')
-    parser.addoption('--framework-version', default=TensorFlow.LATEST_VERSION)
     parser.addoption('--processor', default='cpu', choices=['gpu', 'cpu'])
     parser.addoption('--tag')
 
 
 @pytest.fixture(scope='session')
-def aws_id(request):
-    return request.config.getoption('--aws-id')
+def registry_id(request):
+    return request.config.getoption('--registry-id')
 
 
 @pytest.fixture(scope='session')
@@ -63,25 +60,18 @@ def region(request):
 
 
 @pytest.fixture(scope='session')
-def framework_version(request):
-    return request.config.getoption('--framework-version')
-
-
-@pytest.fixture(scope='session')
 def processor(request):
     return request.config.getoption('--processor')
 
 
 @pytest.fixture(scope='session')
-def tag(request, framework_version, processor):
-    provided_tag = request.config.getoption('--tag')
-    default_tag = '{}-{}'.format(framework_version, processor)
-    return provided_tag if provided_tag is not None else default_tag
+def tag(request):
+    return request.config.getoption('--tag')
 
 
 @pytest.fixture(scope='session')
-def docker_registry(aws_id, region):
-    return '{}.dkr.ecr.{}.amazonaws.com'.format(aws_id, region)
+def docker_registry(registry_id, region):
+    return '{}.dkr.ecr.{}.amazonaws.com'.format(registry_id, region)
 
 
 @pytest.fixture(scope='module')
