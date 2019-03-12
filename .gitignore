@@ -1,3 +1,4 @@
 __pycache__
 .tox/
 log.txt
+container/AmazonEI_TensorFlow_Serving*
