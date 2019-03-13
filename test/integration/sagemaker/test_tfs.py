@@ -63,13 +63,26 @@ def model_data(region):
     s3 = boto3.client('s3')
 
     try:
+        s3.head_bucket(Bucket=bucket)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] != '404':
+            raise
+
+        # bucket doesn't exist, create it
+        if region == 'us-east-1':
+            s3.create_bucket(Bucket=bucket)
+        else:
+            s3.create_bucket(Bucket=bucket,
+                             CreateBucketConfiguration={'LocationConstraint': region})
+
+
+    try:
         s3.head_object(Bucket=bucket, Key=key)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] != '404':
             raise
 
         # file doesn't exist - upload it
-        print('\n\n** uploading the s3 data!!! **\n\n')
         file = 'test/data/test-model.tar.gz'
         s3.upload_file(file, bucket, key)
 
