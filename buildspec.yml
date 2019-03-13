@@ -61,7 +61,7 @@ phases:
             "tox -e py36 -- test/integration/sagemaker/test_tfs.py -n 8 --region {region} --registry-id 520713654638"
           ]
         }, {
-          "repository": "jesterhazy-sagemaker-tensorflow-serving-eia",
+          "repository": "sagemaker-tensorflow-serving-eia",
           "tags": [{
             "source": "1.11-cpu",
             "dest": ["1.11.0-cpu", "1.11.1-cpu", "1.11-cpu", "1.11.1-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
