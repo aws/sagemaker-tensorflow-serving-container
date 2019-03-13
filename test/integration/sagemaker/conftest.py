@@ -10,48 +10,37 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+import os
+import random
+import time
 
-import logging
-
+import boto3
 import pytest
 
 
-logger = logging.getLogger(__name__)
-logging.getLogger('boto').setLevel(logging.INFO)
-logging.getLogger('botocore').setLevel(logging.INFO)
-logging.getLogger('factory.py').setLevel(logging.INFO)
-logging.getLogger('auth.py').setLevel(logging.INFO)
-logging.getLogger('connectionpool.py').setLevel(logging.INFO)
-
-
 def pytest_addoption(parser):
-    parser.addoption('--registry-id')
-    parser.addoption('--docker-base-name', default='sagemaker-tensorflow-serving')
-    parser.addoption('--instance-type')
-    parser.addoption('--accelerator-type', default=None)
     parser.addoption('--region', default='us-west-2')
-    parser.addoption('--processor', default='cpu', choices=['gpu', 'cpu'])
+    parser.addoption('--registry')
+    parser.addoption('--repo')
+    parser.addoption('--versions')
+    parser.addoption('--instance-types')
+    parser.addoption('--accelerator-type')
     parser.addoption('--tag')
 
 
-@pytest.fixture(scope='session')
-def registry_id(request):
-    return request.config.getoption('--registry-id')
+def pytest_configure(config):
+    os.environ['TEST_REGION'] = config.getoption('--region')
+    os.environ['TEST_VERSIONS'] = config.getoption('--versions') or '1.11.1,1.12.0'
+    os.environ['TEST_INSTANCE_TYPES'] = (config.getoption('--instance-types') or
+                                         'ml.m5.xlarge,ml.p3.2xlarge')
 
+    os.environ['TEST_EI_VERSIONS'] = config.getoption('--versions') or '1.11,1.12'
+    os.environ['TEST_EI_INSTANCE_TYPES'] = (config.getoption('--instance-types') or
+                                            'ml.m5.xlarge')
 
-@pytest.fixture(scope='session')
-def docker_base_name(request):
-    return request.config.getoption('--docker-base-name')
-
-
-@pytest.fixture(scope='session')
-def instance_type(request):
-    return request.config.getoption('--instance-type')
-
-
-@pytest.fixture(scope='session')
-def accelerator_type(request):
-    return request.config.getoption('--accelerator-type')
+    if config.getoption('--tag'):
+        os.environ['TEST_VERSIONS'] = config.getoption('--tag')
+        os.environ['TEST_EI_VERSIONS'] = config.getoption('--tag')
 
 
 @pytest.fixture(scope='session')
@@ -60,27 +49,38 @@ def region(request):
 
 
 @pytest.fixture(scope='session')
-def processor(request):
-    return request.config.getoption('--processor')
+def registry(request):
+    if request.config.getoption('--registry'):
+        return request.config.getoption('--registry')
+
+    return boto3.client('sts').get_caller_identity()['Account']
 
 
 @pytest.fixture(scope='session')
-def tag(request):
-    return request.config.getoption('--tag')
+def boto_session(region):
+    return boto3.Session(region_name=region)
 
 
 @pytest.fixture(scope='session')
-def docker_registry(registry_id, region):
-    return '{}.dkr.ecr.{}.amazonaws.com'.format(registry_id, region)
+def sagemaker_client(boto_session):
+    return boto_session.client('sagemaker')
 
 
-@pytest.fixture(scope='module')
-def docker_image(docker_base_name, tag):
-    return '{}:{}'.format(docker_base_name, tag)
+@pytest.fixture(scope='session')
+def sagemaker_runtime_client(boto_session):
+    return boto_session.client('runtime.sagemaker')
 
 
-@pytest.fixture(scope='module')
-def docker_image_uri(docker_registry, docker_image):
-    uri = '{}/{}'.format(docker_registry, docker_image)
-    return uri
+def unique_name_from_base(base, max_length=63):
+    unique = '%04x' % random.randrange(16 ** 4)  # 4-digit hex
+    ts = str(int(time.time()))
+    available_length = max_length - 2 - len(ts) - len(unique)
+    trimmed = base[:available_length]
+    return '{}-{}-{}'.format(trimmed, ts, unique)
+
+
+@pytest.fixture
+def model_name():
+    return unique_name_from_base('test-tfs')
+
 

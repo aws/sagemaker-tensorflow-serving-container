@@ -56,7 +56,10 @@ phases:
           },{
             "source": "1.12.0-gpu",
             "dest": ["1.12.0-gpu", "1.12-gpu", "1.12.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
-          }]
+          }],
+          "test": [
+            "tox -e py36 -- test/integration/sagemaker/test_tfs.py -n 8 --region {region} --registry-id 520713654638"
+          ]
         }, {
           "repository": "jesterhazy-sagemaker-tensorflow-serving-eia",
           "tags": [{
@@ -67,8 +70,7 @@ phases:
             "dest": ["1.12.0-cpu", "1.12-cpu", "1.12.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "tox -e py36 -- test/integration/sagemaker/test_elastic_inference.py --region {region} --registry-id 520713654638 --docker-base-name tensorflow-serving-eia --instance-type ml.m5.xlarge --accelerator-type ml.eia1.medium --tag 1.12-cpu",
-            "tox -e py36 -- test/integration/sagemaker/test_elastic_inference.py --region {region} --registry-id 520713654638 --docker-base-name tensorflow-serving-eia --instance-type ml.m5.xlarge --accelerator-type ml.eia1.medium --tag 1.11-cpu"
+            "tox -e py36 -- test/integration/sagemaker/test_ei.py -n 8 --region {region} --registry-id 520713654638"
           ]
         }]' > deployments.json
         fi
