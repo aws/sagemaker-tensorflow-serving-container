@@ -110,19 +110,19 @@ tox
 
 To test against Elastic Inference with Accelerator, you will need an AWS account, publish your built image to ECR repository and run the following command:
 
-    pytest test/integration/sagemaker/test_elastic_inference.py --aws-id <aws_account> \
-                                                                --docker-base-name <ECR_repository_name> \
-                                                                --instance-type <instance_type> \
-                                                                --accelerator-type <accelerator_type> \
-                                                                --tag <image_tag>   
+    tox -e py36 -- test/integration/sagemaker/test_ei.py
+        [--repo <ECR_repository_name>]
+        [--instance-types <instance_type>,...]
+        [--accelerator-type <accelerator_type>]
+        [--versions <version>,...]
 
 For example:
     
-    pytest test/integration/sagemaker/test_elastic_inference.py --aws-id 0123456789012 \
-                                                                --docker-base-name sagemaker-tensorflow-serving-eia \
-                                                                --instance_type ml.m4.xlarge \
-                                                                --accelerator-type ml.eia1.medium \
-                                                                --tag 1.12.0-cpu
+    tox -e py36 -- test/integration/sagemaker/test_ei.py \
+        --repo sagemaker-tensorflow-serving-eia \
+        --instance_type ml.m5.xlarge \
+        --accelerator-type ml.eia1.medium \
+        --versions 1.12.0
 
 ## Contributing
 
