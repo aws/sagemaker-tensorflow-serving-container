@@ -55,12 +55,12 @@ def accelerator_type():
     return None
 
 @pytest.fixture(scope='session')
-def model_data(region):
-    account = boto3.client('sts').get_caller_identity()['Account']
+def model_data(region, boto_session):
+    account = boto_session.client('sts').get_caller_identity()['Account']
     bucket = f'sagemaker-{region}-{account}'
     key = 'test-tfs/test-model.tar.gz'
 
-    s3 = boto3.client('s3')
+    s3 = boto_session.client('s3')
 
     try:
         s3.head_bucket(Bucket=bucket)

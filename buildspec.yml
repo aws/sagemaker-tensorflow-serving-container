@@ -56,10 +56,7 @@ phases:
           },{
             "source": "1.12.0-gpu",
             "dest": ["1.12.0-gpu", "1.12-gpu", "1.12.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
-          }],
-          "test": [
-            "tox -e py36 -- test/integration/sagemaker/test_tfs.py -n 8 --region {region} --registry 520713654638"
-          ]
+          }]
         }, {
           "repository": "sagemaker-tensorflow-serving-eia",
           "tags": [{
