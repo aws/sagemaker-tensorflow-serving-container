@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.2 (2019-03-14)
+
+### Bug fixes
+
+ * remove tfs deployment tests
+
 ## v1.1.1 (2019-03-13)
 
 ### Bug fixes
@@ -21,4 +27,3 @@
  * simplify tfs versioning
  * add buildspec.yml for codebuild
  * add tox, pylint, flake8, jshint
-
