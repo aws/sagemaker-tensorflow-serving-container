@@ -124,6 +124,10 @@ For example:
         --accelerator-type ml.eia1.medium \
         --versions 1.12.0
 
+To test the Python pre/post-processing functionality, you will need to implement your handlers and create a ``requirements.txt``, put the files under ``test/resources/models`` and run:
+    
+    tox test/integration/local/test_python_service.py
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](https://github.com/aws/sagemaker-tensorflow-serving-container/blob/master/CONTRIBUTING.md) 

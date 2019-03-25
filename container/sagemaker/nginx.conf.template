@@ -21,6 +21,10 @@ http {
     server localhost:%TFS_REST_PORT%;
   }
 
+  upstream gunicorn_upstream {
+    server localhost:%GUNICORN_PORT%;
+  }
+
   server {
     listen %NGINX_HTTP_PORT% deferred;
     client_max_body_size 0;
@@ -40,11 +44,11 @@ http {
     }
 
     location /ping {
-        js_content ping;
+        %FORWARD_PING_REQUESTS%;
     }
 
     location /invocations {
-        js_content invocations;
+        %FORWARD_INVOCATION_REQUESTS%;
     }
 
     location / {

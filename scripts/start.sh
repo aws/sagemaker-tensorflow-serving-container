@@ -23,4 +23,5 @@ $docker_command run \
     -e "SAGEMAKER_TFS_NGINX_LOGLEVEL=error" \
     -e "SAGEMAKER_BIND_TO_PORT=8080" \
     -e "SAGEMAKER_SAFE_PORT_RANGE=9000-9999" \
+    -e "GUNICORN_PORT=5000" \
     $repository:$full_version-$device serve > log.txt 2>&1 &
