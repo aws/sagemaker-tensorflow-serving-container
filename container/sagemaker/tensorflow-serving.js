@@ -170,22 +170,19 @@ function csv_request(r) {
 
     var lines = data.trim().split(/\r?\n/)
 
-    var json = '{"instances":['
+    var builder = []
+    builder.push('{"instances":[')
 
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim()
         if (line) {
             var instance = (i == 0) ? '[' : ',['
-
-            instance += line
-            instance += ']'
-
-            json += instance
+            builder.push(instance)
+            builder.push(line)
+            builder.push(']')
         }
     }
 
-    // end instances json
-    json += ']}'
-
-    tfs_json_request(r, json)
+    builder.push(']}')
+    tfs_json_request(r, builder.join(''))
 }
