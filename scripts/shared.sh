@@ -40,7 +40,7 @@ function get_tfs_executable() {
     mkdir exec_dir
     unzip ${zip_file} -d exec_dir
 
-    find . -name AmazonEI_TensorFlow_Serving_v${short_version}_v1* -exec mv {} container/ \;
+    find . -name amazonei_tensorflow_model_server* -exec mv {} container/ \;
     rm ${zip_file} && rm -rf exec_dir
 }
 

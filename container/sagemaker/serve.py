@@ -99,7 +99,7 @@ class ServiceManager(object):
 
     def _setup_python_service(self):
         requirements_path = '/opt/ml/model/requirements.txt'
-        inference_path = '/opt/ml/model/inference_example.py'
+        inference_path = '/opt/ml/model/inference.py'
 
         if os.path.exists(requirements_path):
             cmd = 'pip3 install --install-option="--prefix=${}" -r {}'.\

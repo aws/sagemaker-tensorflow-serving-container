@@ -126,7 +126,7 @@ For example:
 
 To test the Python pre/post-processing functionality, you will need to implement your handlers in a file named ``inference.py`` and create a ``requirements.txt``, put the files under ``test/resources/models`` and run:
     
-    tox test/integration/local/test_python_service.py
+    tox -e py36 test/integration/local/test_python_service.py
 
 ## Contributing
 
