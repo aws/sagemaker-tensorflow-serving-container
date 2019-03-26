@@ -168,38 +168,24 @@ function json_lines_request(r, data) {
 function csv_request(r) {
     var data = r.requestBody
 
-    // look for initial quote or numeric-only data in 1st field
-    var needs_quotes = data.search(/^\s*("|[\d.Ee+\-]+\s*,)/) != 0
-
     var lines = data.trim().split(/\r?\n/)
 
-    // start instances json - omit outer list for single example
-    var json = '{"instances":'
-    if (lines.length != 1) {
-        json += '['
-    }
+    var json = '{"instances":['
 
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim()
         if (line) {
             var instance = (i == 0) ? '[' : ',['
 
-            if (needs_quotes) {
-                instance += '"'
-                instance += line.replace(',', '","')
-                instance += '"'
-            } else {
-                instance += line
-            }
-
+            instance += line
             instance += ']'
 
             json += instance
         }
     }
 
-    // end instances json - omit outer list for single example
-    json += lines.length == 1 ? '}' : ']}'
+    // end instances json
+    json += ']}'
 
     tfs_json_request(r, json)
 }
