@@ -1,0 +1,11 @@
+version: "2"
+options:
+  verbose: true
+
+syncs:
+  sagemaker-tensorflow-serving-container-native-osx-sync:
+    src: '${PWD}/../../container/sagemaker'
+    # one way replication
+    sync_args: '-force /host_sync'
+    sync_excludes: ['.git']
+    sync_strategy: 'native_osx'

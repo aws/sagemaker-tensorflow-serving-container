@@ -1,6 +1,5 @@
 __pycache__
 .tox/
 log.txt
-container/AmazonEI_TensorFlow_Serving*
-docker/dev/
+container/amazonei_tensorflow_model_server
 .idea/

@@ -29,19 +29,19 @@ function get_aws_account() {
 }
 
 function get_tfs_executable() {
-    if [[ -z $(aws s3 ls 's3://amazonei-tensorflow/Tensorflow Serving/v'${short_version}'/Ubuntu/') ]]; then
+    if [[ -z $(aws s3 ls 's3://amazonei-tensorflow/tensorflow-serving/v'${short_version}'/ubuntu/latest/') ]]; then
         echo 'ERROR: cannot find this version in S3 bucket.'
         exit 1
     fi
 
-    zip_file=$(aws s3 ls 's3://amazonei-tensorflow/Tensorflow Serving/v'${short_version}'/Ubuntu/' | awk '{print $4}')
-    aws s3 cp 's3://amazonei-tensorflow/Tensorflow Serving/v'${short_version}'/Ubuntu/'${zip_file} .
+    tar_file=$(aws s3 ls 's3://amazonei-tensorflow/tensorflow-serving/v'${short_version}'/ubuntu/latest/' | awk '{print $4}')
+    aws s3 cp 's3://amazonei-tensorflow/tensorflow-serving/v'${short_version}'/ubuntu/latest/'${tar_file} .
 
     mkdir exec_dir
-    unzip ${zip_file} -d exec_dir
+    tar -C exec_dir -xf ${tar_file}
 
-    find . -name amazonei_tensorflow_model_server* -exec mv {} container/ \;
-    rm ${zip_file} && rm -rf exec_dir
+    find . -name amazonei_tensorflow_model_server -exec mv {} container/ \;
+    rm ${tar_file} && rm -rf exec_dir
 }
 
 function get_device_type() {

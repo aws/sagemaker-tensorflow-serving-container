@@ -36,22 +36,24 @@ class ServiceManager(object):
         self._nginx_loglevel = os.environ.get('SAGEMAKER_TFS_NGINX_LOGLEVEL', 'error')
         self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', None)
         self._python_path = os.environ.get('PYTHONPATH', '/opt/ml/model/lib')
-        self._gunicorn_port = os.environ.get('GUNICORN_PORT', 5000)
 
         if 'SAGEMAKER_SAFE_PORT_RANGE' in os.environ:
             port_range = os.environ['SAGEMAKER_SAFE_PORT_RANGE']
             parts = port_range.split('-')
             low = int(parts[0])
             hi = int(parts[1])
-            if low + 1 > hi:
+            if low + 2 > hi:
                 raise ValueError('not enough ports available in SAGEMAKER_SAFE_PORT_RANGE ({})'
                                  .format(port_range))
             self._tfs_grpc_port = str(low)
             self._tfs_rest_port = str(low + 1)
+            self._gunicorn_port = str(low + 2)
+
         else:
             # just use the standard default ports
             self._tfs_grpc_port = '9000'
             self._tfs_rest_port = '8501'
+            self._gunicorn_port = '5000'
 
     def _create_tfs_config(self):
         models = self._find_models()
@@ -119,12 +121,12 @@ class ServiceManager(object):
         template_values = {
             'TFS_VERSION': self._tfs_version,
             'TFS_REST_PORT': self._tfs_rest_port,
-            'GUNICORN_PORT': self._gunicorn_port,
             'TFS_DEFAULT_MODEL_NAME': self._tfs_default_model_name,
             'NGINX_HTTP_PORT': self._nginx_http_port,
             'NGINX_LOG_LEVEL': self._nginx_loglevel,
             'FORWARD_PING_REQUESTS': self._nginx_ping_requests,
-            'FORWARD_INVOCATION_REQUESTS': self._nginx_invocation_requests
+            'FORWARD_INVOCATION_REQUESTS': self._nginx_invocation_requests,
+            'GUNICORN_PORT': self._gunicorn_port
         }
 
         config = pattern.sub(lambda x: template_values[x.group(1)], template)
@@ -152,14 +154,13 @@ class ServiceManager(object):
         self._tfs = p
 
     def _start_python_service(self):
-        if self._execute_custom_code:
-            self._log_version('gunicorn --version', 'gunicorn version info:')
-            cmd = 'gunicorn -b localhost:{} --chdir /sagemaker ' \
-                  'python_service:app --reload'.format(self._gunicorn_port)
-            log.info('gunicorn command: {}'.format(cmd))
-            p = subprocess.Popen(cmd.split())
-            log.info('started python service (pid: %d)', p.pid)
-            self._python_service = p
+        self._log_version('gunicorn --version', 'gunicorn version info:')
+        cmd = 'gunicorn -b localhost:{} --chdir /sagemaker ' \
+              'python_service:app --reload'.format(self._gunicorn_port)
+        log.info('gunicorn command: {}'.format(cmd))
+        p = subprocess.Popen(cmd.split())
+        log.info('started python service (pid: %d)', p.pid)
+        self._python_service = p
 
     def _start_nginx(self):
         self._log_version('/usr/sbin/nginx -V', 'nginx version info:')
@@ -201,7 +202,10 @@ class ServiceManager(object):
         self._create_nginx_config()
 
         self._start_tfs()
-        self._start_python_service()
+
+        if self._execute_custom_code:
+            self._start_python_service()
+
         self._start_nginx()
         self._state = 'started'
 

@@ -32,8 +32,6 @@ DEFAULT_CONTENT_TYPE = 'application/json'
 DEFAULT_ACCEPT_HEADER = 'application/json'
 BASE_URI = 'http://localhost:8080/invocations'
 
-JSON_CONTENT_TYPE = ['application/json', 'application/jsons', 'application/jsonlines']
-
 
 def input_handler(data, context):
     """ Pre-process request input before it is sent to TensorFlow Serving REST API
@@ -52,18 +50,12 @@ def input_handler(data, context):
             context.request_content_type == 'application/jsonlines':
         data = _parse_jsonlines(data)
 
-        print('*********** parsed jsonlines: ' + str(data))
     elif context.request_content_type == 'text/csv':
         data = _parse_csv(data)
     else:
         _return_error(415, 'Unsupported content type "{}"'.format(context.request_content_type or 'Unknown'))
 
-    processed_input = {
-        'headers': _make_headers(context),
-        'data': data
-    }
-
-    return processed_input
+    return data
 
 
 def output_handler(data, context):
