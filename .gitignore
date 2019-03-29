@@ -1,3 +1,6 @@
 __pycache__
 .tox/
 log.txt
+container/amazonei_tensorflow_model_server
+.idea/
+docker/dev

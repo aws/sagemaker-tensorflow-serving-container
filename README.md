@@ -50,13 +50,14 @@ The Docker images are built from the Dockerfiles in
 [docker/](https://github.com/aws/sagemaker-tensorflow-serving-container/tree/master/docker>).
 
 The Dockerfiles are grouped based on the version of TensorFlow Serving they support. Each supported
-processor type (e.g. "cpu", "gpu") has a different Dockerfile in each group.  
+processor type (e.g. "cpu", "gpu", "ei") has a different Dockerfile in each group.  
 
 To build an image, run the `./scripts/build.sh` script:
 
 ```bash
 ./scripts/build.sh --version 1.11 --arch cpu
 ./scripts/build.sh --version 1.11 --arch gpu
+./scripts/build.sh --version 1.11 --arch eia
 ```
 
 
@@ -67,6 +68,7 @@ in SageMaker, you need to publish it to an ECR repository in your account. The
 ```bash
 ./scripts/publish.sh --version 1.11 --arch cpu
 ./scripts/publish.sh --version 1.11 --arch gpu
+./scripts/publish.sh --version 1.11 --arch eia
 ```
 
 Note: this will publish to ECR in your default region. Use the `--region` argument to 
@@ -80,8 +82,8 @@ GPU images) will work for this, or you can use the provided `start.sh`
 and `stop.sh` scripts:
 
 ```bash
-./scripts/start.sh [--version x.xx] [--arch cpu|gpu|...]
-./scripts/stop.sh [--version x.xx] [--arch cpu|gpu|...]
+./scripts/start.sh [--version x.xx] [--arch cpu|gpu|eia|...]
+./scripts/stop.sh [--version x.xx] [--arch cpu|gpu|eia|...]
 ```
 
 When the container is running, you can send test requests to it using any HTTP client. Here's
@@ -105,6 +107,22 @@ checkers using `tox`:
 ```bash
 tox
 ```
+
+To test against Elastic Inference with Accelerator, you will need an AWS account, publish your built image to ECR repository and run the following command:
+
+    tox -e py36 -- test/integration/sagemaker/test_ei.py
+        [--repo <ECR_repository_name>]
+        [--instance-types <instance_type>,...]
+        [--accelerator-type <accelerator_type>]
+        [--versions <version>,...]
+
+For example:
+    
+    tox -e py36 -- test/integration/sagemaker/test_ei.py \
+        --repo sagemaker-tensorflow-serving-eia \
+        --instance_type ml.m5.xlarge \
+        --accelerator-type ml.eia1.medium \
+        --versions 1.12.0
 
 ## Contributing
 

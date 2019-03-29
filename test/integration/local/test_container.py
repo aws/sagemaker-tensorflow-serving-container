@@ -130,15 +130,27 @@ def test_predict_generic_json_two_instances():
 
 
 def test_predict_csv():
-    x = '1.0, 2.0, 5.0'
+    x = '1.0'
     y = make_request(x, 'text/csv')
-    assert y == {'predictions': [3.5, 4.0, 5.5]}
+    assert y == {'predictions': [3.5]}
 
 
-def test_predict_csv_two_instances():
-    x = '1.0, 2.0, 5.0\n1.0, 2.0, 5.0'
+def test_predict_csv_one_instance_three_values():
+    x = '1.0,2.0,5.0'
+    y = make_request(x, 'text/csv')
+    assert y == {'predictions': [[3.5, 4.0, 5.5]]}
+
+
+def test_predict_csv_two_instances_three_values():
+    x = '1.0,2.0,5.0\n1.0,2.0,5.0'
     y = make_request(x, 'text/csv')
     assert y == {'predictions': [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]}
+
+
+def test_predict_csv_three_instances():
+    x = '1.0\n2.0\n5.0'
+    y = make_request(x, 'text/csv')
+    assert y == {'predictions': [3.5, 4.0, 5.5]}
 
 
 def test_regress():

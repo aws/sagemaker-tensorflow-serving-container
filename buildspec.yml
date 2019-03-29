@@ -11,36 +11,71 @@ phases:
   build:
     commands:
       # prepare the release (update versions, changelog etc.)
-      - if-release-build git-release --prepare
+      - if is-release-build; then git-release --prepare; fi
 
-      - tox -e flake8,pylint,jshint
+      - tox -e jshint,flake8,pylint
 
       # build images
       - ./scripts/build.sh --version 1.11.1 --arch cpu
       - ./scripts/build.sh --version 1.11.1 --arch gpu
       - ./scripts/build.sh --version 1.12.0 --arch cpu
       - ./scripts/build.sh --version 1.12.0 --arch gpu
+      - ./scripts/build.sh --version 1.11 --arch eia
+      - ./scripts/build.sh --version 1.12 --arch eia
 
       # run tests
       - tox -e py36
 
       # push docker images to ECR
-      - if-release-build ./scripts/publish.sh --version 1.11.1 --arch cpu
-      - if-release-build ./scripts/publish.sh --version 1.11.1 --arch gpu
-      - if-release-build ./scripts/publish.sh --version 1.12.0 --arch cpu
-      - if-release-build ./scripts/publish.sh --version 1.12.0 --arch gpu
+      - |
+        if is-release-build; then
+          ./scripts/publish.sh --version 1.11.1 --arch cpu
+          ./scripts/publish.sh --version 1.11.1 --arch gpu
+          ./scripts/publish.sh --version 1.12.0 --arch cpu
+          ./scripts/publish.sh --version 1.12.0 --arch gpu
+          ./scripts/publish.sh --version 1.11 --arch eia
+          ./scripts/publish.sh --version 1.12 --arch eia
+        fi
 
-      # write images to manifest (used by deploy step)
-      - if-release-build create-manifest docker
-            --images
-              sagemaker-tensorflow-serving:1.11.1-cpu
-              sagemaker-tensorflow-serving:1.11.1-gpu
-              sagemaker-tensorflow-serving:1.12.0-cpu
-              sagemaker-tensorflow-serving:1.12.0-gpu
+      # write deployment details to file
+      # todo sort out eia versioning
+      # todo add non-eia tests
+      - |
+        if is-release-build; then
+          echo '[{
+          "repository": "sagemaker-tensorflow-serving",
+          "tags": [{
+            "source": "1.11.1-cpu",
+            "dest": ["1.11.1-cpu", "1.11-cpu", "1.11.1-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.11.1-gpu",
+            "dest": ["1.11.1-gpu", "1.11-gpu", "1.11.1-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.12.0-cpu",
+            "dest": ["1.12.0-cpu", "1.12-cpu", "1.12.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.12.0-gpu",
+            "dest": ["1.12.0-gpu", "1.12-gpu", "1.12.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          }]
+        }, {
+          "repository": "sagemaker-tensorflow-serving-eia",
+          "tags": [{
+            "source": "1.11-cpu",
+            "dest": ["1.11.0-cpu", "1.11.1-cpu", "1.11-cpu", "1.11.1-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.12-cpu",
+            "dest": ["1.12.0-cpu", "1.12-cpu", "1.12.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          }],
+          "test": [
+            "tox -e py36 -- test/integration/sagemaker/test_ei.py -n 8 --region {region} --registry 520713654638"
+          ]
+        }]' > deployments.json
+        fi
 
       # publish the release to github
-      - if-release-build git-release --publish
+      - if is-release-build; then git-release --publish; fi
 
 artifacts:
   files:
-    - release-manifest.json
+    - deployments.json
+  name: ARTIFACT_1
