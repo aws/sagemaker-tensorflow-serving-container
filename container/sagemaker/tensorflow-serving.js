@@ -168,7 +168,7 @@ function json_lines_request(r, data) {
 function csv_request(r) {
     var data = r.requestBody
 
-    var needs_quotes = data.search(/^\s*(\[+?"|[\d.Ee+\-]+\s*,)/) != 0
+    var needs_quotes = data.search(/^\s*("|[\d.Ee+\-]+\s*,)/) != 0
     var lines = data.trim().split(/\r?\n/)
 
     var builder = []
