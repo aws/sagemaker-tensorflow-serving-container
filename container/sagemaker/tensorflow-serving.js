@@ -147,9 +147,10 @@ function generic_json_request(r, data) {
 
 function json_lines_request(r, data) {
     var lines = data.trim().split(/\r?\n/)
-    var json = '{"instances":'
+    var builder = []
+    builder.push('{"instances":')
     if (lines.length != 1) {
-        json += '['
+        builder.push('[')
     }
 
     for (var i = 0; i < lines.length; i++) {
@@ -157,49 +158,48 @@ function json_lines_request(r, data) {
         if (line) {
             var instance = (i == 0) ? '' : ','
             instance += line
-            json += instance
+            builder.push(instance)
         }
     }
 
-    json += lines.length == 1 ? '}' : ']}'
-    tfs_json_request(r, json)
+    builder.push(lines.length == 1 ? '}' : ']}')
+    tfs_json_request(r, builder.join(''))
 }
 
 function csv_request(r) {
     var data = r.requestBody
-
-    // look for initial quote or numeric-only data in 1st field
-    var needs_quotes = data.search(/^\s*("|[\d.Ee+\-]+\s*,)/) != 0
-
     var lines = data.trim().split(/\r?\n/)
-
-    // start instances json - omit outer list for single example
-    var json = '{"instances":'
-    if (lines.length != 1) {
-        json += '['
-    }
+    var builder = []
+    builder.push('{"instances":[')
 
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim()
         if (line) {
-            var instance = (i == 0) ? '[' : ',['
+            // Split by comma, but not within quoted strings.
+            var arr = csv_split(line)
+            // Turn numeric strings into numeric values and construct JSON array.
+            var json_array_str = JSON.stringify(arr.map(handle_numeric_values))
 
-            if (needs_quotes) {
-                instance += '"'
-                instance += line.replace(',', '","')
-                instance += '"'
-            } else {
-                instance += line
+            // Remove outer brackets if only one element exists.
+            if (arr.length === 1) {
+                json_array_str = json_array_str.substring(1, json_array_str.length - 1)
             }
+            builder.push(json_array_str)
 
-            instance += ']'
-
-            json += instance
+            if (i != lines.length - 1)
+                builder.push(',')
         }
     }
 
-    // end instances json - omit outer list for single example
-    json += lines.length == 1 ? '}' : ']}'
+    builder.push(']}')
+    tfs_json_request(r, builder.join(''))
+}
 
-    tfs_json_request(r, json)
+function handle_numeric_values(arg) {
+    return parseFloat(arg) || arg
+}
+
+function csv_split(s) {
+    var arr = s.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+    return arr || [];
 }
