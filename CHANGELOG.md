@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.3 (2019-03-29)
+
+### Bug fixes
+
+ * update EI binary location
+
 ## v1.1.2 (2019-03-14)
 
 ### Bug fixes
