@@ -87,6 +87,7 @@ function parse_std_args() {
     esac
     done
 
+
     [[ -z "${version// }" ]] && error 'missing version'
     [[ "$arch" =~ ^(cpu|gpu|eia)$ ]] || error "invalid arch: $arch"
     [[ -z "${aws_region// }" ]] && error 'missing aws region'
@@ -97,7 +98,24 @@ function parse_std_args() {
     short_version=$(get_short_version $version)
     device=$(get_device_type $arch)
 
+    version_check="$(echo $short_version |tr -d '.' )"
+
+    if [[ "$version_check" == 'nightly' ]] || [[ $version_check -ge 113 ]]; then
+        cuda_version=10.0
+        cuda_version_dash=10-0
+        nccl_version=2.4.2
+        cudnn_version=7.3.0.29
+        tf_tensorrt_version=5.0.2
+        libnvinfer_version=5
+    else
+        cuda_version=9.0
+        cuda_version_dash=9-0
+        nccl_version=2.2.13
+        cudnn_version=7.2.1.38
+        tf_tensorrt_version=5.0.2
+        libnvinfer_version=5
+    fi
+
     true
 }
-
 
