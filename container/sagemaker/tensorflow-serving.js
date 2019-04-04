@@ -196,7 +196,12 @@ function csv_request(r) {
 }
 
 function handle_numeric_values(arg) {
-    return parseFloat(arg) || arg
+    var parsed = parseFloat(arg)
+    if (isNaN(parsed)) {
+        return arg
+    } else {
+        return parsed;
+    }
 }
 
 function csv_split(s) {
