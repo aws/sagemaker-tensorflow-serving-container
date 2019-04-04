@@ -165,6 +165,19 @@ def test_predict_csv_three_instances():
     assert y == {'predictions': [3.5, 4.0, 5.5]}
 
 
+def test_predict_csv_wide_categorical_input():
+    x = ('0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,0.0\n'   # noqa
+         '0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,6.0,0.0\n')  # noqa
+
+    y = make_request(x, 'text/csv')
+    predictions = y['predictions']
+
+    assert 2 == len(predictions)
+    assert 30 == len(predictions[0])
+    assert 97 == sum(predictions[0])  # half_plus_three with row sum 14 and n = 30
+    assert 100 == sum(predictions[1])  # half_plus_three with row sum 20 and n = 30
+
+
 def test_regress():
     x = {
         'signature_name': 'tensorflow/serving/regress',
