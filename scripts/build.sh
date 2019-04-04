@@ -22,6 +22,13 @@ docker build \
     --cache-from $aws_account.dkr.ecr.$aws_region.amazonaws.com/$repository:$full_version-$device \
     --build-arg TFS_VERSION=$full_version \
     --build-arg TFS_SHORT_VERSION=$short_version \
+    --build-arg CUDA_VERSION_IMAGE=$cuda_version \
+	--build-arg CUDA_VERSION_PACKAGES=$cuda_version \
+	--build-arg CUDA_VERSION_DASH=$cuda_version_dash \
+	--build-arg NCCL_VERSION=$nccl_version \
+	--build-arg CUDNN_VERSION=$cudnn_version \
+	--build-arg TF_TENSORRT_VERSION=$tf_tensorrt_version \
+	--build-arg LIBNVINFER_VERSION=$libnvinfer_version \
     -f docker/Dockerfile.$arch \
     -t $repository:$full_version-$device \
     -t $repository:$short_version-$device container
