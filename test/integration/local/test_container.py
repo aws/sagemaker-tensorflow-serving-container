@@ -135,6 +135,18 @@ def test_predict_csv():
     assert y == {'predictions': [3.5]}
 
 
+def test_predict_csv_with_zero():
+    x = '0.0'
+    y = make_request(x, 'text/csv')
+    assert y == {'predictions': [3.0]}
+
+
+def test_predict_csv_one_instance_three_values_with_zero():
+    x = '0.0,2.0,5.0'
+    y = make_request(x, 'text/csv')
+    assert y == {'predictions': [[3.0, 4.0, 5.5]]}
+
+
 def test_predict_csv_one_instance_three_values():
     x = '1.0,2.0,5.0'
     y = make_request(x, 'text/csv')
