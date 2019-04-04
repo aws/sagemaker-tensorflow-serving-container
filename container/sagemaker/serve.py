@@ -111,8 +111,10 @@ class ServiceManager(object):
             self._requirements = p
 
         if os.path.exists(inference_path):
-            self._nginx_ping_requests = 'proxy_pass http://gunicorn_upstream'
-            self._nginx_invocation_requests = 'proxy_pass http://gunicorn_upstream'
+            self._nginx_ping_requests = 'proxy_pass http://localhost:{}/ping'\
+                .format(self._gunicorn_port)
+            self._nginx_invocation_requests = 'proxy_pass http://localhost:{}/invocations'\
+                .format(self._gunicorn_port)
             self._execute_custom_code = True
 
     def _create_nginx_config(self):

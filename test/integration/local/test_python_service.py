@@ -27,6 +27,11 @@ INVOCATIONS_URL = 'http://localhost:8080/invocations'
 @pytest.fixture(scope='session', autouse=True)
 def volume():
     try:
+        with open('test/integration/local/inference_test_example.py') as example:
+            with open('test/resources/models/inference.py', 'w') as custom_code:
+                for line in example:
+                    custom_code.write(line)
+
         model_dir = os.path.abspath('test/resources/models')
         subprocess.check_call(
             'docker volume create --name model_volume --opt type=none '
@@ -75,27 +80,21 @@ def make_headers(content_type, method):
     return headers
 
 
-def test_ping_service():
-    response = requests.get(PING_URL)
-    assert response.status_code == 200
-
-
 def test_predict_json():
     headers = make_headers('application/json', 'predict')
     data = '{"instances": [1.0, 2.0, 5.0]}'
     response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
-    assert response == [3.5, 4.0, 5.5]
+    assert response == {'predictions': [3.5, 4.0, 5.5]}
 
 
-def test_predict_jsonlines():
-    headers = make_headers('application/jsonlines', 'predict')
-    data = '[1.0, 2.0, 5.0]\n[1.0, 2.0, 5.0]'
-    response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
-    assert response == [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]
-
-
-def test_predict_csv():
+def test_unsupported_content_type():
     headers = make_headers('text/csv', 'predict')
-    data = '1.0, 2.0, 5.0\n1.0, 2.0, 5.0'
-    response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
-    assert response == [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]
+    data = '1.0,2.0,5.0'
+    with pytest.raises(ValueError, message='Error: 415, Unsupported content type "text/csv"'):
+        requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
+
+
+def test_ping_service():
+    response = requests.get(PING_URL)
+    assert response.status_code == 200
+    assert response.text == 'OK!\n'

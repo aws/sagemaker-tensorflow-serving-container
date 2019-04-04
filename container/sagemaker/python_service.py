@@ -10,7 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-
+import json
 import os
 
 import importlib.util
@@ -36,7 +36,6 @@ Context = namedtuple('Context',
 class InvocationResource(object):
 
     def __init__(self):
-
         if 'SAGEMAKER_SAFE_PORT_RANGE' in os.environ:
             port_range = os.environ['SAGEMAKER_SAFE_PORT_RANGE']
             parts = port_range.split('-')
@@ -64,25 +63,27 @@ class InvocationResource(object):
             res.body = self.handler(data, context)
         elif self.input_handler and self.output_handler:
             processed_input = self.input_handler(data, context)
-            response = requests.post(context.rest_uri, data=processed_input)
+            response = requests.post(context.rest_uri, data=json.dumps(processed_input))
+            prediction, content_type = self.output_handler(response, context)
+            prediction = json.dumps(prediction)
+
             res.status = falcon.HTTP_200
-            res.body, res.content_type = self.output_handler(response, context)
-        else:
-            res.status = falcon.HTTP_500
-            res.body = 'Handlers are not implemented correctly.'
+            res.body, res.content_type = prediction, content_type
 
     def _import_handlers(self):
-        spec = importlib.util.spec_from_file_location('inference',
-                                                      '/opt/ml/model/inference.py')
+        spec = importlib.util.spec_from_file_location('inference', '/opt/ml/model/inference.py')
         inference = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(inference)
 
-        self.handler = inference.handler
-        self.input_handler = inference.input_handler
-        self.output_handler = inference.output_handler
-
-        if self.handler:
+        try:
+            self.handler = inference.handler
             log.warning('Using handler, input_handler and output_handler will be ignored.')
+        except AttributeError:
+            try:
+                self.input_handler = inference.input_handler
+                self.output_handler = inference.output_handler
+            except AttributeError:
+                log.error('Handlers are not implemented correctly.')
 
     def _parse_request(self, req):
         content_type = req.get_header('Content-Type') or DEFAULT_CONTENT_TYPE
@@ -90,15 +91,14 @@ class InvocationResource(object):
         attributes = self._parse_custom_attributes(req.get_header(CUSTOM_ATTRIBUTES))
 
         context = self._make_context(attributes, content_type, accept)
-        data = req.stream.read()
+        data = req.stream.read().decode('utf-8')
         return context, data
 
     def _parse_custom_attributes(self, custom_attributes):
         attribute_list = []
         attributes = {}
         if custom_attributes:
-            attribute_list = re.findall(r'(tfs-[a-z\-]+=[^,]+)',
-                                        custom_attributes)
+            attribute_list = re.findall(r'(tfs-[a-z\-]+=[^,]+)', custom_attributes)
         for attribute in attribute_list:
             k, v = attribute.split('=')
             attributes[k] = v
@@ -121,7 +121,6 @@ class InvocationResource(object):
 
         rest_uri = self._tfs_uri(self._tfs_rest_port, attributes)
         grpc_uri = self._tfs_uri(self._tfs_grpc_port, attributes)
-
         request_content_type = content_type
         accept_header = accept
 
