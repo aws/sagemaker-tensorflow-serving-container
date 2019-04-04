@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.6 (2019-04-04)
+
+### Bug fixes and other changes
+
+ * handle zero values correctly
+
 ## v1.1.5 (2019-04-04)
 
 ### Bug fixes and other changes
