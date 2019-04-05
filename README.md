@@ -124,7 +124,6 @@ For example:
         --accelerator-type ml.eia1.medium \
         --versions 1.12.0
 
-
 ## Contributing
 
 Please read [CONTRIBUTING.md](https://github.com/aws/sagemaker-tensorflow-serving-container/blob/master/CONTRIBUTING.md) 

@@ -25,7 +25,7 @@ INVOCATIONS_URL = 'http://localhost:8080/invocations'
 
 
 @pytest.fixture(scope='session', autouse=True)
-def volume():
+def volume(tmpdir_factory):
     try:
         with open('test/integration/local/inference_test_example.py') as example:
             with open('test/resources/models/inference.py', 'w') as custom_code:
@@ -34,11 +34,12 @@ def volume():
 
         model_dir = os.path.abspath('test/resources/models')
         subprocess.check_call(
-            'docker volume create --name model_volume --opt type=none '
+            'docker volume create --name model_inference_volume --opt type=none '
             '--opt device={} --opt o=bind'.format(model_dir).split())
         yield model_dir
     finally:
-        subprocess.check_call('docker volume rm model_volume'.split())
+        os.remove('test/resources/models/inference.py')
+        subprocess.check_call('docker volume rm model_inference_volume'.split())
 
 
 @pytest.fixture(scope='module', autouse=True, params=['1.11', '1.12'])
@@ -46,12 +47,11 @@ def container(request):
     try:
         command = (
             'docker run --name sagemaker-tensorflow-serving-test -p 8080:8080'
-            ' --mount type=volume,source=model_volume,target=/opt/ml/model,readonly'
+            ' --mount type=volume,source=model_inference_volume,target=/opt/ml/model,readonly'
             ' -e SAGEMAKER_TFS_DEFAULT_MODEL_NAME=half_plus_three'
             ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
             ' -e SAGEMAKER_BIND_TO_PORT=8080'
             ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
-            ' -e "GUNICORN_PORT=5000'
             ' sagemaker-tensorflow-serving:{}-cpu serve'
         ).format(request.param)
 
