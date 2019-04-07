@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.7 (2019-04-05)
+
+### Bug fixes and other changes
+
+ * add additional csv test case
+
 ## v1.1.6 (2019-04-04)
 
 ### Bug fixes and other changes
