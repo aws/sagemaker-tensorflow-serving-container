@@ -168,6 +168,8 @@ function json_lines_request(r, data) {
 
 function csv_request(r) {
     var data = r.requestBody
+    // look for initial quote or numeric-only data in 1st field
+    var needs_quotes = data.search(/^\s*("|[\d.Ee+\-]+.*)/) != 0
     var lines = data.trim().split(/\r?\n/)
     var builder = []
     builder.push('{"instances":[')
@@ -175,16 +177,30 @@ function csv_request(r) {
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim()
         if (line) {
-            // Split by comma, but not within quoted strings.
-            var arr = csv_split(line)
-            // Turn numeric strings into numeric values and construct JSON array.
-            var json_array_str = JSON.stringify(arr.map(handle_numeric_values))
+            var line_builder = []
+            // Only wrap line in brackets if there are multiple columns.
+            // If there's only one column and it has a string with a comma,
+            // the input will be wrapped in an extra set of brackets.
+            var has_multiple_columns = line.search(',') != -1
 
-            // Remove outer brackets if only one element exists.
-            if (arr.length === 1) {
-                json_array_str = json_array_str.substring(1, json_array_str.length - 1)
+            if (has_multiple_columns) {
+                line_builder.push('[')
             }
-            builder.push(json_array_str)
+
+            if (needs_quotes) {
+                line_builder.push('"')
+                line_builder.push(line.replace('"', '\\"').replace(',', '","'))
+                line_builder.push('"')
+            } else {
+                line_builder.push(line)
+            }
+
+            if (has_multiple_columns) {
+                line_builder.push(']')
+            }
+
+            var json_line = line_builder.join('')
+            builder.push(json_line)
 
             if (i != lines.length - 1)
                 builder.push(',')
@@ -193,18 +209,4 @@ function csv_request(r) {
 
     builder.push(']}')
     tfs_json_request(r, builder.join(''))
-}
-
-function handle_numeric_values(arg) {
-    var parsed = parseFloat(arg)
-    if (isNaN(parsed)) {
-        return arg
-    } else {
-        return parsed;
-    }
-}
-
-function csv_split(s) {
-    var arr = s.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
-    return arr || [];
 }
