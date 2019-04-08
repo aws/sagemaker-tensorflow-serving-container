@@ -13,7 +13,7 @@
 
 import pytest
 
-FRAMEWORK_LATEST_VERSION = '1.12'
+FRAMEWORK_LATEST_VERSION = '1.13'
 TFS_DOCKER_BASE_NAME = 'sagemaker-tensorflow-serving'
 
 
@@ -21,7 +21,6 @@ def pytest_addoption(parser):
     parser.addoption('--docker-base-name', default=TFS_DOCKER_BASE_NAME)
     parser.addoption('--framework-version', default=FRAMEWORK_LATEST_VERSION, required=True)
     parser.addoption('--processor', default='cpu')
-    parser.addoption('--enable-batch', default='False', choices=['True', 'False'])
     parser.addoption('--tag')
 
 

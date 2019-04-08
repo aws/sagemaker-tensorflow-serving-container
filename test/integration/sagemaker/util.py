@@ -16,6 +16,8 @@ import logging
 import os
 
 import botocore
+import random
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +97,11 @@ def find_or_put_model_data(region, boto_session, local_path):
 @contextlib.contextmanager
 def sagemaker_endpoint(sagemaker_client, model_name, instance_type, accelerator_type=None):
     logger.info('creating endpoint %s', model_name)
+
+    # Add jitter so we can run tests in parallel without running into service side limits.
+    delay = round(random.random()*5, 3)
+    logger.info('waiting for {} seconds'.format(delay))
+    time.sleep(delay)
 
     production_variants = _production_variants(model_name, instance_type, accelerator_type)
     sagemaker_client.create_endpoint_config(EndpointConfigName=model_name,

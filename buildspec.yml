@@ -18,8 +18,10 @@ phases:
       # build images
       - ./scripts/build-all.sh
 
-      # run tests
-      - tox -e py36
+      # run local tests
+      - tox -e py36 -- test/integration/local --framework-version 1.11
+      - tox -e py36 -- test/integration/local --framework-version 1.12
+      - tox -e py36 -- test/integration/local --framework-version 1.13
 
       # push docker images to ECR
       - |
@@ -46,7 +48,16 @@ phases:
           },{
             "source": "1.12.0-gpu",
             "dest": ["1.12.0-gpu", "1.12-gpu", "1.12.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
-          }]
+          },{
+            "source": "1.13.0-cpu",
+            "dest": ["1.13.0-cpu", "1.13-cpu", "1.13.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.13.0-gpu",
+            "dest": ["1.13.0-gpu", "1.13-gpu", "1.13.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          }],
+          "test": [
+            "tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 1.13.0 --region {region} --registry 520713654638"
+          ]
         }, {
           "repository": "sagemaker-tensorflow-serving-eia",
           "tags": [{
