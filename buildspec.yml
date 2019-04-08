@@ -16,12 +16,7 @@ phases:
       - tox -e jshint,flake8,pylint
 
       # build images
-      - ./scripts/build.sh --version 1.11.1 --arch cpu
-      - ./scripts/build.sh --version 1.11.1 --arch gpu
-      - ./scripts/build.sh --version 1.12.0 --arch cpu
-      - ./scripts/build.sh --version 1.12.0 --arch gpu
-      - ./scripts/build.sh --version 1.11 --arch eia
-      - ./scripts/build.sh --version 1.12 --arch eia
+      - ./scripts/build-all.sh
 
       # run tests
       - tox -e py36
@@ -33,6 +28,8 @@ phases:
           ./scripts/publish.sh --version 1.11.1 --arch gpu
           ./scripts/publish.sh --version 1.12.0 --arch cpu
           ./scripts/publish.sh --version 1.12.0 --arch gpu
+          ./scripts/publish.sh --version 1.13.0 --arch cpu
+          ./scripts/publish.sh --version 1.13.0 --arch gpu
           ./scripts/publish.sh --version 1.11 --arch eia
           ./scripts/publish.sh --version 1.12 --arch eia
         fi
@@ -56,6 +53,12 @@ phases:
           },{
             "source": "1.12.0-gpu",
             "dest": ["1.12.0-gpu", "1.12-gpu", "1.12.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.13.0-cpu",
+            "dest": ["1.13.0-cpu", "1.13-cpu", "1.13.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.13.0-gpu",
+            "dest": ["1.13.0-gpu", "1.13-gpu", "1.13.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
           }]
         }, {
           "repository": "sagemaker-tensorflow-serving-eia",

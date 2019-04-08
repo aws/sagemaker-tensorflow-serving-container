@@ -30,7 +30,7 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     os.environ['TEST_REGION'] = config.getoption('--region')
-    os.environ['TEST_VERSIONS'] = config.getoption('--versions') or '1.11.1,1.12.0'
+    os.environ['TEST_VERSIONS'] = config.getoption('--versions') or '1.11.1,1.12.0,1.13.0'
     os.environ['TEST_INSTANCE_TYPES'] = (config.getoption('--instance-types') or
                                          'ml.m5.xlarge,ml.p3.2xlarge')
 

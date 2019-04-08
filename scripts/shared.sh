@@ -60,10 +60,22 @@ function get_device_type() {
     fi
 }
 
+function get_dockerfile_name() {
+
+    full_version=$(get_full_version $1)
+    arch=$2
+
+    if [[ $full_version = '1.12.0' ]] || [[ $full_version = '1.11.0' ]]; then
+        echo "Dockerfile.$arch"
+    else
+        echo "Dockerfile.1-13-$arch"
+    fi
+}
+
 function parse_std_args() {
     # defaults
     arch='cpu'
-    version='1.12.0'
+    version='1.13.0'
     repository='sagemaker-tensorflow-serving'
 
     aws_region=$(get_default_region)

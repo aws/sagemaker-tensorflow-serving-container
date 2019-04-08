@@ -55,9 +55,9 @@ processor type (e.g. "cpu", "gpu", "ei") has a different Dockerfile in each grou
 To build an image, run the `./scripts/build.sh` script:
 
 ```bash
-./scripts/build.sh --version 1.11 --arch cpu
-./scripts/build.sh --version 1.11 --arch gpu
-./scripts/build.sh --version 1.11 --arch eia
+./scripts/build.sh --version 1.13 --arch cpu
+./scripts/build.sh --version 1.13 --arch gpu
+./scripts/build.sh --version 1.13 --arch eia
 ```
 
 
@@ -66,9 +66,9 @@ in SageMaker, you need to publish it to an ECR repository in your account. The
 `./scripts/publish.sh` script makes that easy:
  
 ```bash
-./scripts/publish.sh --version 1.11 --arch cpu
-./scripts/publish.sh --version 1.11 --arch gpu
-./scripts/publish.sh --version 1.11 --arch eia
+./scripts/publish.sh --version 1.13 --arch cpu
+./scripts/publish.sh --version 1.13 --arch gpu
+./scripts/publish.sh --version 1.13 --arch eia
 ```
 
 Note: this will publish to ECR in your default region. Use the `--region` argument to 
@@ -122,7 +122,7 @@ For example:
         --repo sagemaker-tensorflow-serving-eia \
         --instance_type ml.m5.xlarge \
         --accelerator-type ml.eia1.medium \
-        --versions 1.12.0
+        --versions 1.13.0
 
 ## Contributing
 
