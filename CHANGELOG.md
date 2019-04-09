@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.9 (2019-04-09)
+
+### Bug fixes and other changes
+
+ * improve handling of ei binary during builds
+
 ## v1.1.8 (2019-04-08)
 
 ### Bug fixes and other changes
