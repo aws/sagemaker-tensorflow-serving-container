@@ -28,24 +28,32 @@ function get_aws_account() {
     aws sts get-caller-identity --query 'Account' --output text
 }
 
-function get_tfs_executable() {
+function get_ei_executable() {
+    [[ $arch != 'eia' ]] && return
+
     if [[ -z $(aws s3 ls 's3://amazonei-tensorflow/tensorflow-serving/v'${short_version}'/ubuntu/latest/') ]]; then
         echo 'ERROR: cannot find this version in S3 bucket.'
         exit 1
     fi
 
-    tar_file=$(aws s3 ls 's3://amazonei-tensorflow/tensorflow-serving/v'${short_version}'/ubuntu/latest/' | awk '{print $4}')
-    aws s3 cp 's3://amazonei-tensorflow/tensorflow-serving/v'${short_version}'/ubuntu/latest/'${tar_file} .
+    tmpdir=$(mktemp -d)
+    tar_file=$(aws s3 ls "s3://amazonei-tensorflow/tensorflow-serving/v${short_version}/ubuntu/latest/" | awk '{print $4}')
+    aws s3 cp "s3://amazonei-tensorflow/tensorflow-serving/v${short_version}/ubuntu/latest/${tar_file}" "$tmpdir/$tar_file"
 
-    mkdir exec_dir
-    tar -C exec_dir -xf ${tar_file}
+    tar -C "$tmpdir" -xf "$tmpdir/$tar_file"
 
-    find . -name amazonei_tensorflow_model_server -exec mv {} container/ \;
-    rm ${tar_file} && rm -rf exec_dir
+    find "$tmpdir" -name amazonei_tensorflow_model_server -exec mv {} container/ \;
+    rm -rf "$tmpdir"
+}
+
+function remove_ei_executable() {
+    [[ $arch != 'eia' ]] && return
+
+    rm container/amazonei_tensorflow_model_server
 }
 
 function get_device_type() {
-    if [ $1 = 'eia' ]; then
+    if [[ $1 = 'eia' ]]; then
         echo 'cpu'
     else
         echo $1
@@ -99,5 +107,3 @@ function parse_std_args() {
 
     true
 }
-
-

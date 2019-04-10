@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.1.9 (2019-04-09)
+
+### Bug fixes and other changes
+
+ * improve handling of ei binary during builds
+
+## v1.1.8 (2019-04-08)
+
+### Bug fixes and other changes
+
+ * add data generator and perf tests
+ * remove per-line parsing
+
 ## v1.1.7 (2019-04-05)
 
 ### Bug fixes and other changes

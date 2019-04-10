@@ -8,9 +8,7 @@ source scripts/shared.sh
 
 parse_std_args "$@"
 
-if [ $arch = 'eia' ]; then
-    get_tfs_executable
-fi
+get_ei_executable
 
 echo "pulling previous image for layer cache... "
 $(aws ecr get-login --no-include-email --registry-id $aws_account) &>/dev/null || echo 'warning: ecr login failed'
@@ -25,3 +23,5 @@ docker build \
     -f docker/Dockerfile.$arch \
     -t $repository:$full_version-$device \
     -t $repository:$short_version-$device container
+
+remove_ei_executable
