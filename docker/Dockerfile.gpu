@@ -47,7 +47,6 @@ RUN apt-get update && \
         libnvinfer${LIBNVINFER_VERSION}=${LIBNVINFER_TF_TENSORRT_VERSION}-1+cuda${CUDA_VERSION_PACKAGES} && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
-    rm /usr/lib/x86_64-linux-gnu/libnvinfer_plugin && \
     rm /usr/lib/x86_64-linux-gnu/libnvcaffe_parser* && \
     rm /usr/lib/x86_64-linux-gnu/libnvparsers*
 
