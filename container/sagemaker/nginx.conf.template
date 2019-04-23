@@ -22,7 +22,7 @@ http {
   }
 
   upstream gunicorn_upstream {
-    server localhost:%GUNICORN_PORT%;
+    server unix:/tmp/gunicorn.sock fail_timeout=0;
   }
 
   server {

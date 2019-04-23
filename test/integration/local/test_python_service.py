@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -24,13 +25,11 @@ PING_URL = 'http://localhost:8080/ping'
 INVOCATIONS_URL = 'http://localhost:8080/invocations'
 
 
-@pytest.fixture(scope='session', autouse=True)
-def volume(tmpdir_factory):
+@pytest.fixture(scope='session', autouse=True, params=['input_output_handler', 'handler'])
+def volume(tmpdir_factory, request):
     try:
-        with open('test/integration/local/inference_test_example.py') as example:
-            with open('test/resources/models/inference.py', 'w') as custom_code:
-                for line in example:
-                    custom_code.write(line)
+        source_file = 'test/integration/local/script/{}_example.py'.format(request.param)
+        shutil.copy(source_file, tmpdir_factory.getbasetemp().join('inference.py'))
 
         model_dir = os.path.abspath('test/resources/models')
         subprocess.check_call(
@@ -38,8 +37,7 @@ def volume(tmpdir_factory):
             '--opt device={} --opt o=bind'.format(model_dir).split())
         yield model_dir
     finally:
-        os.remove('test/resources/models/inference.py')
-        subprocess.check_call('docker volume rm model_inference_volume'.split())
+        subprocess.check_call('docker volume prune -f'.split())
 
 
 @pytest.fixture(scope='module', autouse=True, params=['1.11', '1.12'])
@@ -87,6 +85,24 @@ def test_predict_json():
     assert response == {'predictions': [3.5, 4.0, 5.5]}
 
 
+def test_zero_content():
+    headers = make_headers('application/json', 'predict')
+    data = ''
+    response = requests.post(INVOCATIONS_URL, data=data, headers=headers)
+    assert response.status_code != 200
+
+
+def test_large_input():
+    headers = make_headers('application/json', 'predict')
+    data = '{"instances": [0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,0.0,1.0,' \
+           '0.0,1.0,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,' \
+           '1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,6.0,0.0]}'
+    response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
+    predictions = response['predictions']
+    assert len(predictions) == 60
+    assert sum(predictions) == 197
+
+
 def test_unsupported_content_type():
     headers = make_headers('text/csv', 'predict')
     data = '1.0,2.0,5.0'
@@ -97,4 +113,3 @@ def test_unsupported_content_type():
 def test_ping_service():
     response = requests.get(PING_URL)
     assert response.status_code == 200
-    assert response.text == 'OK!\n'

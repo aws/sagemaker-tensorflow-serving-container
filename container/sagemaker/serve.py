@@ -16,9 +16,15 @@ import os
 import re
 import signal
 import subprocess
+import sys
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+JS_PING = 'js_content ping'
+JS_INVOCATIONS = 'js_content invocations'
+GUNICORN_PING = 'proxy_pass http://gunicorn_upstream/ping'
+GUNICORN_INVOCATIONS = 'proxy_pass http://gunicorn_upstream/invocations'
 
 
 class ServiceManager(object):
@@ -26,16 +32,13 @@ class ServiceManager(object):
         self._state = 'initializing'
         self._nginx = None
         self._tfs = None
-        self._requirements = None
-        self._execute_custom_code = False
+        self._use_python_service = False
         self._python_service = None
-        self._nginx_ping_requests = 'js_content ping'
-        self._nginx_invocation_requests = 'js_content invocations'
         self._tfs_version = os.environ.get('SAGEMAKER_TFS_VERSION', '1.12')
         self._nginx_http_port = os.environ.get('SAGEMAKER_BIND_TO_PORT', '8080')
         self._nginx_loglevel = os.environ.get('SAGEMAKER_TFS_NGINX_LOGLEVEL', 'error')
         self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', None)
-        self._python_path = os.environ.get('PYTHONPATH', '/opt/ml/model/lib')
+        self._python_lib_dir = '/opt/ml/model/lib'
 
         if 'SAGEMAKER_SAFE_PORT_RANGE' in os.environ:
             port_range = os.environ['SAGEMAKER_SAFE_PORT_RANGE']
@@ -47,13 +50,14 @@ class ServiceManager(object):
                                  .format(port_range))
             self._tfs_grpc_port = str(low)
             self._tfs_rest_port = str(low + 1)
-            self._gunicorn_port = str(low + 2)
-
         else:
             # just use the standard default ports
             self._tfs_grpc_port = '9000'
             self._tfs_rest_port = '8501'
-            self._gunicorn_port = '5000'
+
+        # set environment variable for python service
+        os.environ['TFS_GRPC_PORT'] = self._tfs_grpc_port
+        os.environ['TFS_REST_PORT'] = self._tfs_rest_port
 
     def _create_tfs_config(self):
         models = self._find_models()
@@ -100,22 +104,21 @@ class ServiceManager(object):
                     yield os.path.join(path, e.name)
 
     def _setup_python_service(self):
-        requirements_path = '/opt/ml/model/requirements.txt'
-        inference_path = '/opt/ml/model/inference.py'
+        requirements_path = '/opt/ml/model/script/requirements.txt'
+        inference_path = '/opt/ml/model/script/inference.py'
 
         if os.path.exists(requirements_path):
-            cmd = 'pip3 install --install-option="--prefix=${}" -r {}'.\
-                format(self._python_path, requirements_path)
+            cmd = 'pip3 install -t {} -r {}'.format(self._python_lib_dir, requirements_path)
             log.info('installing required packages...')
-            p = subprocess.Popen(cmd.split())
-            self._requirements = p
+            try:
+                subprocess.check_call(cmd.split())
+            except subprocess.CalledProcessError:
+                log.error('failed to install required packages, exiting.')
+                self._stop()
+                raise
 
         if os.path.exists(inference_path):
-            self._nginx_ping_requests = 'proxy_pass http://localhost:{}/ping'\
-                .format(self._gunicorn_port)
-            self._nginx_invocation_requests = 'proxy_pass http://localhost:{}/invocations'\
-                .format(self._gunicorn_port)
-            self._execute_custom_code = True
+            self._use_python_service = True
 
     def _create_nginx_config(self):
         template = self._read_nginx_template()
@@ -126,9 +129,9 @@ class ServiceManager(object):
             'TFS_DEFAULT_MODEL_NAME': self._tfs_default_model_name,
             'NGINX_HTTP_PORT': self._nginx_http_port,
             'NGINX_LOG_LEVEL': self._nginx_loglevel,
-            'FORWARD_PING_REQUESTS': self._nginx_ping_requests,
-            'FORWARD_INVOCATION_REQUESTS': self._nginx_invocation_requests,
-            'GUNICORN_PORT': self._gunicorn_port
+            'FORWARD_PING_REQUESTS': GUNICORN_PING if self._use_python_service else JS_PING,
+            'FORWARD_INVOCATION_REQUESTS': GUNICORN_INVOCATIONS if self._use_python_service
+            else JS_INVOCATIONS,
         }
 
         config = pattern.sub(lambda x: template_values[x.group(1)], template)
@@ -157,8 +160,8 @@ class ServiceManager(object):
 
     def _start_python_service(self):
         self._log_version('gunicorn --version', 'gunicorn version info:')
-        cmd = 'gunicorn -b localhost:{} --chdir /sagemaker ' \
-              'python_service:app --reload'.format(self._gunicorn_port)
+        sys.path.append(self._python_lib_dir)
+        cmd = 'gunicorn -b unix:/tmp/gunicorn.sock --chdir /sagemaker python_service:app --reload'
         log.info('gunicorn command: {}'.format(cmd))
         p = subprocess.Popen(cmd.split())
         log.info('started python service (pid: %d)', p.pid)
@@ -205,7 +208,7 @@ class ServiceManager(object):
 
         self._start_tfs()
 
-        if self._execute_custom_code:
+        if self._use_python_service:
             self._start_python_service()
 
         self._start_nginx()
@@ -227,12 +230,9 @@ class ServiceManager(object):
                 self._start_tfs()
 
             elif pid == self._python_service.pid:
-                log.warning('unexpected python service exit (status: {}). starting.'.format(status))
+                log.warning('unexpected python service exit (status: {}). restarting.'
+                            .format(status))
                 self._start_python_service()
-
-            elif pid == self._requirements.pid:
-                log.error('failed to install required packages (status: {}).'.format(status))
-                self._state = 'error'
 
         self._stop()
 

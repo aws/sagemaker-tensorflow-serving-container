@@ -13,14 +13,8 @@
 
 
 import json
-import logging
 import re
 from collections import namedtuple
-
-import requests
-
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
 
 Context = namedtuple('Context',
                      'model_name, model_version, method, rest_uri, grpc_uri, '
@@ -54,20 +48,24 @@ def output_handler(data, context):
         context (Context): an object containing request and configuration details
 
     Returns:
-        (dict, string): data to return to client, response content type
+        (bytes, string): data to return to client, response content type
     """
-    processed_output = json.loads(data.text)
+    if data.status_code != 200:
+        raise Exception(data.content.decode('utf-8'))
     response_content_type = context.accept_header
-    return processed_output, response_content_type
+    prediction = data.content
+    return prediction, response_content_type
 
 
 def _parse_json(data):
-    if isinstance(data, dict):
+    data = data.read().decode('utf-8')
+    if len(data) == 0:
         return data
-    elif isinstance(data, str):
-        for line in data.splitlines():
-            data_str = re.findall(r'\[([^\]]+)', line)[0]
-        return {"instances": [float(i) for i in data_str.split(',')]}
+    data_str = ''
+    for line in data.splitlines():
+        log.info('DATA LINE: ' + line)
+        data_str += re.findall(r'\[([^\]]+)', line)[0]
+    return json.dumps({"instances": [float(i) for i in data_str.split(',')]})
 
 
 def _return_error(code, message):
