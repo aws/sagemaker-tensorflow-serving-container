@@ -10,6 +10,7 @@ ARG CUDA_VERSION_DASH
 ARG NCCL_VERSION
 ARG CUDNN_VERSION
 ARG TF_TENSORRT_VERSION
+ARG LIBNVINFER_TF_TENSORRT_VERSION
 ARG LIBNVINFER_VERSION
 
 COPY --from=tfs /usr/bin/tensorflow_model_server /usr/bin/tensorflow_model_server
@@ -43,7 +44,7 @@ RUN apt-get update && \
         nvinfer-runtime-trt-repo-ubuntu1604-${TF_TENSORRT_VERSION}-ga-cuda${CUDA_VERSION_PACKAGES} && \
     apt-get update && \
     apt-get install --no-install-recommends \
-        libnvinfer${LIBNVINFER_VERSION}=${TF_TENSORRT_VERSION}-1+cuda${CUDA_VERSION_PACKAGES} && \
+        libnvinfer${LIBNVINFER_VERSION}=${LIBNVINFER_TF_TENSORRT_VERSION}-1+cuda${CUDA_VERSION_PACKAGES} && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm /usr/lib/x86_64-linux-gnu/libnvinfer_plugin* && \

@@ -69,6 +69,7 @@ do
      cudnn_version=7.3.0.29
      tf_tensorrt_version=5.0.2
      libnvinfer_version=5
+     libnvinfer_tf_tensorrt_version=5.1.2
    else
      cuda_version=9.0
      cuda_version_dash=9-0
@@ -76,6 +77,7 @@ do
      cudnn_version=7.2.1.38
      tf_tensorrt_version=5.0.2
      libnvinfer_version=5
+     libnvinfer_tf_tensorrt_version=5.0.2
    fi
 
    echo "building ${arch} image with tf version ${full_version}."
@@ -93,6 +95,7 @@ do
        --build-arg CUDNN_VERSION=$cudnn_version \
        --build-arg TF_TENSORRT_VERSION=$tf_tensorrt_version \
        --build-arg LIBNVINFER_VERSION=$libnvinfer_version \
+       --build-arg LIBNVINFER_TF_TENSORRT_VERSION=$libnvinfer_tf_tensorrt_version \
        -f docker/Dockerfile.$arch \
        -t $hub_user/sagemaker-tensorflow-serving:$full_version-$arch \
        -t $hub_user/sagemaker-tensorflow-serving:$short_version-$arch container

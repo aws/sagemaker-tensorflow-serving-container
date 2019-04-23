@@ -107,6 +107,7 @@ function parse_std_args() {
         cudnn_version=7.3.0.29
         tf_tensorrt_version=5.0.2
         libnvinfer_version=5
+        libnvinfer_tf_tensorrt_version=5.1.2
     else
         cuda_version=9.0
         cuda_version_dash=9-0
@@ -114,6 +115,7 @@ function parse_std_args() {
         cudnn_version=7.2.1.38
         tf_tensorrt_version=5.0.2
         libnvinfer_version=5
+        libnvinfer_tf_tensorrt_version=5.0.2
     fi
 
     true
