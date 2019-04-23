@@ -62,7 +62,7 @@ do
    short_version=$(get_short_version $i)
    version_check="$(echo $short_version |tr -d '.' )"
 
-   if [[ "$version_check" == 'nightly' ]] || [[ $version_check -ge 113 ]]; then
+   if [[ "$version_check" == nightly* ]] || [[ $version_check -ge 113 ]]; then
      cuda_version=10.0
      cuda_version_dash=10-0
      nccl_version=2.4.2
