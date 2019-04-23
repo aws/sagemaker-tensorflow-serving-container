@@ -63,7 +63,6 @@ def _parse_json(data):
         return data
     data_str = ''
     for line in data.splitlines():
-        log.info('DATA LINE: ' + line)
         data_str += re.findall(r'\[([^\]]+)', line)[0]
     return json.dumps({"instances": [float(i) for i in data_str.split(',')]})
 
