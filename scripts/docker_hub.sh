@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Keep in order to prevent older versions from overwriting when given the "short version" tag.
-declare -a versions=("nightly" "1.11.0" "1.11.1" "1.12.0" "1.13.0")
+declare -a versions=("nightly" "nightly-devel" "1.11.0" "1.11.1" "1.12.0" "1.13.0")
 push=0 # arbitrary assignment
 function get_full_version() {
     echo $1 | sed 's#^\([0-9][0-9]*\.[0-9][0-9]*\)$#\1.0#'
