@@ -4,9 +4,7 @@ FROM tensorflow/serving:${TFS_VERSION} as tfs
 FROM ubuntu:16.04
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
-ARG TENSORFLOW_SERVING_LOCATION
-
-COPY --from=tfs ${TENSORFLOW_SERVING_LOCATION} /usr/bin/tensorflow_model_server
+COPY --from=tfs /usr/bin/tensorflow_model_server /usr/bin/tensorflow_model_server
 
 # nginx + njs
 RUN \

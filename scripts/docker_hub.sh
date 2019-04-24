@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Keep in order to prevent older versions from overwriting when given the "short version" tag.
-declare -a versions=("nightly" "nightly-devel" "1.11.0" "1.11.1" "1.12.0" "1.13.0")
+declare -a versions=("nightly" "1.11.0" "1.11.1" "1.12.0" "1.13.0")
 push=0 # arbitrary assignment
 function get_full_version() {
     echo $1 | sed 's#^\([0-9][0-9]*\.[0-9][0-9]*\)$#\1.0#'
@@ -70,7 +70,6 @@ do
      tf_tensorrt_version=5.0.2
      libnvinfer_version=5
      libnvinfer_tf_tensorrt_version=5.1.2
-     tensorflow_serving_location="/usr/local/bin/tensorflow_model_server"
    else
      cuda_version=9.0
      cuda_version_dash=9-0
@@ -79,11 +78,10 @@ do
      tf_tensorrt_version=5.0.2
      libnvinfer_version=5
      libnvinfer_tf_tensorrt_version=5.0.2
-     tensorflow_serving_location="/usr/bin/tensorflow_model_server"
    fi
 
-   echo "\n\n\n\n"
-   echo "building ${arch} image with tf version ${full_version}."
+   echo -e "\n\n\n\n"
+   echo -e "\033[0;32mbuilding ${arch} image with tf version ${full_version}.\033[0m"
 
    docker pull $hub_user/sagemaker-tensorflow-serving:$short_version-$arch &>/dev/null || echo 'warning: pull failed'
 
@@ -99,7 +97,6 @@ do
        --build-arg TF_TENSORRT_VERSION=$tf_tensorrt_version \
        --build-arg LIBNVINFER_VERSION=$libnvinfer_version \
        --build-arg LIBNVINFER_TF_TENSORRT_VERSION=$libnvinfer_tf_tensorrt_version \
-       --build-arg TENSORFLOW_SERVING_LOCATION=$tensorflow_serving_location \
        -f docker/Dockerfile.$arch \
        -t $hub_user/sagemaker-tensorflow-serving:$full_version-$arch \
        -t $hub_user/sagemaker-tensorflow-serving:$short_version-$arch container

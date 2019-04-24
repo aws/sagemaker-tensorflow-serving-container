@@ -12,9 +12,8 @@ ARG CUDNN_VERSION
 ARG TF_TENSORRT_VERSION
 ARG LIBNVINFER_TF_TENSORRT_VERSION
 ARG LIBNVINFER_VERSION
-ARG TENSORFLOW_SERVING_LOCATION
 
-COPY --from=tfs ${TENSORFLOW_SERVING_LOCATION} /usr/bin/tensorflow_model_server
+COPY --from=tfs /usr/bin/tensorflow_model_server /usr/bin/tensorflow_model_server
 
 # https://github.com/tensorflow/serving/blob/1.12.0/tensorflow_serving/tools/docker/Dockerfile.gpu
 
