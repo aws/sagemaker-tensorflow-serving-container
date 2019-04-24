@@ -41,6 +41,8 @@ def handler(data, context):
 def _process_input(data, context):
     if context.request_content_type == 'application/json':
         data = _parse_json(data)
+    elif context.request_content_type == 'text/csv':
+        data = _parse_csv(data)
     else:
         _return_error(415, 'Unsupported content type "{}"'.format(context.request_content_type or 'Unknown'))
 
@@ -63,6 +65,11 @@ def _parse_json(data):
     for line in data.splitlines():
         data_str += re.findall(r'\[([^\]]+)', line)[0]
     return json.dumps({"instances": [float(i) for i in data_str.split(',')]})
+
+
+def _parse_csv(data):
+    data = data.read().decode('utf-8')
+    return json.dumps({"instances": [float(x) for x in data.split(',')]})
 
 
 def _return_error(code, message):

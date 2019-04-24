@@ -103,10 +103,17 @@ def test_large_input():
     assert sum(predictions) == 197
 
 
-def test_unsupported_content_type():
+def test_csv_input():
     headers = make_headers('text/csv', 'predict')
     data = '1.0,2.0,5.0'
-    with pytest.raises(ValueError, message='Error: 415, Unsupported content type "text/csv"'):
+    response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
+    assert response == {'predictions': [3.5, 4.0, 5.5]}
+
+
+def test_unsupported_content_type():
+    headers = make_headers('unsupported-type', 'predict')
+    data = 'aW1hZ2UgYnl0ZXM='
+    with pytest.raises(ValueError, message='Error: 415, Unsupported content type "image/png"'):
         requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
 
 
