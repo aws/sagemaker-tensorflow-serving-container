@@ -16,7 +16,6 @@ import os
 import re
 import signal
 import subprocess
-import sys
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -160,8 +159,8 @@ class ServiceManager(object):
 
     def _start_python_service(self):
         self._log_version('gunicorn --version', 'gunicorn version info:')
-        sys.path.append(self._python_lib_dir)
-        cmd = 'gunicorn -b unix:/tmp/gunicorn.sock --chdir /sagemaker python_service:app --reload'
+        cmd = 'gunicorn -b unix:/tmp/gunicorn.sock --chdir /sagemaker ' \
+              '--pythonpath {} python_service:app --reload'.format(self._python_lib_dir)
         log.info('gunicorn command: {}'.format(cmd))
         p = subprocess.Popen(cmd.split())
         log.info('started python service (pid: %d)', p.pid)

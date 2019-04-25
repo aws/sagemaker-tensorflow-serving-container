@@ -28,8 +28,10 @@ INVOCATIONS_URL = 'http://localhost:8080/invocations'
 @pytest.fixture(scope='session', autouse=True, params=['input_output_handler', 'handler'])
 def volume(tmpdir_factory, request):
     try:
-        source_file = 'test/integration/local/script/{}_example.py'.format(request.param)
-        shutil.copy(source_file, tmpdir_factory.getbasetemp().join('inference.py'))
+        script_file = 'test/integration/local/script/{}_example.py'.format(request.param)
+        requirements_file = 'test/integration/local/script/requirements_example.txt'
+        shutil.copy(script_file, tmpdir_factory.getbasetemp().join('inference.py'))
+        shutil.copy(requirements_file, tmpdir_factory.getbasetemp().join('requirements.txt'))
 
         model_dir = os.path.abspath('test/resources/models')
         subprocess.check_call(
@@ -45,7 +47,7 @@ def container(request):
     try:
         command = (
             'docker run --name sagemaker-tensorflow-serving-test -p 8080:8080'
-            ' --mount type=volume,source=model_inference_volume,target=/opt/ml/model,readonly'
+            ' --mount type=volume,source=model_inference_volume,target=/opt/ml/model'
             ' -e SAGEMAKER_TFS_DEFAULT_MODEL_NAME=half_plus_three'
             ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
             ' -e SAGEMAKER_BIND_TO_PORT=8080'

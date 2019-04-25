@@ -18,6 +18,8 @@ from collections import namedtuple
 
 import requests
 
+import PIL  # for testing requirements.txt install and pythonpath
+
 Context = namedtuple('Context',
                      'model_name, model_version, method, rest_uri, grpc_uri, '
                      'custom_attributes, request_content_type, accept_header')

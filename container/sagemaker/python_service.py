@@ -14,7 +14,6 @@ import os
 
 import importlib.util
 import re
-import sys
 from collections import namedtuple
 
 import falcon
@@ -27,8 +26,6 @@ CUSTOM_ATTRIBUTES = 'X-Amzn-SageMaker-Custom-Attributes'
 Context = namedtuple('Context',
                      'model_name, model_version, method, rest_uri, grpc_port, '
                      'custom_attributes, request_content_type, accept_header, content_length')
-
-sys.path.append('/opt/ml/model/lib')
 
 
 class InvocationResource(object):

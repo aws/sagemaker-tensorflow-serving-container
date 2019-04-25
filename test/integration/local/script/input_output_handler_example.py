@@ -11,10 +11,11 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-
 import json
 import re
 from collections import namedtuple
+
+import PIL  # for testing requirements.txt install and pythonpath
 
 Context = namedtuple('Context',
                      'model_name, model_version, method, rest_uri, grpc_uri, '
