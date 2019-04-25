@@ -113,7 +113,7 @@ def test_csv_input():
 def test_unsupported_content_type():
     headers = make_headers('unsupported-type', 'predict')
     data = 'aW1hZ2UgYnl0ZXM='
-    with pytest.raises(ValueError, message='Error: 415, Unsupported content type "image/png"'):
+    with pytest.raises(ValueError, message='Error: 415, Unsupported content type "unsupported-type"'):
         requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
 
 
