@@ -35,7 +35,7 @@ def volume():
         subprocess.check_call('docker volume rm model_volume'.split())
 
 
-@pytest.fixture(scope='module', autouse=True, params=['1.11', '1,12', '1.13'])
+@pytest.fixture(scope='module', autouse=True, params=['1.11', '1.12', '1.13'])
 def container(request):
     try:
         command = (
