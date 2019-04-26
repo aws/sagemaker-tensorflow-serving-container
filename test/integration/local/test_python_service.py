@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -20,20 +21,23 @@ import pytest
 
 import requests
 
-from distutils.dir_util import copy_tree
-
 
 PING_URL = 'http://localhost:8080/ping'
 INVOCATIONS_URL = 'http://localhost:8080/invocations'
 
 
 @pytest.fixture(scope='session', autouse=True, params=['1', '2', '3', '4', '5'])
-def volume(request):
+def volume(tmpdir_factory, request):
     try:
+        model_dir = os.path.join(tmpdir_factory.mktemp('test'), 'model')
+        code_dir = os.path.join(model_dir, 'code')
         test_example = 'test/resources/examples/test{}'.format(request.param)
-        copy_tree(test_example, os.path.join('test/resources/models', 'code'))
 
-        model_dir = os.path.abspath('test/resources/models')
+        models_dir = 'test/resources/models'
+        shutil.copytree(models_dir, model_dir)
+        shutil.rmtree(code_dir)  # clear existing /code dir
+        shutil.copytree(test_example, code_dir)
+
         subprocess.check_call(
             'docker volume create --name model_inference_volume --opt type=none '
             '--opt device={} --opt o=bind'.format(model_dir).split())
