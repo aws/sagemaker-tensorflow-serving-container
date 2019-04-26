@@ -35,10 +35,11 @@ def volume(tmpdir_factory, request):
 
         models_dir = 'test/resources/models'
         shutil.copytree(models_dir, model_dir)
-        shutil.rmtree(code_dir)  # clear existing /code dir
-        shutil.copytree(test_example, code_dir)
 
         subprocess.check_call('ls -lR {}'.format(model_dir).split())
+
+        shutil.rmtree(code_dir, ignore_errors=True)  # clear existing /code dir
+        shutil.copytree(test_example, code_dir)
 
         subprocess.check_call(
             'docker volume create --name model_inference_volume --opt type=none '
