@@ -28,12 +28,12 @@ INVOCATIONS_URL = 'http://localhost:8080/invocations'
 
 
 @pytest.fixture(scope='session', autouse=True, params=['1', '2', '3', '4', '5'])
-def volume(tmpdir_factory, request):
+def volume(request):
     try:
         test_example = 'test/resources/examples/test{}'.format(request.param)
-        copy_tree(test_example, tmpdir_factory.getbasetemp().strpath)
+        copy_tree(test_example, os.path.join('test/resources/models', 'code'))
 
-        model_dir = os.path.abspath(tmpdir_factory.getbasetemp())
+        model_dir = os.path.abspath('test/resources/models')
         subprocess.check_call(
             'docker volume create --name model_inference_volume --opt type=none '
             '--opt device={} --opt o=bind'.format(model_dir).split())
