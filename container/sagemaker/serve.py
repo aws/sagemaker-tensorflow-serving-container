@@ -25,19 +25,22 @@ JS_INVOCATIONS = 'js_content invocations'
 GUNICORN_PING = 'proxy_pass http://gunicorn_upstream/ping'
 GUNICORN_INVOCATIONS = 'proxy_pass http://gunicorn_upstream/invocations'
 
+PYTHON_LIB_PATH = '/opt/ml/model/code/lib'
+REQUIREMENTS_PATH = '/opt/ml/model/code/requirements.txt'
+INFERENCE_PATH = '/opt/ml/model/code/inference.py'
+
 
 class ServiceManager(object):
     def __init__(self):
         self._state = 'initializing'
         self._nginx = None
         self._tfs = None
-        self._use_python_service = False
         self._python_service = None
+        self._use_python_service = os.path.exists(INFERENCE_PATH)
         self._tfs_version = os.environ.get('SAGEMAKER_TFS_VERSION', '1.12')
         self._nginx_http_port = os.environ.get('SAGEMAKER_BIND_TO_PORT', '8080')
         self._nginx_loglevel = os.environ.get('SAGEMAKER_TFS_NGINX_LOGLEVEL', 'error')
         self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', None)
-        self._python_lib_dir = '/opt/ml/model/lib'
 
         if 'SAGEMAKER_SAFE_PORT_RANGE' in os.environ:
             port_range = os.environ['SAGEMAKER_SAFE_PORT_RANGE']
@@ -102,22 +105,29 @@ class ServiceManager(object):
                 if e.name == 'saved_model.pb':
                     yield os.path.join(path, e.name)
 
-    def _setup_python_service(self):
-        requirements_path = '/opt/ml/model/script/requirements.txt'
-        inference_path = '/opt/ml/model/script/inference.py'
+    def _gunicorn_cmd(self):
+        lib_path_exists = os.path.exists(PYTHON_LIB_PATH)
+        requirements_exists = os.path.exists(REQUIREMENTS_PATH)
+        python_path_content = ['/opt/ml/model/code']
 
-        if os.path.exists(requirements_path):
-            cmd = 'pip3 install -t {} -r {}'.format(self._python_lib_dir, requirements_path)
+        if lib_path_exists or requirements_exists:
+            python_path_content.append(PYTHON_LIB_PATH)
+        if lib_path_exists and requirements_exists:
+            log.warning('loading modules in "{}", ignoring requirements.txt'
+                        .format(PYTHON_LIB_PATH))
+        elif requirements_exists:
+            pip_install_cmd = 'pip3 install -t {} -r {}'.format(PYTHON_LIB_PATH, REQUIREMENTS_PATH)
             log.info('installing required packages...')
             try:
-                subprocess.check_call(cmd.split())
+                subprocess.check_call(pip_install_cmd.split())
             except subprocess.CalledProcessError:
                 log.error('failed to install required packages, exiting.')
                 self._stop()
-                raise
+                raise ChildProcessError('Failed to install required packages.')
 
-        if os.path.exists(inference_path):
-            self._use_python_service = True
+        gunicorn_cmd = 'gunicorn -b unix:/tmp/gunicorn.sock --chdir /sagemaker ' \
+                       '--pythonpath {} python_service:app'.format(','.join(python_path_content))
+        return gunicorn_cmd
 
     def _create_nginx_config(self):
         template = self._read_nginx_template()
@@ -157,12 +167,11 @@ class ServiceManager(object):
         log.info('started tensorflow serving (pid: %d)', p.pid)
         self._tfs = p
 
-    def _start_python_service(self):
+    def _start_python_service(self, gunicorn_cmd):
         self._log_version('gunicorn --version', 'gunicorn version info:')
-        cmd = 'gunicorn -b unix:/tmp/gunicorn.sock --chdir /sagemaker ' \
-              '--pythonpath {} python_service:app --reload'.format(self._python_lib_dir)
-        log.info('gunicorn command: {}'.format(cmd))
-        p = subprocess.Popen(cmd.split())
+
+        log.info('gunicorn command: {}'.format(gunicorn_cmd))
+        p = subprocess.Popen(gunicorn_cmd.split())
         log.info('started python service (pid: %d)', p.pid)
         self._python_service = p
 
@@ -202,13 +211,13 @@ class ServiceManager(object):
         signal.signal(signal.SIGTERM, self._stop)
 
         self._create_tfs_config()
-        self._setup_python_service()
+
         self._create_nginx_config()
 
         self._start_tfs()
 
         if self._use_python_service:
-            self._start_python_service()
+            self._start_python_service(self._gunicorn_cmd())
 
         self._start_nginx()
         self._state = 'started'
@@ -231,7 +240,7 @@ class ServiceManager(object):
             elif pid == self._python_service.pid:
                 log.warning('unexpected python service exit (status: {}). restarting.'
                             .format(status))
-                self._start_python_service()
+                self._start_python_service(self._gunicorn_cmd())
 
         self._stop()
 

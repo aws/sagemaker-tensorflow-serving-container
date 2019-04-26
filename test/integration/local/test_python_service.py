@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 
 import os
-import shutil
 import subprocess
 import sys
 import time
@@ -21,19 +20,23 @@ import pytest
 
 import requests
 
+from distutils.dir_util import copy_tree
+
+
 PING_URL = 'http://localhost:8080/ping'
 INVOCATIONS_URL = 'http://localhost:8080/invocations'
 
 
-@pytest.fixture(scope='session', autouse=True, params=['input_output_handler', 'handler'])
+@pytest.fixture(scope='session', autouse=True, params=['1', '2', '3', '4', '5'])
 def volume(tmpdir_factory, request):
     try:
-        script_file = 'test/integration/local/script/{}_example.py'.format(request.param)
-        requirements_file = 'test/integration/local/script/requirements_example.txt'
-        shutil.copy(script_file, tmpdir_factory.getbasetemp().join('inference.py'))
-        shutil.copy(requirements_file, tmpdir_factory.getbasetemp().join('requirements.txt'))
+        test_example = 'test/resources/examples/test{}'.format(request.param)
+        copy_tree(test_example, tmpdir_factory.getbasetemp().strpath)
 
-        model_dir = os.path.abspath('test/resources/models')
+        models_dir = 'test/resources/models'
+        copy_tree(models_dir, tmpdir_factory.getbasetemp().strpath)
+
+        model_dir = os.path.abspath(tmpdir_factory.getbasetemp())
         subprocess.check_call(
             'docker volume create --name model_inference_volume --opt type=none '
             '--opt device={} --opt o=bind'.format(model_dir).split())
@@ -91,18 +94,19 @@ def test_zero_content():
     headers = make_headers('application/json', 'predict')
     data = ''
     response = requests.post(INVOCATIONS_URL, data=data, headers=headers)
-    assert response.status_code != 200
+    assert response.status_code == 500
+    assert 'Internal Server Error' in response.text
 
 
 def test_large_input():
-    headers = make_headers('application/json', 'predict')
-    data = '{"instances": [0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,0.0,1.0,' \
-           '0.0,1.0,0.0,1.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,' \
-           '1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,6.0,0.0]}'
-    response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
-    predictions = response['predictions']
-    assert len(predictions) == 60
-    assert sum(predictions) == 197
+    headers = make_headers('text/csv', 'predict')
+    data_file = 'test/resources/inputs/test-large.csv'
+
+    with open(data_file, 'r') as file:
+        large_data = file.read()
+        response = requests.post(INVOCATIONS_URL, data=large_data, headers=headers).json()
+        predictions = response['predictions']
+        assert len(predictions) == 753936
 
 
 def test_csv_input():

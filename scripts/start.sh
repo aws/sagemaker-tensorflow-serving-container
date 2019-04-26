@@ -17,7 +17,7 @@ fi
 
 MODEL_DIR="$(cd "test/resources/models" > /dev/null && pwd)"
 $docker_command run \
-    -v "$MODEL_DIR":/opt/ml/model \
+    -v "$MODEL_DIR":/opt/ml/model:ro \
     -p 8080:8080 \
     -e "SAGEMAKER_TFS_DEFAULT_MODEL_NAME=half_plus_three" \
     -e "SAGEMAKER_TFS_NGINX_LOGLEVEL=error" \

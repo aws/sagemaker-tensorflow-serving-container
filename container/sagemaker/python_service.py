@@ -55,29 +55,29 @@ class InvocationResource(object):
 
     def _import_handlers(self):
         spec = importlib.util.spec_from_file_location('inference',
-                                                      '/opt/ml/model/script/inference.py')
+                                                      '/opt/ml/model/code/inference.py')
         inference = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(inference)
 
         _custom_handler, _custom_input_handler, _custom_output_handler = None, None, None
-        try:
+        if hasattr(inference, 'handler'):
             _custom_handler = inference.handler
-        except AttributeError:
-            try:
-                _custom_input_handler = inference.input_handler
-                _custom_output_handler = inference.output_handler
-            except AttributeError:
-                raise NotImplementedError('Handlers are not implemented correctly in user script.')
+        elif hasattr(inference, 'input_handler') and hasattr(inference, 'output_handler'):
+            _custom_input_handler = inference.input_handler
+            _custom_output_handler = inference.output_handler
+        else:
+            raise NotImplementedError('Handlers are not implemented correctly in user script.')
+
         return _custom_handler, _custom_input_handler, _custom_output_handler
 
     def _make_handler(self, custom_handler, custom_input_handler, custom_output_handler):
+        if custom_handler:
+            return custom_handler
+
         def handler(data, context):
-            if custom_handler:
-                return custom_handler(data, context)
-            else:
-                processed_input = custom_input_handler(data, context)
-                response = requests.post(context.rest_uri, data=processed_input)
-                return custom_output_handler(response, context)
+            processed_input = custom_input_handler(data, context)
+            response = requests.post(context.rest_uri, data=processed_input)
+            return custom_output_handler(response, context)
         return handler
 
     def _parse_request(self, req):

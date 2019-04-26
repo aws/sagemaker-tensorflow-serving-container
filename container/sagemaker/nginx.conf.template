@@ -22,7 +22,7 @@ http {
   }
 
   upstream gunicorn_upstream {
-    server unix:/tmp/gunicorn.sock fail_timeout=0;
+    server unix:/tmp/gunicorn.sock fail_timeout=1;
   }
 
   server {

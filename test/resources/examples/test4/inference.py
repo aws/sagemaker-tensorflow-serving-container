@@ -11,28 +11,36 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+
 import json
 import re
 from collections import namedtuple
 
-import PIL  # for testing requirements.txt install and pythonpath
+import requests
+
+import dummy_module  # for testing requirements.txt install and pythonpath
 
 Context = namedtuple('Context',
                      'model_name, model_version, method, rest_uri, grpc_uri, '
                      'custom_attributes, request_content_type, accept_header')
 
 
-def input_handler(data, context):
-    """ Pre-process request input before it is sent to TensorFlow Serving REST API
+def handler(data, context):
+    """Handle request.
 
     Args:
-        data (obj): the request data, in format of dict or string
+        data (obj): the request data
         context (Context): an object containing request and configuration details
 
     Returns:
-        (dict): a JSON-serializable dict that contains request body and headers
+        (bytes, string): data to return to client, (optional) response content type
     """
+    input = _process_input(data, context)
+    response = requests.post(context.rest_uri, data=input)
+    return _process_output(response, context)
 
+
+def _process_input(data, context):
     if context.request_content_type == 'application/json':
         data = _parse_json(data)
     elif context.request_content_type == 'text/csv':
@@ -43,16 +51,7 @@ def input_handler(data, context):
     return data
 
 
-def output_handler(data, context):
-    """Post-process TensorFlow Serving output before it is returned to the client.
-
-    Args:
-        data (obj): the TensorFlow serving response
-        context (Context): an object containing request and configuration details
-
-    Returns:
-        (bytes, string): data to return to client, response content type
-    """
+def _process_output(data, context):
     if data.status_code != 200:
         raise Exception(data.content.decode('utf-8'))
     response_content_type = context.accept_header
