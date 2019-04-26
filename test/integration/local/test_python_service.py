@@ -33,9 +33,6 @@ def volume(tmpdir_factory, request):
         test_example = 'test/resources/examples/test{}'.format(request.param)
         copy_tree(test_example, tmpdir_factory.getbasetemp().strpath)
 
-        models_dir = 'test/resources/models'
-        copy_tree(models_dir, tmpdir_factory.getbasetemp().strpath)
-
         model_dir = os.path.abspath(tmpdir_factory.getbasetemp())
         subprocess.check_call(
             'docker volume create --name model_inference_volume --opt type=none '
