@@ -59,9 +59,8 @@ def generate_csv(shape, payload_size):
         # end in newline characters.
         rows = int(math.ceil((float(payload_size) / columns / 2.0)))
 
-    def generate_row(columns):
-        return ','.join(map(lambda x: str(x), _random_input(columns)))
-    return '\n'.join([generate_row(columns) for _ in range(0, rows)])
+    row = ','.join(map(lambda x: str(x), _random_input(columns)))
+    return '\n'.join([row for _ in range(0, rows)])
 
 
 def _random_input(n):
