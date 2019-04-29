@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.1 (2019-04-29)
+
+### Bug fixes and other changes
+
+ * make njs code handle missing custom attributes header
+
 ## v1.2.0 (2019-04-29)
 
 ### Features
