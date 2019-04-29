@@ -210,3 +210,17 @@ def test_predict_bad_input_instances():
     x = json.dumps({'junk': 'data'})
     y = make_request(x)
     assert y['error'].startswith('Failed to process element: 0 key: junk of \'instances\' list.')
+
+
+def test_predict_no_custom_attributes_header():
+    x = {
+        'instances': [1.0, 2.0, 5.0]
+    }
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    response = requests.post(BASE_URL, data=json.dumps(x), headers=headers)
+    y = json.loads(response.content.decode('utf-8'))
+
+    assert y == {'predictions': [3.5, 4.0, 5.5]}

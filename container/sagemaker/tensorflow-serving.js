@@ -103,12 +103,14 @@ function parse_custom_attributes(r) {
     var attributes = {}
     var kv_pattern = /tfs-[a-z\-]+=[^,]+/g
     var header = r.headersIn[custom_attributes_header]
-    var matches = header.match(kv_pattern)
-    if (matches) {
-        for (var i = 0; i < matches.length; i++) {
-            var kv = matches[i].split('=')
-            if (kv.length === 2) {
-                attributes[kv[0]] = kv[1]
+    if (header) {
+        var matches = header.match(kv_pattern)
+        if (matches) {
+            for (var i = 0; i < matches.length; i++) {
+                var kv = matches[i].split('=')
+                if (kv.length === 2) {
+                    attributes[kv[0]] = kv[1]
+                }
             }
         }
     }
