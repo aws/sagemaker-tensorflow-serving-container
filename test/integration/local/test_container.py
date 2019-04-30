@@ -42,10 +42,7 @@ def volume():
 def container(request):
     try:
         if request.param[1]:
-            batching_config = ' -e SAGEMAKER_TFS_ENABLE_BATCHING=1' \
-                              ' -e SAGEMAKER_TFS_BATCHING_MAX_BATCH_SIZE=8' \
-                              ' -e SAGEMAKER_TFS_BATCHING_TIMEOUT_MICROS=1000' \
-                              ' -e SAGEMAKER_TFS_BATCHING_MAX_ENQUEUED_BATCHES=10000'
+            batching_config = ' -e SAGEMAKER_TFS_ENABLE_BATCHING=true'
         else:
             batching_config = ''
         command = (
