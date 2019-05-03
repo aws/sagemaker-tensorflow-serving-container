@@ -36,8 +36,9 @@ class ServiceManager(object):
         self._state = 'initializing'
         self._nginx = None
         self._tfs = None
-        self._python_service = None
-        self._use_python_service = os.path.exists(INFERENCE_PATH)
+        self._gunicorn = None
+        self._gunicorn_command = None
+        self._use_gunicorn = os.path.exists(INFERENCE_PATH)
         self._tfs_version = os.environ.get('SAGEMAKER_TFS_VERSION', '1.12')
         self._nginx_http_port = os.environ.get('SAGEMAKER_BIND_TO_PORT', '8080')
         self._nginx_loglevel = os.environ.get('SAGEMAKER_TFS_NGINX_LOGLEVEL', 'error')
@@ -167,29 +168,34 @@ class ServiceManager(object):
                 if e.name == 'saved_model.pb':
                     yield os.path.join(path, e.name)
 
-    def _gunicorn_cmd(self):
+    def _setup_gunicorn(self):
         lib_path_exists = os.path.exists(PYTHON_LIB_PATH)
         requirements_exists = os.path.exists(REQUIREMENTS_PATH)
         python_path_content = ['/opt/ml/model/code']
 
-        if lib_path_exists or requirements_exists:
+        if lib_path_exists:
             python_path_content.append(PYTHON_LIB_PATH)
-        if lib_path_exists and requirements_exists:
-            log.warning('loading modules in "{}", ignoring requirements.txt'
-                        .format(PYTHON_LIB_PATH))
-        elif requirements_exists:
-            pip_install_cmd = 'pip3 install -t {} -r {}'.format(PYTHON_LIB_PATH, REQUIREMENTS_PATH)
-            log.info('installing required packages...')
-            try:
-                subprocess.check_call(pip_install_cmd.split())
-            except subprocess.CalledProcessError:
-                log.error('failed to install required packages, exiting.')
-                self._stop()
-                raise ChildProcessError('Failed to install required packages.')
 
-        gunicorn_cmd = 'gunicorn -b unix:/tmp/gunicorn.sock --chdir /sagemaker ' \
-                       '--pythonpath {} python_service:app'.format(','.join(python_path_content))
-        return gunicorn_cmd
+        if requirements_exists:
+            if lib_path_exists:
+                log.warning('loading modules in "{}", ignoring requirements.txt'
+                            .format(PYTHON_LIB_PATH))
+            else:
+                log.info('installing packages from requirements.txt...')
+                pip_install_cmd = 'pip3 install -r {}'.format(REQUIREMENTS_PATH)
+                try:
+                    subprocess.check_call(pip_install_cmd.split())
+                except subprocess.CalledProcessError:
+                    log.error('failed to install required packages, exiting.')
+                    self._stop()
+                    raise ChildProcessError('failed to install required packages.')
+
+        gunicorn_command = (
+            'gunicorn -b unix:/tmp/gunicorn.sock -k gevent --chdir /sagemaker '
+            '--pythonpath {} python_service:app').format(','.join(python_path_content))
+
+        log.info('gunicorn command: {}'.format(gunicorn_command))
+        self._gunicorn_command = gunicorn_command
 
     def _create_nginx_config(self):
         template = self._read_nginx_template()
@@ -200,8 +206,8 @@ class ServiceManager(object):
             'TFS_DEFAULT_MODEL_NAME': self._tfs_default_model_name,
             'NGINX_HTTP_PORT': self._nginx_http_port,
             'NGINX_LOG_LEVEL': self._nginx_loglevel,
-            'FORWARD_PING_REQUESTS': GUNICORN_PING if self._use_python_service else JS_PING,
-            'FORWARD_INVOCATION_REQUESTS': GUNICORN_INVOCATIONS if self._use_python_service
+            'FORWARD_PING_REQUESTS': GUNICORN_PING if self._use_gunicorn else JS_PING,
+            'FORWARD_INVOCATION_REQUESTS': GUNICORN_INVOCATIONS if self._use_gunicorn
             else JS_INVOCATIONS,
         }
 
@@ -230,13 +236,13 @@ class ServiceManager(object):
         log.info('started tensorflow serving (pid: %d)', p.pid)
         self._tfs = p
 
-    def _start_python_service(self, gunicorn_cmd):
+    def _start_gunicorn(self):
         self._log_version('gunicorn --version', 'gunicorn version info:')
-
-        log.info('gunicorn command: {}'.format(gunicorn_cmd))
-        p = subprocess.Popen(gunicorn_cmd.split())
-        log.info('started python service (pid: %d)', p.pid)
-        self._python_service = p
+        env = os.environ.copy()
+        env['TFS_DEFAULT_MODEL_NAME'] = self._tfs_default_model_name
+        p = subprocess.Popen(self._gunicorn_command.split(), env=env)
+        log.info('started gunicorn (pid: %d)', p.pid)
+        self._gunicorn = p
 
     def _start_nginx(self):
         self._log_version('/usr/sbin/nginx -V', 'nginx version info:')
@@ -261,6 +267,11 @@ class ServiceManager(object):
         except OSError:
             pass
         try:
+            if self._gunicorn:
+                os.kill(self._gunicorn.pid, signal.SIGTERM)
+        except OSError:
+            pass
+        try:
             os.kill(self._tfs.pid, signal.SIGTERM)
         except OSError:
             pass
@@ -274,7 +285,6 @@ class ServiceManager(object):
         signal.signal(signal.SIGTERM, self._stop)
 
         self._create_tfs_config()
-
         self._create_nginx_config()
 
         if self._tfs_enable_batching:
@@ -283,8 +293,9 @@ class ServiceManager(object):
 
         self._start_tfs()
 
-        if self._use_python_service:
-            self._start_python_service(self._gunicorn_cmd())
+        if self._use_gunicorn:
+            self._setup_gunicorn()
+            self._start_gunicorn()
 
         self._start_nginx()
         self._state = 'started'
@@ -304,10 +315,10 @@ class ServiceManager(object):
                     'unexpected tensorflow serving exit (status: {}). restarting.'.format(status))
                 self._start_tfs()
 
-            elif pid == self._python_service.pid:
-                log.warning('unexpected python service exit (status: {}). restarting.'
+            elif self._gunicorn and pid == self._gunicorn.pid:
+                log.warning('unexpected gunicorn exit (status: {}). restarting.'
                             .format(status))
-                self._start_python_service(self._gunicorn_cmd())
+                self._start_gunicorn()
 
         self._stop()
 
