@@ -51,7 +51,7 @@ class InvocationResource(object):
         try:
             res.status = falcon.HTTP_200
             res.body, res.content_type = self._handlers(data, context)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             log.exception('exception handling request: {}'.format(e))
             res.status = falcon.HTTP_500
             res.body = json.dumps({
