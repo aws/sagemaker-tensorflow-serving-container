@@ -26,38 +26,38 @@ PING_URL = 'http://localhost:8080/ping'
 INVOCATIONS_URL = 'http://localhost:8080/invocations'
 
 
-@pytest.fixture(scope='session', autouse=True, params=['1', '2', '3', '4', '5'])
+@pytest.fixture(scope='module', autouse=True, params=['1', '2', '3', '4', '5'])
 def volume(tmpdir_factory, request):
     try:
         model_dir = os.path.join(tmpdir_factory.mktemp('test'), 'model')
         code_dir = os.path.join(model_dir, 'code')
         test_example = 'test/resources/examples/test{}'.format(request.param)
 
-        models_dir = 'test/resources/models'
-        shutil.copytree(models_dir, model_dir)
-        shutil.rmtree(code_dir, ignore_errors=True)  # clear existing /code dir
+        model_src_dir = 'test/resources/models'
+        shutil.copytree(model_src_dir, model_dir)
         shutil.copytree(test_example, code_dir)
 
+        volume_name = f'model_volume_{request.param}'
         subprocess.check_call(
-            'docker volume create --name model_inference_volume --opt type=none '
-            '--opt device={} --opt o=bind'.format(model_dir).split())
-        yield model_dir
+            'docker volume create --name {} --opt type=none '
+            '--opt device={} --opt o=bind'.format(volume_name, model_dir).split())
+        yield volume_name
     finally:
-        subprocess.check_call('docker volume prune -f'.split())
+        subprocess.check_call(f'docker volume rm {volume_name}'.split())
 
 
 @pytest.fixture(scope='module', autouse=True, params=['1.11', '1.12'])
-def container(request):
+def container(request, volume):
     try:
         command = (
             'docker run --name sagemaker-tensorflow-serving-test -p 8080:8080'
-            ' --mount type=volume,source=model_inference_volume,target=/opt/ml/model'
+            ' --mount type=volume,source={},target=/opt/ml/model,readonly'
             ' -e SAGEMAKER_TFS_DEFAULT_MODEL_NAME=half_plus_three'
             ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
             ' -e SAGEMAKER_BIND_TO_PORT=8080'
             ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
             ' sagemaker-tensorflow-serving:{}-cpu serve'
-        ).format(request.param)
+        ).format(volume, request.param)
 
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
@@ -95,8 +95,8 @@ def test_zero_content():
     headers = make_headers('application/json', 'predict')
     data = ''
     response = requests.post(INVOCATIONS_URL, data=data, headers=headers)
-    assert response.status_code == 500
-    assert 'Internal Server Error' in response.text
+    assert 500 == response.status_code
+    assert 'document is empty' in response.text
 
 
 def test_large_input():
@@ -120,10 +120,11 @@ def test_csv_input():
 def test_unsupported_content_type():
     headers = make_headers('unsupported-type', 'predict')
     data = 'aW1hZ2UgYnl0ZXM='
-    with pytest.raises(ValueError, message='Error: 415, Unsupported content type "unsupported-type"'):
-        requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
+    response = requests.post(INVOCATIONS_URL, data=data, headers=headers)
+    assert 500 == response.status_code
+    assert 'unsupported content type' in response.text
 
 
 def test_ping_service():
     response = requests.get(PING_URL)
-    assert response.status_code == 200
+    assert 200 == response.status_code

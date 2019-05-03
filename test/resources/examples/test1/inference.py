@@ -12,9 +12,7 @@
 # language governing permissions and limitations under the License.
 
 import json
-import re
 from collections import namedtuple
-
 
 Context = namedtuple('Context',
                      'model_name, model_version, method, rest_uri, grpc_uri, '
@@ -31,15 +29,19 @@ def input_handler(data, context):
     Returns:
         (dict): a JSON-serializable dict that contains request body and headers
     """
-
     if context.request_content_type == 'application/json':
-        data = _parse_json(data)
-    elif context.request_content_type == 'text/csv':
-        data = _parse_csv(data)
-    else:
-        _return_error(415, 'Unsupported content type "{}"'.format(context.request_content_type or 'Unknown'))
+        # pass through json (assumes it's correctly formed)
+        d = data.read().decode('utf-8')
+        return d if len(d) else ''
 
-    return data
+    if context.request_content_type == 'text/csv':
+        # very simple csv handler
+        return json.dumps({
+            'instances': [float(x) for x in data.read().decode('utf-8').split(',')]
+        })
+
+    raise ValueError('{{"error": "unsupported content type {}"}}'.format(
+        context.request_content_type or "unknown"))
 
 
 def output_handler(data, context):
@@ -53,26 +55,8 @@ def output_handler(data, context):
         (bytes, string): data to return to client, response content type
     """
     if data.status_code != 200:
-        raise Exception(data.content.decode('utf-8'))
+        raise ValueError(data.content.decode('utf-8'))
+
     response_content_type = context.accept_header
     prediction = data.content
     return prediction, response_content_type
-
-
-def _parse_json(data):
-    data = data.read().decode('utf-8')
-    if len(data) == 0:
-        return data
-    data_str = ''
-    for line in data.splitlines():
-        data_str += re.findall(r'\[([^\]]+)', line)[0]
-    return json.dumps({"instances": [float(i) for i in data_str.split(',')]})
-
-
-def _parse_csv(data):
-    data = data.read().decode('utf-8')
-    return json.dumps({"instances": [float(x) for x in data.split(',')]})
-
-
-def _return_error(code, message):
-    raise ValueError('Error: {}, {}'.format(str(code), message))

@@ -12,14 +12,12 @@
 # language governing permissions and limitations under the License.
 import os
 
-import boto3
-import botocore
 import pytest
 
 import util
 
 NON_P3_REGIONS = ['ap-southeast-1', 'ap-southeast-2', 'ap-south-1',
-                  'ca-central-1', 'eu-west-2', 'us-west-1']
+                  'ca-central-1', 'eu-central-1', 'eu-west-2', 'us-west-1']
 
 
 @pytest.fixture(params=os.environ['TEST_VERSIONS'].split(','))
@@ -50,48 +48,31 @@ def image_uri(registry, region, repo, tag):
 def instance_type(request, region):
     return request.param
 
+
 @pytest.fixture(scope='module')
 def accelerator_type():
     return None
 
+
 @pytest.fixture(scope='session')
-def model_data(region, boto_session):
-    account = boto_session.client('sts').get_caller_identity()['Account']
-    bucket = f'sagemaker-{region}-{account}'
-    key = 'test-tfs/test-model.tar.gz'
-
-    s3 = boto_session.client('s3')
-
-    try:
-        s3.head_bucket(Bucket=bucket)
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != '404':
-            raise
-
-        # bucket doesn't exist, create it
-        if region == 'us-east-1':
-            s3.create_bucket(Bucket=bucket)
-        else:
-            s3.create_bucket(Bucket=bucket,
-                             CreateBucketConfiguration={'LocationConstraint': region})
+def tfs_model(region, boto_session):
+    return util.find_or_put_model_data(region,
+                                       boto_session,
+                                       'test/data/tfs-model.tar.gz')
 
 
-    try:
-        s3.head_object(Bucket=bucket, Key=key)
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != '404':
-            raise
-
-        # file doesn't exist - upload it
-        file = 'test/data/test-model.tar.gz'
-        s3.upload_file(file, bucket, key)
-
-    return f's3://{bucket}/{key}'
+@pytest.fixture(scope='session')
+def python_model_with_requirements(region, boto_session):
+    return util.find_or_put_model_data(region,
+                                       boto_session,
+                                       'test/data/python-with-requirements.tar.gz')
 
 
-@pytest.fixture
-def input_data():
-    return {'instances': [1.0, 2.0, 5.0]}
+@pytest.fixture(scope='session')
+def python_model_with_lib(region, boto_session):
+    return util.find_or_put_model_data(region,
+                                       boto_session,
+                                       'test/data/python-with-lib.tar.gz')
 
 
 @pytest.fixture
@@ -101,9 +82,48 @@ def skip_if_p3_in_unsupported_region(region, instance_type):
 
 
 @pytest.mark.skip_if_p3_in_unsupported_region()
-def test_invoke_endpoint(region, boto_session, sagemaker_client, sagemaker_runtime_client,
-                         model_name, model_data, image_uri, instance_type, accelerator_type,
-                         input_data):
+def test_tfs_model(region, boto_session, sagemaker_client,
+                                     sagemaker_runtime_client, model_name, tfs_model,
+                                     image_uri, instance_type, accelerator_type):
+    input_data = {'instances': [1.0, 2.0, 5.0]}
     util.create_and_invoke_endpoint(region, boto_session, sagemaker_client,
-                                    sagemaker_runtime_client, model_name, model_data, image_uri,
+                                    sagemaker_runtime_client, model_name, tfs_model,
+                                    image_uri, instance_type, accelerator_type, input_data)
+
+
+def test_python_model_with_requirements(region, boto_session, sagemaker_client,
+                                     sagemaker_runtime_client, model_name,
+                                     python_model_with_requirements, image_uri, instance_type,
+                                     accelerator_type):
+
+    if 'p3' in instance_type:
+        pytest.skip('skip for p3 instance')
+
+    # the python service needs to transform this to get a valid prediction
+    input_data = {'x': [1.0, 2.0, 5.0]}
+    output_data = util.create_and_invoke_endpoint(region, boto_session, sagemaker_client,
+                                    sagemaker_runtime_client, model_name,
+                                    python_model_with_requirements, image_uri,
                                     instance_type, accelerator_type, input_data)
+
+    # python service adds this to tfs response
+    assert output_data['python'] is True
+    assert output_data['pillow'] == '6.0.0'
+
+
+def test_python_model_with_lib(region, boto_session, sagemaker_client,
+                                     sagemaker_runtime_client, model_name, python_model_with_lib,
+                                     image_uri, instance_type, accelerator_type):
+
+    if 'p3' in instance_type:
+        pytest.skip('skip for p3 instance')
+
+    # the python service needs to transform this to get a valid prediction
+    input_data = {'x': [1.0, 2.0, 5.0]}
+    output_data = util.create_and_invoke_endpoint(region, boto_session, sagemaker_client,
+                                    sagemaker_runtime_client, model_name, python_model_with_lib,
+                                    image_uri, instance_type, accelerator_type, input_data)
+
+    # python service adds this to tfs response
+    assert output_data['python'] is True
+    assert output_data['dummy_module'] == '0.1'
