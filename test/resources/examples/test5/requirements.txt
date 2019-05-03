@@ -1,1 +1,1 @@
-pillow
+Pillow==6.0.0

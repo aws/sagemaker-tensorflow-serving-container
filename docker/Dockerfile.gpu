@@ -57,7 +57,7 @@ RUN \
 
 # cython, falcon, gunicorn
 RUN \
-    pip3 install cython falcon gunicorn requests
+    pip3 install cython falcon gunicorn gevent requests
 
 COPY ./ /
 

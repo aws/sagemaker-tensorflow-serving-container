@@ -13,7 +13,9 @@
 import contextlib
 import json
 import logging
+import os
 
+import botocore
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,39 @@ def _production_variants(model_name, instance_type, accelerator_type):
 
     return production_variants
 
+def find_or_put_model_data(region, boto_session, local_path):
+    model_file = os.path.basename(local_path)
+
+    account = boto_session.client('sts').get_caller_identity()['Account']
+    bucket = f'sagemaker-{region}-{account}'
+    key = f'test-tfs/{model_file}'
+
+    s3 = boto_session.client('s3')
+
+    try:
+        s3.head_bucket(Bucket=bucket)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] != '404':
+            raise
+
+        # bucket doesn't exist, create it
+        if region == 'us-east-1':
+            s3.create_bucket(Bucket=bucket)
+        else:
+            s3.create_bucket(Bucket=bucket,
+                             CreateBucketConfiguration={'LocationConstraint': region})
+
+    try:
+        s3.head_object(Bucket=bucket, Key=key)
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] != '404':
+            raise
+
+        # file doesn't exist - upload it
+        s3.upload_file(local_path, bucket, key)
+
+    return f's3://{bucket}/{key}'
+
 
 @contextlib.contextmanager
 def sagemaker_endpoint(sagemaker_client, model_name, instance_type, accelerator_type=None):
@@ -88,6 +123,7 @@ def invoke_endpoint(sagemaker_runtime_client, endpoint_name, input_data):
                                                         Body=json.dumps(input_data))
     result = json.loads(response['Body'].read().decode())
     assert result['predictions'] is not None
+    return result
 
 
 def create_and_invoke_endpoint(region, boto_session, sagemaker_client, sagemaker_runtime_client,
@@ -95,4 +131,4 @@ def create_and_invoke_endpoint(region, boto_session, sagemaker_client, sagemaker
                                input_data):
     with sagemaker_model(region, boto_session, sagemaker_client, image_uri, model_name, model_data):
         with sagemaker_endpoint(sagemaker_client, model_name, instance_type, accelerator_type):
-            invoke_endpoint(sagemaker_runtime_client, model_name, input_data)
+            return invoke_endpoint(sagemaker_runtime_client, model_name, input_data)
