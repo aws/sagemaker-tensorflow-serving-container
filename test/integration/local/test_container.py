@@ -35,9 +35,18 @@ def volume():
         subprocess.check_call('docker volume rm model_volume'.split())
 
 
-@pytest.fixture(scope='module', autouse=True, params=['1.11', '1.12', '1.13'])
+@pytest.fixture(scope='module', autouse=True, params=[['1.11', True],
+                                                      ['1.11', False],
+                                                      ['1.12', True],
+                                                      ['1.12', False],
+                                                      ['1.13', True],
+                                                      ['1.13', False]])
 def container(request):
     try:
+        if request.param[1]:
+            batching_config = ' -e SAGEMAKER_TFS_ENABLE_BATCHING=true'
+        else:
+            batching_config = ''
         command = (
             'docker run --name sagemaker-tensorflow-serving-test -p 8080:8080'
             ' --mount type=volume,source=model_volume,target=/opt/ml/model,readonly'
@@ -45,8 +54,9 @@ def container(request):
             ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
             ' -e SAGEMAKER_BIND_TO_PORT=8080'
             ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
+            ' {}'
             ' sagemaker-tensorflow-serving:{}-cpu serve'
-        ).format(request.param)
+        ).format(batching_config, request.param[0])
 
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
@@ -82,6 +92,17 @@ def test_predict():
 
     y = make_request(json.dumps(x))
     assert y == {'predictions': [3.5, 4.0, 5.5]}
+
+
+def test_predict_twice():
+    x = {
+        'instances': [1.0, 2.0, 5.0]
+    }
+
+    y = make_request(json.dumps(x))
+    z = make_request(json.dumps(x))
+    assert y == {'predictions': [3.5, 4.0, 5.5]}
+    assert z == {'predictions': [3.5, 4.0, 5.5]}
 
 
 def test_predict_two_instances():
@@ -210,3 +231,17 @@ def test_predict_bad_input_instances():
     x = json.dumps({'junk': 'data'})
     y = make_request(x)
     assert y['error'].startswith('Failed to process element: 0 key: junk of \'instances\' list.')
+
+
+def test_predict_no_custom_attributes_header():
+    x = {
+        'instances': [1.0, 2.0, 5.0]
+    }
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    response = requests.post(BASE_URL, data=json.dumps(x), headers=headers)
+    y = json.loads(response.content.decode('utf-8'))
+
+    assert y == {'predictions': [3.5, 4.0, 5.5]}

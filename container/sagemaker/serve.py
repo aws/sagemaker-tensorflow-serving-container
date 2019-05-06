@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 
 import logging
+import multiprocessing
 import os
 import re
 import signal
@@ -20,23 +21,41 @@ import subprocess
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
+JS_PING = 'js_content ping'
+JS_INVOCATIONS = 'js_content invocations'
+GUNICORN_PING = 'proxy_pass http://gunicorn_upstream/ping'
+GUNICORN_INVOCATIONS = 'proxy_pass http://gunicorn_upstream/invocations'
+
+PYTHON_LIB_PATH = '/opt/ml/model/code/lib'
+REQUIREMENTS_PATH = '/opt/ml/model/code/requirements.txt'
+INFERENCE_PATH = '/opt/ml/model/code/inference.py'
+
 
 class ServiceManager(object):
     def __init__(self):
         self._state = 'initializing'
         self._nginx = None
         self._tfs = None
+        self._gunicorn = None
+        self._gunicorn_command = None
+        self._use_gunicorn = os.path.exists(INFERENCE_PATH)
         self._tfs_version = os.environ.get('SAGEMAKER_TFS_VERSION', '1.13')
         self._nginx_http_port = os.environ.get('SAGEMAKER_BIND_TO_PORT', '8080')
         self._nginx_loglevel = os.environ.get('SAGEMAKER_TFS_NGINX_LOGLEVEL', 'error')
         self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', None)
+
+        _enable_batching = os.environ.get('SAGEMAKER_TFS_ENABLE_BATCHING', 'false').lower()
+
+        if _enable_batching not in ['true', 'false']:
+            raise ValueError('SAGEMAKER_TFS_ENABLE_BATCHING must be "true" or "false"')
+        self._tfs_enable_batching = _enable_batching == 'true'
 
         if 'SAGEMAKER_SAFE_PORT_RANGE' in os.environ:
             port_range = os.environ['SAGEMAKER_SAFE_PORT_RANGE']
             parts = port_range.split('-')
             low = int(parts[0])
             hi = int(parts[1])
-            if low + 1 > hi:
+            if low + 2 > hi:
                 raise ValueError('not enough ports available in SAGEMAKER_SAFE_PORT_RANGE ({})'
                                  .format(port_range))
             self._tfs_grpc_port = str(low)
@@ -45,6 +64,10 @@ class ServiceManager(object):
             # just use the standard default ports
             self._tfs_grpc_port = '9000'
             self._tfs_rest_port = '8501'
+
+        # set environment variable for python service
+        os.environ['TFS_GRPC_PORT'] = self._tfs_grpc_port
+        os.environ['TFS_REST_PORT'] = self._tfs_rest_port
 
     def _create_tfs_config(self):
         models = self._find_models()
@@ -71,6 +94,61 @@ class ServiceManager(object):
         with open('/sagemaker/model-config.cfg', 'w') as f:
             f.write(config)
 
+    def _create_batching_config(self):
+
+        class _BatchingParameter:
+            def __init__(self, key, env_var, value, defaulted_message):
+                self.key = key
+                self.env_var = env_var
+                self.value = value
+                self.defaulted_message = defaulted_message
+
+        cpu_count = multiprocessing.cpu_count()
+        batching_parameters = [
+            _BatchingParameter('max_batch_size', 'SAGEMAKER_TFS_MAX_BATCH_SIZE', 8,
+                               "max_batch_size defaulted to {}. Set {} to override default. "
+                               "Tuning this parameter may yield better performance."),
+            _BatchingParameter('batch_timeout_micros', 'SAGEMAKER_TFS_BATCH_TIMEOUT_MICROS', 1000,
+                               "batch_timeout_micros defaulted to {}. Set {} to override "
+                               "default. Tuning this parameter may yield better performance."),
+            _BatchingParameter('num_batch_threads', 'SAGEMAKER_TFS_NUM_BATCH_THREADS',
+                               cpu_count, "num_batch_threads defaulted to {},"
+                               "the number of CPUs. Set {} to override default."),
+            _BatchingParameter('max_enqueued_batches', 'SAGEMAKER_TFS_MAX_ENQUEUED_BATCHES',
+                               # Batch limits number of concurrent requests, which limits number
+                               # of enqueued batches, so this can be set high for Batch
+                               100000000 if 'SAGEMAKER_BATCH' in os.environ else cpu_count,
+                               "max_enqueued_batches defaulted to {}. Set {} to override default. "
+                               "Tuning this parameter may be necessary to tune out-of-memory "
+                               "errors occur."),
+        ]
+
+        warning_message = ''
+        for batching_parameter in batching_parameters:
+            if batching_parameter.env_var in os.environ:
+                batching_parameter.value = os.environ[batching_parameter.env_var]
+            else:
+                warning_message += batching_parameter.defaulted_message.format(
+                    batching_parameter.value, batching_parameter.env_var)
+                warning_message += '\n'
+        if warning_message:
+            log.warning(warning_message)
+
+        config = ''
+        for batching_parameter in batching_parameters:
+            config += '%s { value: %s }\n' % (batching_parameter.key, batching_parameter.value)
+
+        log.info('batching config: \n%s\n', config)
+        with open('/sagemaker/batching-config.cfg', 'w') as f:
+            f.write(config)
+
+    def _get_tfs_batching_args(self):
+        if self._tfs_enable_batching:
+            return "--enable_batching=true " \
+                   "--batching_parameters_file=/sagemaker/batching-config.cfg"
+        else:
+            return ""
+
     def _find_models(self):
         base_path = '/opt/ml/model'
         models = []
@@ -90,6 +168,35 @@ class ServiceManager(object):
                 if e.name == 'saved_model.pb':
                     yield os.path.join(path, e.name)
 
+    def _setup_gunicorn(self):
+        lib_path_exists = os.path.exists(PYTHON_LIB_PATH)
+        requirements_exists = os.path.exists(REQUIREMENTS_PATH)
+        python_path_content = ['/opt/ml/model/code']
+
+        if lib_path_exists:
+            python_path_content.append(PYTHON_LIB_PATH)
+
+        if requirements_exists:
+            if lib_path_exists:
+                log.warning('loading modules in "{}", ignoring requirements.txt'
+                            .format(PYTHON_LIB_PATH))
+            else:
+                log.info('installing packages from requirements.txt...')
+                pip_install_cmd = 'pip3 install -r {}'.format(REQUIREMENTS_PATH)
+                try:
+                    subprocess.check_call(pip_install_cmd.split())
+                except subprocess.CalledProcessError:
+                    log.error('failed to install required packages, exiting.')
+                    self._stop()
+                    raise ChildProcessError('failed to install required packages.')
+
+        gunicorn_command = (
+            'gunicorn -b unix:/tmp/gunicorn.sock -k gevent --chdir /sagemaker '
+            '--pythonpath {} python_service:app').format(','.join(python_path_content))
+
+        log.info('gunicorn command: {}'.format(gunicorn_command))
+        self._gunicorn_command = gunicorn_command
+
     def _create_nginx_config(self):
         template = self._read_nginx_template()
         pattern = re.compile(r'%(\w+)%')
@@ -98,7 +205,10 @@ class ServiceManager(object):
             'TFS_REST_PORT': self._tfs_rest_port,
             'TFS_DEFAULT_MODEL_NAME': self._tfs_default_model_name,
             'NGINX_HTTP_PORT': self._nginx_http_port,
-            'NGINX_LOG_LEVEL': self._nginx_loglevel
+            'NGINX_LOG_LEVEL': self._nginx_loglevel,
+            'FORWARD_PING_REQUESTS': GUNICORN_PING if self._use_gunicorn else JS_PING,
+            'FORWARD_INVOCATION_REQUESTS': GUNICORN_INVOCATIONS if self._use_gunicorn
+            else JS_INVOCATIONS,
         }
 
         config = pattern.sub(lambda x: template_values[x.group(1)], template)
@@ -118,12 +228,21 @@ class ServiceManager(object):
     def _start_tfs(self):
         self._log_version('tensorflow_model_server --version', 'tensorflow version info:')
         tfs_config_path = '/sagemaker/model-config.cfg'
-        cmd = "tensorflow_model_server --port={} --rest_api_port={} --model_config_file={}".format(
-            self._tfs_grpc_port, self._tfs_rest_port, tfs_config_path)
+        cmd = "tensorflow_model_server --port={} --rest_api_port={} --model_config_file={} {}"\
+            .format(self._tfs_grpc_port, self._tfs_rest_port, tfs_config_path,
+                    self._get_tfs_batching_args())
         log.info('tensorflow serving command: {}'.format(cmd))
         p = subprocess.Popen(cmd.split())
         log.info('started tensorflow serving (pid: %d)', p.pid)
         self._tfs = p
+
+    def _start_gunicorn(self):
+        self._log_version('gunicorn --version', 'gunicorn version info:')
+        env = os.environ.copy()
+        env['TFS_DEFAULT_MODEL_NAME'] = self._tfs_default_model_name
+        p = subprocess.Popen(self._gunicorn_command.split(), env=env)
+        log.info('started gunicorn (pid: %d)', p.pid)
+        self._gunicorn = p
 
     def _start_nginx(self):
         self._log_version('/usr/sbin/nginx -V', 'nginx version info:')
@@ -148,6 +267,11 @@ class ServiceManager(object):
         except OSError:
             pass
         try:
+            if self._gunicorn:
+                os.kill(self._gunicorn.pid, signal.SIGTERM)
+        except OSError:
+            pass
+        try:
             os.kill(self._tfs.pid, signal.SIGTERM)
         except OSError:
             pass
@@ -163,7 +287,16 @@ class ServiceManager(object):
         self._create_tfs_config()
         self._create_nginx_config()
 
+        if self._tfs_enable_batching:
+            log.info('batching is enabled')
+            self._create_batching_config()
+
         self._start_tfs()
+
+        if self._use_gunicorn:
+            self._setup_gunicorn()
+            self._start_gunicorn()
+
         self._start_nginx()
         self._state = 'started'
 
@@ -181,6 +314,11 @@ class ServiceManager(object):
                 log.warning(
                     'unexpected tensorflow serving exit (status: {}). restarting.'.format(status))
                 self._start_tfs()
+
+            elif self._gunicorn and pid == self._gunicorn.pid:
+                log.warning('unexpected gunicorn exit (status: {}). restarting.'
+                            .format(status))
+                self._start_gunicorn()
 
         self._stop()
 

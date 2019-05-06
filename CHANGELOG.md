@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.3.0 (2019-05-06)
+
+### Features
+
+ * add tensorflow serving batching
+
+### Bug fixes and other changes
+
+ * install requirements.txt in writable dir
+
+## v1.2.1 (2019-04-29)
+
+### Bug fixes and other changes
+
+ * make njs code handle missing custom attributes header
+
+## v1.2.0 (2019-04-29)
+
+### Features
+
+ * add python service for pre/post-processing
+
 ## v1.1.9 (2019-04-09)
 
 ### Bug fixes and other changes
