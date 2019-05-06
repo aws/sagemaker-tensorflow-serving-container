@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.3.0 (2019-05-06)
+
+### Features
+
+ * add tensorflow serving batching
+
+### Bug fixes and other changes
+
+ * install requirements.txt in writable dir
+
 ## v1.2.1 (2019-04-29)
 
 ### Bug fixes and other changes
