@@ -18,6 +18,16 @@ phases:
       # build images
       - ./scripts/build-all.sh
 
+      # push docker images to pr repository
+      - ./scripts/publish.sh --version 1.11.1 --arch cpu --repository sagemaker-test
+      - ./scripts/publish.sh --version 1.11.1 --arch gpu --repository sagemaker-test
+      - ./scripts/publish.sh --version 1.12.0 --arch cpu --repository sagemaker-test
+      - ./scripts/publish.sh --version 1.12.0 --arch gpu --repository sagemaker-test
+      - ./scripts/publish.sh --version 1.13.0 --arch cpu --repository sagemaker-test
+      - ./scripts/publish.sh --version 1.13.0 --arch gpu --repository sagemaker-test
+      - ./scripts/publish.sh --version 1.11 --arch eia --repository sagemaker-test
+      - ./scripts/publish.sh --version 1.12 --arch eia --repository sagemaker-test
+
       # run tests
       - tox -e py36
 

@@ -100,6 +100,11 @@ function parse_std_args() {
         shift
         shift
         ;;
+        -p|--repository)
+        repository="$2"
+        shift
+        shift
+        ;;
         *) # unknown option
         error "unknown option: $1"
         shift
