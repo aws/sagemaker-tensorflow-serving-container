@@ -1,22 +1,16 @@
 #!/bin/bash
 #
-# Script to build all versions of TFS and EIA containers.
+# Build all the docker images.
 
-tfs_versions=( "1.11.1" "1.12.0" "1.13.0" )
-tfs_arches=( "cpu" "gpu" )
-eia_versions=( "1.11" "1.12" )
+set -euo pipefail
 
-for version in "${tfs_versions[@]}"
-do
-    for arch in "${tfs_arches[@]}"
-    do
-        echo "Building TFS container for version $version arch $arch"
-        ./scripts/build.sh --version $version --arch $arch
-    done
-done
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-for eia_version in "${eia_versions[@]}"
-do
-    echo "Building EIA container for version $eia_version"
-    ./scripts/build.sh --version $eia_version --arch eia
-done
+${DIR}/build.sh --version 1.11.1 --arch cpu
+${DIR}/build.sh --version 1.11.1 --arch gpu
+${DIR}/build.sh --version 1.12.0 --arch cpu
+${DIR}/build.sh --version 1.12.0 --arch gpu
+${DIR}/build.sh --version 1.13.0 --arch cpu
+${DIR}/build.sh --version 1.13.0 --arch gpu
+${DIR}/build.sh --version 1.11 --arch eia
+${DIR}/build.sh --version 1.12 --arch eia
