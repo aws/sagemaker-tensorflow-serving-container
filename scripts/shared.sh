@@ -118,6 +118,7 @@ function parse_std_args() {
     [[ -z "${aws_region// }" ]] && error 'missing aws region'
 
     [[ "$arch" = eia ]] && repository=$repository'-'$arch
+    [[ "$arch" = eia ]] && test_repository=$test_repository'-'$arch
 
     full_version=$(get_full_version $version)
     short_version=$(get_short_version $version)

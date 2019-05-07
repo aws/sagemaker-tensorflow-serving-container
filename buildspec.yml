@@ -29,7 +29,9 @@ phases:
       - ./scripts/publish.sh --version 1.12 --arch eia --repository sagemaker-test
 
       # run tests
-      - tox -e py36
+      - tox -e py36 test/integration/local
+      - tox -e py36 test/integration/sagemaker/test_tfs.py --repo sagemaker-test
+      - tox -e py36 test/integration/sagemaker/test_ei.py --repo sagemaker-test-eia
 
       # push docker images to ECR
       - |
