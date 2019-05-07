@@ -77,6 +77,7 @@ function parse_std_args() {
     arch='cpu'
     version='1.13.0'
     repository='sagemaker-tensorflow-serving'
+    test_repository='sagemaker-test'
 
     aws_region=$(get_default_region)
     aws_account=$(get_aws_account)
