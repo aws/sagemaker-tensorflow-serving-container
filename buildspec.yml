@@ -25,13 +25,13 @@ phases:
       - ./scripts/publish.sh --version 1.12.0 --arch gpu --repository sagemaker-test
       - ./scripts/publish.sh --version 1.13.0 --arch cpu --repository sagemaker-test
       - ./scripts/publish.sh --version 1.13.0 --arch gpu --repository sagemaker-test
-      - ./scripts/publish.sh --version 1.11 --arch eia --repository sagemaker-test
-      - ./scripts/publish.sh --version 1.12 --arch eia --repository sagemaker-test
+      - ./scripts/publish.sh --version 1.11 --arch eia --repository sagemaker-test-eia
+      - ./scripts/publish.sh --version 1.12 --arch eia --repository sagemaker-test-eia
 
       # run tests
       - tox -e py36 test/integration/local
-      - tox -e py36 test/integration/sagemaker/test_tfs.py --repo sagemaker-test
-      - tox -e py36 test/integration/sagemaker/test_ei.py --repo sagemaker-test-eia
+      - tox -e py36 -- test/integration/sagemaker/test_tfs.py --repo sagemaker-test
+      - tox -e py36 -- test/integration/sagemaker/test_ei.py --repo sagemaker-test-eia
 
       # push docker images to ECR
       - |
