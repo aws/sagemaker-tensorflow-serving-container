@@ -46,7 +46,7 @@ def volume(tmpdir_factory, request):
         subprocess.check_call(f'docker volume rm {volume_name}'.split())
 
 
-@pytest.fixture(scope='module', autouse=True, params=['1.11', '1.12'])
+@pytest.fixture(scope='module', autouse=True, params=['1.11', '1.12', '1.13'])
 def container(request, volume):
     try:
         command = (

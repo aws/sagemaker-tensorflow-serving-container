@@ -31,7 +31,7 @@ def volume():
         subprocess.check_call('docker volume rm batching_model_volume'.split())
 
 
-@pytest.mark.parametrize("version", ['1.11', '1.12'])
+@pytest.mark.parametrize("version", ['1.11', '1.12', '1.13'])
 def test_run_tfs_with_batching_parameters(version):
 
     try:
