@@ -16,12 +16,7 @@ phases:
       - tox -e jshint,flake8,pylint
 
       # build images
-      - ./scripts/build.sh --version 1.11.1 --arch cpu
-      - ./scripts/build.sh --version 1.11.1 --arch gpu
-      - ./scripts/build.sh --version 1.12.0 --arch cpu
-      - ./scripts/build.sh --version 1.12.0 --arch gpu
-      - ./scripts/build.sh --version 1.11 --arch eia
-      - ./scripts/build.sh --version 1.12 --arch eia
+      - ./scripts/build-all.sh
 
       # run tests
       - tox -e py36
@@ -29,12 +24,7 @@ phases:
       # push docker images to ECR
       - |
         if is-release-build; then
-          ./scripts/publish.sh --version 1.11.1 --arch cpu
-          ./scripts/publish.sh --version 1.11.1 --arch gpu
-          ./scripts/publish.sh --version 1.12.0 --arch cpu
-          ./scripts/publish.sh --version 1.12.0 --arch gpu
-          ./scripts/publish.sh --version 1.11 --arch eia
-          ./scripts/publish.sh --version 1.12 --arch eia
+          ./scripts/publish-all.sh
         fi
 
       # write deployment details to file
