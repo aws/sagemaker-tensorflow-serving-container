@@ -17,6 +17,7 @@ For notebook examples, see: [Amazon SageMaker Examples](https://github.com/awsla
 1. [Getting Started](#getting-started)
 2. [Building your image](#building-your-image)
 3. [Running the tests](#running-the-tests)
+4. [Pre/Post-Processing](#pre/post-processing)
 
 ## Getting Started
 
@@ -123,6 +124,16 @@ For example:
         --instance_type ml.m5.xlarge \
         --accelerator-type ml.eia1.medium \
         --versions 1.12.0
+
+## Pre/Post-Processing
+
+You can add your customized Python code to process your input and output data. To make it work, here are some few things you need to pay attention:
+1. The customized Python code file should be named `inference.py` and it should be under `code` directory of your model archive.
+2. `inference.py` should implement either a pair of `input_handler` and `output_handler` functions or a single `handler` function. Note that if `handler` function is implemented, `input_handler` and `output_handler` will be ignored.
+
+You can also bring in external dependencies to help with your data processing. There are 2 ways to do this:
+1. If your model archive contains `code/requirements.txt`, the container will install the python dependencies at runtime using `pip install -r`.
+2. If you have pre-installed modules under `code/lib` directory in your model archive, the container will add the modules to the Python path. Note that if both `code/lib` and `code/requirements.txt` are present in the model archive, the `requirements.txt` will be ignored.
 
 ## Contributing
 
