@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.3.1.post0 (2019-05-16)
+
+### Documentation changes
+
+ * add pre-post-processing documentation
+
 ## v1.3.1 (2019-05-08)
 
 ### Bug fixes and other changes
