@@ -280,7 +280,7 @@ where "12345" is your TensorFlow serving model version which contains your Saved
 After uploading your `model.tar.gz` to an S3 URI, such as `s3://your-bucket/your-models/model.tar.gz`, create a [SageMaker Model](https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateModel.html) which will be used to generate inferences. Set `PrimaryContainer.ModelDataUrl` to the S3 URI where you uploaded the `model.tar.gz`, and set `PrimaryContainer.Image` to an image following this format:
 
 ```
-520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving:{TENSORFLOW_SERVING_VERSION}-{cpu|gpu}
+520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving:{TENSORFLOW_SERVING_VERSION}-{cpu|gpu|eia}
 ```
 
 Where `REGION` is your AWS region, such as "us-east-1" or "eu-west-1"; `TENSORFLOW_SERVING_VERSION` is one of the supported versions: "1.11" or "1.12"; and "gpu" for use on GPU-based instance types like ml.p3.2xlarge, or "cpu" for use on CPU-based instances like `ml.c5.xlarge`.
