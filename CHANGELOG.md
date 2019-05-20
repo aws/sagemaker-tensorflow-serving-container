@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3.1.post1 (2019-05-20)
+
+### Documentation changes
+
+ * update README.md
+ * add pre/post-processing usage examples
+
 ## v1.3.1.post0 (2019-05-16)
 
 ### Documentation changes
