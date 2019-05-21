@@ -14,7 +14,6 @@ RUN \
     apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
         cuda-command-line-tools-10-0 \
-        cuda-command-line-tools-10-0 \
         cuda-cublas-10-0 \
         cuda-cufft-10-0 \
         cuda-curand-10-0 \
