@@ -47,7 +47,7 @@ def volume(tmpdir_factory, request):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def container(request, volume, docker_base_name, framework_version, processor):
+def container(request, volume, docker_base_name, tag):
     try:
         command = (
             'docker run --name sagemaker-tensorflow-serving-test -p 8080:8080'
@@ -56,8 +56,8 @@ def container(request, volume, docker_base_name, framework_version, processor):
             ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
             ' -e SAGEMAKER_BIND_TO_PORT=8080'
             ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
-            ' {}:{}-{} serve'
-        ).format(volume, docker_base_name, framework_version, processor)
+            ' {}:{} serve'
+        ).format(volume, docker_base_name, tag)
 
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
