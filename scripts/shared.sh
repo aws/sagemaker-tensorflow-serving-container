@@ -61,15 +61,9 @@ function get_device_type() {
 }
 
 function get_dockerfile_name() {
-
-    full_version=$(get_full_version $1)
+    short_version=$(get_short_version $1)
     arch=$2
-
-    if [[ $full_version = '1.12.0' ]] || [[ $full_version = '1.11.1' ]] || [[ $full_version = '1.11.0' ]]; then
-        echo "Dockerfile.$arch"
-    else
-        echo "Dockerfile.1-13-$arch"
-    fi
+    echo "$short_version/Dockerfile.$arch"
 }
 
 function parse_std_args() {
