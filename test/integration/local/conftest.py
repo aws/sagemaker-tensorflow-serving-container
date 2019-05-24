@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -13,12 +13,16 @@
 
 import pytest
 
+FRAMEWORK_LATEST_VERSION = '1.12'
+TFS_DOCKER_BASE_NAME = 'sagemaker-tensorflow-serving'
+
 
 def pytest_addoption(parser):
-    parser.addoption('--docker-base-name', default='sagemaker-tensorflow-serving')
-    parser.addoption('--framework-version', default='1.12', choices=['1.11', '1.12'])
-    parser.addoption('--processor', default='cpu', choices=['cpu', 'gpu'])
+    parser.addoption('--docker-base-name', default=TFS_DOCKER_BASE_NAME)
+    parser.addoption('--framework-version', default=FRAMEWORK_LATEST_VERSION, required=True)
+    parser.addoption('--processor', default='cpu')
     parser.addoption('--enable-batch', default='False', choices=['True', 'False'])
+    parser.addoption('--tag')
 
 
 @pytest.fixture(scope='module')
@@ -39,3 +43,11 @@ def processor(request):
 @pytest.fixture(scope='module')
 def enable_batch(request):
     return request.config.getoption('--enable-batch') == 'True'
+
+
+@pytest.fixture(scope='module')
+def tag(request, framework_version, processor):
+    image_tag = request.config.getoption('--tag')
+    if not image_tag:
+        image_tag = '{}-{}'.format(framework_version, processor)
+    return image_tag
