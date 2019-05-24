@@ -1,27 +1,90 @@
-ARG TFS_VERSION
+FROM ubuntu:16.04
 
-FROM tensorflow/serving:${TFS_VERSION} as tfs
-FROM ubuntu:18.04
+LABEL maintainer="Amazon AI"
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
-
-COPY --from=tfs /usr/bin/tensorflow_model_server /usr/bin/tensorflow_model_server
 
 # nginx + njs
 RUN \
     apt-get update && \
-    apt-get -y install --no-install-recommends curl gnupg2 && \
+    apt-get -y install --no-install-recommends curl gnupg2 ca-certificates git wget vim build-essential zlib1g-dev && \
     curl -s http://nginx.org/keys/nginx_signing.key | apt-key add - && \
     echo 'deb http://nginx.org/packages/ubuntu/ xenial nginx' >> /etc/apt/sources.list && \
     apt-get update && \
-    apt-get -y install --no-install-recommends nginx nginx-module-njs python3 python3-pip python3-setuptools && \
+    apt-get -y install --no-install-recommends nginx nginx-module-njs && \
     apt-get clean
+
+# See http://bugs.python.org/issue19846
+ENV LANG C.UTF-8
+
+# Add arguments to achieve the version, python and url
+#  PYTHON=python for 2.7
+#  PYTHON=python3 for 3.5, 3.6 is not available directly on 16.04
+ARG PYTHON=python3
+
+# user python-pip or python3-pip
+ARG PYTHON_PIP=python3-pip
+
+#  PIP=pip for 2.7
+#  PIP=pip3 for 3.5, 3.6 is not available directly on 16.04
+ARG PIP=pip3
+ARG PYTHON_VERSION=3.6.6
+
+RUN wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz && \
+    tar -xvf Python-$PYTHON_VERSION.tgz && cd Python-$PYTHON_VERSION && \
+    ./configure && make && make install && \
+    apt-get update && apt-get install -y --no-install-recommends libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev && \
+    make && make install && rm -rf ../Python-$PYTHON_VERSION* && \
+    ln -s /usr/local/bin/pip3 /usr/bin/pip
+
+# Python won’t try to write .pyc or .pyo files on the import of source modules
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
 # cython, falcon, gunicorn
 RUN \
-    pip3 install cython falcon gunicorn gevent requests
+    ${PIP} install cython falcon gunicorn gevent requests
 
 COPY ./ /
 
 ARG TFS_SHORT_VERSION
 ENV SAGEMAKER_TFS_VERSION "${TFS_SHORT_VERSION}"
 ENV PATH "$PATH:/sagemaker"
+
+RUN ${PIP} --no-cache-dir install  --upgrade pip setuptools
+
+# Some TF tools expect a "python" binary
+RUN ln -s $(which ${PYTHON}) /usr/local/bin/python
+
+RUN curl https://s3.amazonaws.com/dlamidrivers/mkldnn-v0.15-artifacts-ubuntu/libiomp5.so -o /usr/local/lib/libiomp5.so
+RUN curl https://s3.amazonaws.com/dlamidrivers/mkldnn-v0.15-artifacts-ubuntu/libmklml_intel.so -o /usr/local/lib/libmklml_intel.so
+
+ENV LD_LIBRARY_PATH '/usr/local/lib:$LD_LIBRARY_PATH'
+
+RUN curl https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/Serving/CPU-WITH-MKL/tensorflow_model_server -o tensorflow_model_server && \
+chmod 555 tensorflow_model_server && cp tensorflow_model_server /usr/bin/tensorflow_model_server && \
+rm -f tensorflow_model_server
+
+RUN ${PIP} install -U --no-cache-dir awscli==1.16.130
+
+# Expose ports
+# gRPC
+EXPOSE 8500
+
+# REST
+EXPOSE 8501
+
+# Set where models should be stored in the container
+ENV MODEL_BASE_PATH=/models
+RUN mkdir -p ${MODEL_BASE_PATH}
+
+# The only required piece is the model name in order to differentiate endpoints
+ENV MODEL_NAME=model
+
+# Create a script that runs the model server so we can use environment variables
+# while also passing in arguments from the docker command line
+RUN echo '#!/bin/bash \n\n\
+tensorflow_model_server --port=8500 --rest_api_port=8501 \
+--model_name=${MODEL_NAME} --model_base_path=${MODEL_BASE_PATH}/${MODEL_NAME} \
+"$@"' > /usr/bin/tf_serving_entrypoint.sh \
+&& chmod +x /usr/bin/tf_serving_entrypoint.sh
+
+CMD ["/usr/bin/tf_serving_entrypoint.sh"]
