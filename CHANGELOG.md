@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3.2 (2019-05-29)
+
+### Bug fixes and other changes
+
+ * change Dockerfile directory structure
+ * allow local test against single container
+
 ## v1.3.1.post1 (2019-05-20)
 
 ### Documentation changes
