@@ -240,3 +240,17 @@ def test_predict_no_custom_attributes_header():
     y = json.loads(response.content.decode('utf-8'))
 
     assert y == {'predictions': [3.5, 4.0, 5.5]}
+
+def test_predict_with_jsonlines():
+    x = {
+        'instances': [1.0, 2.0, 5.0]
+    }
+
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept':  'application/jsonlines'
+    }
+    response = requests.post(BASE_URL, data=json.dumps(x), headers=headers)
+    y = json.loads(response.content.decode('utf-8'))
+
+    assert y == '{    "predictions": [[3.5, 4.0], [4.5, 5.0]    ]}'

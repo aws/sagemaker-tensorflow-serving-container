@@ -71,6 +71,7 @@ function tfs_json_request(r, json) {
         body: json
     }
 
+    var accept = r.headersIn.Accept
     function callback (reply) {
         var body = reply.responseBody
         if (reply.status == 400) {
@@ -78,10 +79,14 @@ function tfs_json_request(r, json) {
             body = body.replace("\\'instances\\'", "'instances'")
         }
 
+        if (accept == 'application/jsonlines') {
+            body = body.replace(/\n/g, '')
+        }
         r.return(reply.status, body)
     }
 
     r.subrequest(uri, options, callback)
+
 }
 
 function make_tfs_uri(r, with_method) {
