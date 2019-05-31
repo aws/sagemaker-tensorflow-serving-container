@@ -79,9 +79,9 @@ function tfs_json_request(r, json) {
             body = body.replace("\\'instances\\'", "'instances'")
         }
 
-        if (accept == 'application/jsonlines') {
+        if ('application/jsonlines' == accept || 'application/jsons' == accept) {
             body = body.replace(/\n/g, '')
-            reply.headers['Content-Type'] = 'application/jsonlines'
+            r.headersOut['Content-Type'] = accept
         }
         r.return(reply.status, body)
     }
