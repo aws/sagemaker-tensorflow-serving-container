@@ -110,6 +110,16 @@ checkers using `tox`:
 tox
 ```
 
+To run local tests against a single container or with other options, you can use the following command:
+
+```bash
+python -m pytest test/integration/local 
+    [--docker-name-base <docker_name_base>]
+    [--framework-version <framework_version>]
+    [--processor-type <processor_type>]
+    [--enable-batch <ues_bactch>]
+```
+
 To test against Elastic Inference with Accelerator, you will need an AWS account, publish your built image to ECR repository and run the following command:
 
     tox -e py36 -- test/integration/sagemaker/test_ei.py

@@ -1,0 +1,25 @@
+FROM ubuntu:16.04
+LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
+
+ARG TFS_SHORT_VERSION
+
+# nginx + njs
+RUN \
+    apt-get update && \
+    apt-get -y install --no-install-recommends curl && \
+    curl -s http://nginx.org/keys/nginx_signing.key | apt-key add - && \
+    echo 'deb http://nginx.org/packages/ubuntu/ xenial nginx' >> /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get -y install --no-install-recommends nginx nginx-module-njs python3 python3-pip python3-setuptools && \
+    apt-get clean
+
+# cython, falcon, gunicorn
+RUN \
+    pip3 install cython falcon gunicorn gevent requests
+
+COPY ./ /
+RUN mv amazonei_tensorflow_model_server /usr/bin/tensorflow_model_server && \
+    chmod +x /usr/bin/tensorflow_model_server
+
+ENV SAGEMAKER_TFS_VERSION "${TFS_SHORT_VERSION}"
+ENV PATH "$PATH:/sagemaker"
