@@ -251,6 +251,5 @@ def test_predict_with_jsonlines():
         'Accept':  'application/jsonlines'
     }
     response = requests.post(BASE_URL, data=json.dumps(x), headers=headers)
-    y = json.loads(response.content.decode('utf-8'))
-
-    assert y == '{    "predictions": [[3.5, 4.0], [4.5, 5.0]    ]}'
+    assert response.headers['Content-Type'] == 'application/jsonlines'
+    assert response.content.decode('utf-8') == '{    "predictions": [[3.5, 4.0], [4.5, 5.0]    ]}'

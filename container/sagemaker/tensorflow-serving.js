@@ -81,6 +81,7 @@ function tfs_json_request(r, json) {
 
         if (accept == 'application/jsonlines') {
             body = body.replace(/\n/g, '')
+            reply.headers['Content-Type'] = 'application/jsonlines'
         }
         r.return(reply.status, body)
     }
