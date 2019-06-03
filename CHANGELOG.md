@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.4.0 (2019-06-03)
+
+### Features
+
+ * support jsonlines output
+
+### Documentation changes
+
+ * update README.md for EI image
+
 ## v1.3.2 (2019-05-29)
 
 ### Bug fixes and other changes
