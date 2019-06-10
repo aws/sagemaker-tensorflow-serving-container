@@ -35,10 +35,13 @@ def volume():
         subprocess.check_call('docker volume rm model_volume'.split())
 
 
-@pytest.fixture(scope='module', autouse=True)
-def container(enable_batch, docker_base_name, tag):
+@pytest.fixture(scope='module', autouse=True, params=[['1.11', True],
+                                                      ['1.11', False],
+                                                      ['1.12', True],
+                                                      ['1.12', False]])
+def container(request, docker_base_name, processor):
     try:
-        if enable_batch:
+        if request.param[1]:
             batching_config = ' -e SAGEMAKER_TFS_ENABLE_BATCHING=true'
         else:
             batching_config = ''
@@ -50,8 +53,8 @@ def container(enable_batch, docker_base_name, tag):
             ' -e SAGEMAKER_BIND_TO_PORT=8080'
             ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
             ' {}'
-            ' {}:{} serve'
-        ).format(batching_config, docker_base_name, tag)
+            ' {}:{}-{} serve'
+        ).format(batching_config, docker_base_name, request.param[0], processor)
 
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 

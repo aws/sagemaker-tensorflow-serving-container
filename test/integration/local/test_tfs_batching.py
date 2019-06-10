@@ -31,7 +31,8 @@ def volume():
         subprocess.check_call('docker volume rm batching_model_volume'.split())
 
 
-def test_run_tfs_with_batching_parameters(docker_base_name, tag):
+@pytest.mark.parametrize("version", ['1.11', '1.12'])
+def test_run_tfs_with_batching_parameters(docker_base_name, version, processor):
     try:
         command = (
             'docker run --name sagemaker-tensorflow-serving-test -p 8080:8080'
@@ -45,8 +46,8 @@ def test_run_tfs_with_batching_parameters(docker_base_name, tag):
             ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
             ' -e SAGEMAKER_BIND_TO_PORT=8080'
             ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
-            ' {}:{} serve'
-        ).format(docker_base_name, tag)
+            ' {}:{}-{} serve'
+        ).format(docker_base_name, version, processor)
 
         proc = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 

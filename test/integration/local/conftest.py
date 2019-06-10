@@ -22,7 +22,6 @@ def pytest_addoption(parser):
     parser.addoption('--framework-version', default=FRAMEWORK_LATEST_VERSION, required=True)
     parser.addoption('--processor', default='cpu')
     parser.addoption('--enable-batch', default='False', choices=['True', 'False'])
-    parser.addoption('--tag')
 
 
 @pytest.fixture(scope='module')
@@ -43,11 +42,3 @@ def processor(request):
 @pytest.fixture(scope='module')
 def enable_batch(request):
     return request.config.getoption('--enable-batch') == 'True'
-
-
-@pytest.fixture(scope='module')
-def tag(request, framework_version, processor):
-    image_tag = request.config.getoption('--tag')
-    if not image_tag:
-        image_tag = '{}-{}'.format(framework_version, processor)
-    return image_tag
