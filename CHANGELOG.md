@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.1 (2019-06-11)
+
+### Bug fixes and other changes
+
+ * make tox run any pytest tests
+
 ## v1.4.0 (2019-06-03)
 
 ### Features
