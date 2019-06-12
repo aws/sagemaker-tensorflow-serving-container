@@ -10,6 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+
 import pytest
 
 FRAMEWORK_LATEST_VERSION = '1.13'
@@ -18,8 +19,9 @@ TFS_DOCKER_BASE_NAME = 'sagemaker-tensorflow-serving'
 
 def pytest_addoption(parser):
     parser.addoption('--docker-base-name', default=TFS_DOCKER_BASE_NAME)
-    parser.addoption('--framework-versions', default=FRAMEWORK_LATEST_VERSION)
-    parser.addoption('--arches', default='cpu')
+    parser.addoption('--framework-version', default=FRAMEWORK_LATEST_VERSION, required=True)
+    parser.addoption('--processor', default='cpu')
+    parser.addoption('--tag')
 
 
 @pytest.fixture(scope='module')
@@ -27,10 +29,24 @@ def docker_base_name(request):
     return request.config.getoption('--docker-base-name')
 
 
-def pytest_generate_tests(metafunc):
-    tags = list()
-    for arch in metafunc.config.getoption('--arches').split(','):
-        for version in metafunc.config.getoption('--framework-versions').split(','):
-            tags.append('{}-{}'.format(version, arch))
-    if 'tag' in metafunc.fixturenames:
-        metafunc.parametrize('tag', tags, scope='session')
+@pytest.fixture(scope='module')
+def framework_version(request):
+    return request.config.getoption('--framework-version')
+
+
+@pytest.fixture(scope='module')
+def processor(request):
+    return request.config.getoption('--processor')
+
+
+@pytest.fixture(scope='module')
+def enable_batch(request):
+    return request.config.getoption('--enable-batch') == 'True'
+
+
+@pytest.fixture(scope='module')
+def tag(request, framework_version, processor):
+    image_tag = request.config.getoption('--tag')
+    if not image_tag:
+        image_tag = '{}-{}'.format(framework_version, processor)
+    return image_tag

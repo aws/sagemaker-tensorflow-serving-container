@@ -19,7 +19,9 @@ phases:
       - ./scripts/build-all.sh
 
       # run local tests
-      - tox -e py36 -- -vv test/integration/local --framework-versions 1.11,1.12,1.13
+      - tox -e py36 -- test/integration/local --framework-version 1.11
+      - tox -e py36 -- test/integration/local --framework-version 1.12
+      - tox -e py36 -- test/integration/local --framework-version 1.13
 
       # push docker images to ECR
       - |
