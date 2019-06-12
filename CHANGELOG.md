@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.2 (2019-06-12)
+
+### Bug fixes and other changes
+
+ * add Tensorflow 1.13
+
 ## v1.4.1 (2019-06-11)
 
 ### Bug fixes and other changes
