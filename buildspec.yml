@@ -30,7 +30,10 @@ phases:
         fi
 
       # run SageMaker tests
-      - tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 1.13.0
+      - |
+        if is-release-build; then
+          tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 1.13.0
+        fi
 
       # write deployment details to file
       # todo sort out eia versioning
