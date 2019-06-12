@@ -13,7 +13,7 @@
 
 import pytest
 
-FRAMEWORK_LATEST_VERSION = '1.12'
+FRAMEWORK_LATEST_VERSION = '1.13'
 TFS_DOCKER_BASE_NAME = 'sagemaker-tensorflow-serving'
 
 
