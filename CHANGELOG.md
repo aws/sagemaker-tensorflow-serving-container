@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.4 (2019-06-12)
+
+### Bug fixes and other changes
+
+ * move SageMaker tests to release build
+
 ## v1.4.3 (2019-06-12)
 
 ### Bug fixes and other changes
