@@ -47,7 +47,7 @@ def volume(tmpdir_factory, request):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def container(volume, docker_base_name, tag):
+def container(request, volume, docker_base_name, tag):
     try:
         command = (
             'docker run --name sagemaker-tensorflow-serving-test -p 8080:8080'
