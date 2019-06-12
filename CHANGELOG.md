@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.3 (2019-06-12)
+
+### Bug fixes and other changes
+
+ * use p2.xlarge by default in tests
+
 ## v1.4.2 (2019-06-12)
 
 ### Bug fixes and other changes
