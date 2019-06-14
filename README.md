@@ -1,10 +1,12 @@
+# <img alt="SageMaker" src="branding/icon/sagemaker-banner.png" height="100">
+
 # SageMaker TensorFlow Serving Container
 
 SageMaker TensorFlow Serving Container is an a open source project that builds 
-docker images for running TensorFlow Serving on 
+Docker images for running TensorFlow Serving on 
 [Amazon SageMaker](https://aws.amazon.com/documentation/sagemaker/).
 
-This documentation covers building and testing these docker images. 
+This documentation covers building and testing these Docker images.
 
 For information about using TensorFlow Serving on SageMaker, see: 
 [Deploying to TensorFlow Serving Endpoints](https://github.com/aws/sagemaker-python-sdk/blob/master/src/sagemaker/tensorflow/deploying_tensorflow_serving.rst)
@@ -136,9 +138,14 @@ For example:
         --accelerator-type ml.eia1.medium \
         --versions 1.12.0
 
+
 ## Pre/Post-Processing
 
-You can add your customized Python code to process your input and output data. To make it work, here are some few things you need to pay attention:
+SageMaker TensorFlow Serving Container supports Content-Types 'application/json', 'text/csv', and 'application/jsonlines', defaulting to 'application/json' if not specified,
+and Accept types 'application/json' and 'application/jsonlines' if not specified. The container will convert data in these formats to [TensorFlow Serving REST API](https://www.tensorflow.org/tfx/serving/api_rest) requests,
+and will send these requests to the default serving signature of your model.
+
+But you can also add customized Python code to process your input and output data. To make it work, here are some few things you need to pay attention:
 1. The customized Python code file should be named `inference.py` and it should be under `code` directory of your model archive.
 2. `inference.py` should implement either a pair of `input_handler` and `output_handler` functions or a single `handler` function. Note that if `handler` function is implemented, `input_handler` and `output_handler` will be ignored.
 
@@ -153,7 +160,7 @@ To implement pre/post-processing handler(s), you will need to make use of the `C
 - `accept_header (string)`: the original request accept type, defaulted to 'application/json' if not provided
 - `content_length (int)`: content length of the original request
 
-Here's a code example of implementing `input_handler` and `output_handler`. By providing these, the Python service will post the request to TFS REST uri with the data pre-processed by `input_handler` and pass the response to `output_handler` for post-processing.
+Here's a code example implementing `input_handler` and `output_handler`. By providing these, the Python service will post the request to TFS REST uri with the data pre-processed by `input_handler` and pass the response to `output_handler` for post-processing.
 
 ```python
 import json
@@ -197,7 +204,79 @@ def output_handler(data, context):
     return prediction, response_content_type
 ```
 
-There are occasions when you might want to have complete controls over request. For example, making TFS request (REST or GRPC) to first model, inspecting results and making request to a second model. In this case, you may implement the `handler` instead of the `input_handler` and `output_handler` pair:
+Here's another code example implementing `input_handler` and `output_handler` to format image data into a TFS request that expects image data as an encoded string rather than as a numeric tensor:
+
+```python
+import base64
+import io
+import json
+import requests
+
+def input_handler(data, context):
+    """ Pre-process request input before it is sent to TensorFlow Serving REST API
+
+    Args:
+        data (obj): the request data stream
+        context (Context): an object containing request and configuration details
+
+    Returns:
+        (dict): a JSON-serializable dict that contains request body and headers
+    """
+
+    if context.request_content_type == 'application/x-image':
+        payload = data.read()
+        encoded_image = base64.b64encode(payload).decode('utf-8')
+        instance = [{"b64": encoded_image}]
+        return json.dumps({"instances": instance})
+    else:
+        _return_error(415, 'Unsupported content type "{}"'.format(context.request_content_type or 'Unknown'))
+
+
+def output_handler(response, context):
+    """Post-process TensorFlow Serving output before it is returned to the client.
+
+    Args:
+        response (obj): the TensorFlow serving response
+        context (Context): an object containing request and configuration details
+
+    Returns:
+        (bytes, string): data to return to client, response content type
+    """
+    if response.status_code != 200:
+        _return_error(response.status_code, response.content.decode('utf-8'))
+    response_content_type = context.accept_header
+    prediction = response.content
+    return prediction, response_content_type
+
+
+def _return_error(code, message):
+    raise ValueError('Error: {}, {}'.format(str(code), message))
+```
+
+The `input_handler` above creates requests that match the input of the following TensorFlow Serving SignatureDef, displayed
+using the TensorFlow `saved_model_cli`:
+
+```
+signature_def['serving_default']:
+  The given SavedModel SignatureDef contains the following input(s):
+    inputs['image_bytes'] tensor_info:
+        dtype: DT_STRING
+        shape: (-1)
+        name: input_tensor:0
+  The given SavedModel SignatureDef contains the following output(s):
+    outputs['classes'] tensor_info:
+        dtype: DT_INT64
+        shape: (-1)
+        name: ArgMax:0
+    outputs['probabilities'] tensor_info:
+        dtype: DT_FLOAT
+        shape: (-1, 1001)
+        name: softmax_tensor:0
+  Method name is: tensorflow/serving/predict
+```
+
+
+There are occasions when you might want to have complete control over the request handler. For example, making TFS request (REST or GRPC) to first model, inspecting results and making request to a second model. In this case, you may implement the `handler` instead of the `input_handler` and `output_handler` pair:
 
 ```python
 import json
@@ -295,9 +374,141 @@ After uploading your `model.tar.gz` to an S3 URI, such as `s3://your-bucket/your
 
 Where `REGION` is your AWS region, such as "us-east-1" or "eu-west-1"; `TENSORFLOW_SERVING_VERSION` is one of the supported versions: "1.11" or "1.12"; and "gpu" for use on GPU-based instance types like ml.p3.2xlarge, or "cpu" for use on CPU-based instances like `ml.c5.xlarge`.
 
+### Deploying a TensorFlow Serving Model for Offline or Real-Time Inference
 
-After creating your SageMaker Model, you can use it to create [SageMaker Batch Transform Jobs](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-batch.html)
+After creating a SageMaker Model, you can use it to create [SageMaker Batch Transform Jobs](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-batch.html)
  for offline inference, or create [SageMaker Endpoints](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-hosting.html) for real-time inference.
+ 
+A SageMaker Model contains references to a `model.tar.gz` file containing serialized model data, and a Docker image used to serve predictions with that model.
+The code examples below show how to create a SageMaker Model from a `model.tar.gz` containing a TensorFlow Serving model using the AWS CLI (though you can use any language supported by the [AWS SDK](https://aws.amazon.com/tools/)) and the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk).
+
+#### AWS CLI
+```bash
+timestamp() {
+  date +%Y-%m-%d-%H-%M-%S
+}
+
+
+MODEL_NAME="image-classification-tfs-$(timestamp)"
+MODEL_DATA_URL="s3://my-sagemaker-bucket/model/model.tar.gz"
+
+aws s3 cp model.tar.gz $MODEL_DATA_URL
+
+REGION="us-west-2"
+TFS_VERSION="1.12.0"
+PROCESSOR_TYPE="gpu"
+IMAGE="520713654638.dkr.ecr.$REGION.amazonaws.com/sagemaker-tensorflow-serving:$TFS_VERSION-$PROCESSOR_TYPE"
+
+# See the following document for more on SageMaker Roles:
+# https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-roles.html
+ROLE_ARN="[SageMaker-compatible IAM Role ARN]"
+
+aws sagemaker create-model \
+    --model-name $MODEL_NAME \
+    --primary-container Image=$IMAGE,ModelDataUrl=$MODEL_DATA_URL \
+    --execution-role-arn $ROLE_ARN
+```
+
+#### SageMaker Python SDK
+
+```python
+import os
+import sagemaker
+from sagemaker.tensorflow.serving import Model
+
+sagemaker_session = sagemaker.Session()
+role = 'arn:aws:iam::038453126632:role/service-role/AmazonSageMaker-ExecutionRole-20180718T141171'
+bucket = 'am-datasets'
+prefix = 'sagemaker/high-throughput-tfs-batch-transform'
+s3_path = 's3://{}/{}'.format(bucket, prefix)
+
+model_data = sagemaker_session.upload_data('model.tar.gz',
+                                           bucket,
+                                           os.path.join(prefix, 'model'))
+                                           
+# The "Model" object doesn't create a SageMaker Model until a Transform Job or Endpoint is created.
+tensorflow_serving_model = Model(model_data=model_data,
+                                 role=role,
+                                 framework_version='1.13',
+                                 sagemaker_session=sagemaker_session)
+
+```
+
+After creating a SageMaker Model, you can refer to the model name to create Transform Jobs and Endpoints. Examples are given below:
+
+#### Creating a Batch Transform Job
+
+
+##### CLI
+```bash
+TRANSFORM_JOB_NAME="tfs-image-classification-transform-job"
+TRANSFORM_S3_INPUT="s3://my-sagemaker-input-bucket/sagemaker-transform-input-data/"
+TRANSFORM_S3_OUTPUT="s3://my-sagemaker-output-bucket/sagemaker-transform-output-data/"
+
+TRANSFORM_INPUT_DATA_SOURCE={S3DataSource={S3DataType="S3Prefix",S3Uri=$TRANSFORM_S3_INPUT}}
+CONTENT_TYPE="application/x-image"
+
+INSTANCE_TYPE="ml.p2.xlarge"
+INSTANCE_COUNT=2
+
+MAX_PAYLOAD_IN_MB=1
+MAX_CONCURRENT_TRANSFORMS=64
+
+aws sagemaker create-transform-job \
+    --model-name $MODEL_NAME \
+    --transform-input DataSource=$TRANSFORM_INPUT_DATA_SOURCE,ContentType=$CONTENT_TYPE \
+    --transform-output S3OutputPath=$TRANSFORM_S3_OUTPUT \
+    --transform-resources InstanceType=$INSTANCE_TYPE,InstanceCount=$INSTANCE_COUNT \
+    --max-payload-in-mb $MAX_PAYLOAD_IN_MB \
+    --max-concurrent-transforms $MAX_CONCURRENT_TRANSFORMS \
+    --transform-job-name $JOB_NAME
+```
+
+##### SageMaker Python SDK
+
+```python
+output_path = 's3://my-sagemaker-output-bucket/sagemaker-transform-output-data/'
+tensorflow_serving_transformer = tensorflow_serving_model.transformer(
+                                     framework_version = '1.12',
+                                     instance_count=2,
+                                     instance_type='ml.p2.xlarge',
+                                     max_concurrent_transforms=64,
+                                     max_payload=1,
+                                     output_path=output_path)
+
+input_path = 's3://my-sagemaker-input-bucket/sagemaker-transform-input-data/'
+tensorflow_serving_transformer.transform(input_path, content_type='application/x-image')
+```
+
+#### Creating an Endpoint
+
+##### AWS CLI
+
+```bash
+ENDPOINT_CONFIG_NAME="my-endpoint-config"
+VARIANT_NAME="TFS"
+INITIAL_INSTANCE_COUNT=1
+INSTANCE_TYPE="ml.p2.xlarge"
+aws sagemaker create-endpoint-config \
+    --endpoint-config-name $ENDPOINT_CONFIG_NAME \
+    --production-variants VariantName=$VARIANT_NAME,ModelName=$MODEL_NAME,InitialInstanceCount=$INITIAL_INSTANCE_COUNT,InstanceType=$INSTANCE_TYPE
+
+ENDPOINT_NAME="my-tfs-endpoint"
+aws sagemaker create-endpoint \
+    --endpoint-name $ENDPOINT_NAME
+    --endpoint-config-name $ENDPOINT_CONFIG_NAME
+
+```
+
+##### SageMaker Python SDK
+
+```python
+predictor = tensorflow_serving_model.deploy(initial_instance_count=1,
+                                            framework_version='1.12',
+                                            instance_type='ml.m5.xlarge')
+
+```
+
 
 ## Contributing
 
