@@ -35,15 +35,10 @@ def volume():
         subprocess.check_call('docker volume rm model_volume'.split())
 
 
-@pytest.fixture(scope='module', autouse=True, params=[['1.11', True],
-                                                      ['1.11', False],
-                                                      ['1.12', True],
-                                                      ['1.12', False],
-                                                      ['1.13', True],
-                                                      ['1.13', False]])
-def container(request):
+@pytest.fixture(scope='module', autouse=True, params=[True, False])
+def container(request, docker_base_name, tag):
     try:
-        if request.param[1]:
+        if request.param:
             batching_config = ' -e SAGEMAKER_TFS_ENABLE_BATCHING=true'
         else:
             batching_config = ''
@@ -55,8 +50,8 @@ def container(request):
             ' -e SAGEMAKER_BIND_TO_PORT=8080'
             ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
             ' {}'
-            ' sagemaker-tensorflow-serving:{}-cpu serve'
-        ).format(batching_config, request.param[0])
+            ' {}:{} serve'
+        ).format(batching_config, docker_base_name, tag)
 
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
@@ -245,3 +240,16 @@ def test_predict_no_custom_attributes_header():
     y = json.loads(response.content.decode('utf-8'))
 
     assert y == {'predictions': [3.5, 4.0, 5.5]}
+
+def test_predict_with_jsonlines():
+    x = {
+        'instances': [1.0, 2.0, 5.0]
+    }
+
+    headers = {
+        'Content-Type': 'application/json',
+        'Accept':  'application/jsonlines'
+    }
+    response = requests.post(BASE_URL, data=json.dumps(x), headers=headers)
+    assert response.headers['Content-Type'] == 'application/jsonlines'
+    assert response.content.decode('utf-8') == '{    "predictions": [3.5, 4.0, 5.5    ]}'

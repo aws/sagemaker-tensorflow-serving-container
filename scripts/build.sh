@@ -20,10 +20,8 @@ docker build \
     --cache-from $aws_account.dkr.ecr.$aws_region.amazonaws.com/$repository:$full_version-$device \
     --build-arg TFS_VERSION=$full_version \
     --build-arg TFS_SHORT_VERSION=$short_version \
-    -f docker/$(get_dockerfile_name $full_version $arch) \
+    -f docker/$short_version/Dockerfile.$arch \
     -t $repository:$full_version-$device \
-    -t $repository:$short_version-$device \
-    -t $test_repository:$full_version-$device \
-    -t $test_repository:$short_version-$device container
+    -t $repository:$short_version-$device container
 
 remove_ei_executable

@@ -17,6 +17,11 @@ import time
 import boto3
 import pytest
 
+# these regions have some p2 and p3 instances, but not enough for automated testing
+NO_P2_REGIONS = ['ca-central-1', 'eu-central-1', 'eu-west-2', 'us-west-1']
+NO_P3_REGIONS = ['ap-southeast-1', 'ap-southeast-2', 'ap-south-1', 'ca-central-1',
+                 'eu-central-1', 'eu-west-2', 'us-west-1']
+
 
 def pytest_addoption(parser):
     parser.addoption('--region', default='us-west-2')
@@ -32,7 +37,7 @@ def pytest_configure(config):
     os.environ['TEST_REGION'] = config.getoption('--region')
     os.environ['TEST_VERSIONS'] = config.getoption('--versions') or '1.11.1,1.12.0,1.13.0'
     os.environ['TEST_INSTANCE_TYPES'] = (config.getoption('--instance-types') or
-                                         'ml.m5.xlarge,ml.p3.2xlarge')
+                                         'ml.m5.xlarge,ml.p2.xlarge')
 
     os.environ['TEST_EI_VERSIONS'] = config.getoption('--versions') or '1.11,1.12'
     os.environ['TEST_EI_INSTANCE_TYPES'] = (config.getoption('--instance-types') or
@@ -84,3 +89,8 @@ def model_name():
     return unique_name_from_base('test-tfs')
 
 
+@pytest.fixture(autouse=True)
+def skip_gpu_instance_restricted_regions(region, instance_type):
+    if (region in NO_P2_REGIONS and instance_type.startswith('ml.p2')) or \
+            (region in NO_P3_REGIONS and instance_type.startswith('ml.p3')):
+        pytest.skip('Skipping GPU test in region {}'.format(region))

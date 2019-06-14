@@ -13,11 +13,11 @@
 import contextlib
 import json
 import logging
-import random
-import time
 import os
 
 import botocore
+import random
+import time
 
 logger = logging.getLogger(__name__)
 

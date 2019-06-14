@@ -60,18 +60,11 @@ function get_device_type() {
     fi
 }
 
-function get_dockerfile_name() {
-    short_version=$(get_short_version $1)
-    arch=$2
-    echo "$short_version/Dockerfile.$arch"
-}
-
 function parse_std_args() {
     # defaults
     arch='cpu'
     version='1.13.0'
     repository='sagemaker-tensorflow-serving'
-    test_repository='sagemaker-test'
 
     aws_region=$(get_default_region)
     aws_account=$(get_aws_account)
@@ -112,7 +105,6 @@ function parse_std_args() {
     [[ -z "${aws_region// }" ]] && error 'missing aws region'
 
     [[ "$arch" = eia ]] && repository=$repository'-'$arch
-    [[ "$arch" = eia ]] && test_repository=$test_repository'-'$arch
 
     full_version=$(get_full_version $version)
     short_version=$(get_short_version $version)
