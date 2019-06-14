@@ -21,6 +21,7 @@ For notebook examples, see: [Amazon SageMaker Examples](https://github.com/awsla
 3. [Running the tests](#running-the-tests)
 4. [Pre/Post-Processing](#pre/post-processing)
 5. [Packaging SageMaker Models for TensorFlow Serving](#packaging-sagemaker-models-for-tensorflow-serving)
+6. [Deploying a TensorFlow Serving Model for Batch or Real-Time Inference](#deploying-a-tensorflow-serving-model-for-batch-or-real-time-inference)
 
 ## Getting Started
 
@@ -142,7 +143,9 @@ For example:
 ## Pre/Post-Processing
 
 SageMaker TensorFlow Serving Container supports Content-Types 'application/json', 'text/csv', and 'application/jsonlines', defaulting to 'application/json' if not specified,
-and Accept types 'application/json' and 'application/jsonlines' if not specified. The container will convert data in these formats to [TensorFlow Serving REST API](https://www.tensorflow.org/tfx/serving/api_rest) requests,
+and Accept types 'application/json' and 'application/jsonlines', also defaulting to 'application/json' if not specified.
+
+The container will convert data in these formats to [TensorFlow Serving REST API](https://www.tensorflow.org/tfx/serving/api_rest) requests,
 and will send these requests to the default serving signature of your model.
 
 But you can also add customized Python code to process your input and output data. To make it work, here are some few things you need to pay attention:
@@ -229,7 +232,8 @@ def input_handler(data, context):
         instance = [{"b64": encoded_image}]
         return json.dumps({"instances": instance})
     else:
-        _return_error(415, 'Unsupported content type "{}"'.format(context.request_content_type or 'Unknown'))
+        _return_error(415, 'Unsupported content type "{}"'.format(
+            context.request_content_type or 'Unknown'))
 
 
 def output_handler(response, context):
@@ -379,10 +383,12 @@ Where `REGION` is your AWS region, such as "us-east-1" or "eu-west-1"; `TENSORFL
 After creating a SageMaker Model, you can use it to create [SageMaker Batch Transform Jobs](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-batch.html)
  for offline inference, or create [SageMaker Endpoints](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-hosting.html) for real-time inference.
  
+#### Creating a SageMaker Model
+
 A SageMaker Model contains references to a `model.tar.gz` file containing serialized model data, and a Docker image used to serve predictions with that model.
 The code examples below show how to create a SageMaker Model from a `model.tar.gz` containing a TensorFlow Serving model using the AWS CLI (though you can use any language supported by the [AWS SDK](https://aws.amazon.com/tools/)) and the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk).
 
-#### AWS CLI
+##### AWS CLI
 ```bash
 timestamp() {
   date +%Y-%m-%d-%H-%M-%S
@@ -409,7 +415,7 @@ aws sagemaker create-model \
     --execution-role-arn $ROLE_ARN
 ```
 
-#### SageMaker Python SDK
+##### SageMaker Python SDK
 
 ```python
 import os
@@ -437,7 +443,6 @@ tensorflow_serving_model = Model(model_data=model_data,
 After creating a SageMaker Model, you can refer to the model name to create Transform Jobs and Endpoints. Examples are given below:
 
 #### Creating a Batch Transform Job
-
 
 ##### CLI
 ```bash
@@ -505,7 +510,7 @@ aws sagemaker create-endpoint \
 ```python
 predictor = tensorflow_serving_model.deploy(initial_instance_count=1,
                                             framework_version='1.12',
-                                            instance_type='ml.m5.xlarge')
+                                            instance_type='ml.p2.xlarge')
 
 ```
 
