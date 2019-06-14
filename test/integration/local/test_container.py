@@ -241,6 +241,7 @@ def test_predict_no_custom_attributes_header():
 
     assert y == {'predictions': [3.5, 4.0, 5.5]}
 
+
 def test_predict_with_jsonlines():
     x = {
         'instances': [1.0, 2.0, 5.0]
