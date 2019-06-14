@@ -73,7 +73,7 @@ def find_or_put_model_data(region, boto_session, local_path):
     bucket = _test_bucket(region, boto_session)
     key = f'test-tfs/{model_file}'
 
-    s3 = boto_session.client('s3')
+    s3 = boto_session.client('s3', region)
 
     try:
         s3.head_bucket(Bucket=bucket)
@@ -156,8 +156,8 @@ def _create_transform_job_request(model_name, batch_output, batch_input, instanc
     }
 
 
-def _read_batch_output(boto_session, bucket, model_name):
-    s3 = boto_session.client('s3')
+def _read_batch_output(region, boto_session, bucket, model_name):
+    s3 = boto_session.client('s3', region)
     output_file = f'/tmp/{model_name}.out'
     s3.download_file(bucket, f'output/{model_name}/batch.csv.out', output_file)
     return json.loads(open(output_file, 'r').read())['predictions']
@@ -176,9 +176,10 @@ def _wait_for_transform_job(region, boto_session, sagemaker_client, model_name, 
 
         status = sagemaker_client.describe_transform_job(TransformJobName=model_name)['TransformJobStatus']
         if status == 'Completed':
-            return _read_batch_output(boto_session,
-                                      _test_bucket(region, boto_session),
-                                      model_name)
+            return _read_batch_output(region=region,
+                                      boto_session=boto_session,
+                                      bucket=_test_bucket(region, boto_session),
+                                      model_name=model_name)
         if status == 'Failed':
             raise ValueError(f'Failed to execute batch transform job {model_name}')
         if status in ['Stopped', 'Stopping']:
