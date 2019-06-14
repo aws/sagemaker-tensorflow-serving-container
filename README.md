@@ -360,7 +360,7 @@ Your untarred model directory structure may look like this if you have downloade
                 |__external_module
             |__inference.py
 
-### Packaging SageMaker Models for TensorFlow Serving
+## Packaging SageMaker Models for TensorFlow Serving
 
 If you are not using SageMaker Python SDK, you should package the contents in model directory (including models, inference.py and external modules) in .tar.gz format in a file named "model.tar.gz" and upload it to S3. If you're on a Unix-based operating system, you can create a "model.tar.gz" using the `tar` utility:
 
@@ -378,17 +378,17 @@ After uploading your `model.tar.gz` to an S3 URI, such as `s3://your-bucket/your
 
 Where `REGION` is your AWS region, such as "us-east-1" or "eu-west-1"; `TENSORFLOW_SERVING_VERSION` is one of the supported versions: "1.11" or "1.12"; and "gpu" for use on GPU-based instance types like ml.p3.2xlarge, or "cpu" for use on CPU-based instances like `ml.c5.xlarge`.
 
-### Deploying a TensorFlow Serving Model for Offline or Real-Time Inference
+## Deploying a TensorFlow Serving Model for Offline or Real-Time Inference
 
 After creating a SageMaker Model, you can use it to create [SageMaker Batch Transform Jobs](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-batch.html)
  for offline inference, or create [SageMaker Endpoints](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-hosting.html) for real-time inference.
  
-#### Creating a SageMaker Model
+### Creating a SageMaker Model
 
 A SageMaker Model contains references to a `model.tar.gz` file containing serialized model data, and a Docker image used to serve predictions with that model.
 The code examples below show how to create a SageMaker Model from a `model.tar.gz` containing a TensorFlow Serving model using the AWS CLI (though you can use any language supported by the [AWS SDK](https://aws.amazon.com/tools/)) and the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk).
 
-##### AWS CLI
+#### AWS CLI
 ```bash
 timestamp() {
   date +%Y-%m-%d-%H-%M-%S
@@ -415,7 +415,7 @@ aws sagemaker create-model \
     --execution-role-arn $ROLE_ARN
 ```
 
-##### SageMaker Python SDK
+#### SageMaker Python SDK
 
 ```python
 import os
@@ -442,9 +442,9 @@ tensorflow_serving_model = Model(model_data=model_data,
 
 After creating a SageMaker Model, you can refer to the model name to create Transform Jobs and Endpoints. Examples are given below:
 
-#### Creating a Batch Transform Job
+### Creating a Batch Transform Job
 
-##### CLI
+#### CLI
 ```bash
 TRANSFORM_JOB_NAME="tfs-image-classification-transform-job"
 TRANSFORM_S3_INPUT="s3://my-sagemaker-input-bucket/sagemaker-transform-input-data/"
@@ -469,7 +469,7 @@ aws sagemaker create-transform-job \
     --transform-job-name $JOB_NAME
 ```
 
-##### SageMaker Python SDK
+#### SageMaker Python SDK
 
 ```python
 output_path = 's3://my-sagemaker-output-bucket/sagemaker-transform-output-data/'
@@ -485,9 +485,9 @@ input_path = 's3://my-sagemaker-input-bucket/sagemaker-transform-input-data/'
 tensorflow_serving_transformer.transform(input_path, content_type='application/x-image')
 ```
 
-#### Creating an Endpoint
+### Creating an Endpoint
 
-##### AWS CLI
+#### AWS CLI
 
 ```bash
 ENDPOINT_CONFIG_NAME="my-endpoint-config"
@@ -505,7 +505,7 @@ aws sagemaker create-endpoint \
 
 ```
 
-##### SageMaker Python SDK
+#### SageMaker Python SDK
 
 ```python
 predictor = tensorflow_serving_model.deploy(initial_instance_count=1,
