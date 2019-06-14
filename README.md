@@ -360,9 +360,17 @@ Your untarred model directory structure may look like this if you have downloade
                 |__external_module
             |__inference.py
 
-## Packaging SageMaker Models for TensorFlow Serving
+## Deploying a TensorFlow Serving Model for Offline or Real-Time Inference
 
-If you are not using SageMaker Python SDK, you should package the contents in model directory (including models, inference.py and external modules) in .tar.gz format in a file named "model.tar.gz" and upload it to S3. If you're on a Unix-based operating system, you can create a "model.tar.gz" using the `tar` utility:
+To use your TensorFlow Serving model on SageMaker, you first need to create a SageMaker Model. After creating a SageMaker Model, you can use it to create [SageMaker Batch Transform Jobs](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-batch.html)
+ for offline inference, or create [SageMaker Endpoints](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-hosting.html) for real-time inference.
+
+
+### Creating a SageMaker Model
+
+A SageMaker Model contains references to a `model.tar.gz` file in S3 containing serialized model data, and a Docker image used to serve predictions with that model.
+
+You can package the contents in model directory (including models, inference.py and external modules) in .tar.gz format in a file named "model.tar.gz" and upload it to S3. If you're on a Unix-based operating system, you can create a "model.tar.gz" using the `tar` utility:
 
 ```
 tar -czvf model.tar.gz 12345 code
@@ -377,15 +385,7 @@ After uploading your `model.tar.gz` to an S3 URI, such as `s3://your-bucket/your
 ```
 
 Where `REGION` is your AWS region, such as "us-east-1" or "eu-west-1"; `TENSORFLOW_SERVING_VERSION` is one of the supported versions: "1.11" or "1.12"; and "gpu" for use on GPU-based instance types like ml.p3.2xlarge, or "cpu" for use on CPU-based instances like `ml.c5.xlarge`.
-
-## Deploying a TensorFlow Serving Model for Offline or Real-Time Inference
-
-After creating a SageMaker Model, you can use it to create [SageMaker Batch Transform Jobs](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-batch.html)
- for offline inference, or create [SageMaker Endpoints](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-hosting.html) for real-time inference.
  
-### Creating a SageMaker Model
-
-A SageMaker Model contains references to a `model.tar.gz` file containing serialized model data, and a Docker image used to serve predictions with that model.
 The code examples below show how to create a SageMaker Model from a `model.tar.gz` containing a TensorFlow Serving model using the AWS CLI (though you can use any language supported by the [AWS SDK](https://aws.amazon.com/tools/)) and the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk).
 
 #### AWS CLI
@@ -440,9 +440,11 @@ tensorflow_serving_model = Model(model_data=model_data,
 
 ```
 
-After creating a SageMaker Model, you can refer to the model name to create Transform Jobs and Endpoints. Examples are given below:
+After creating a SageMaker Model, you can refer to the model name to create Transform Jobs and Endpoints. Code examples are given below.
 
 ### Creating a Batch Transform Job
+
+A Batch Transform job runs an offline-inference job using your TensorFlow Serving model.
 
 #### CLI
 ```bash
@@ -487,6 +489,9 @@ tensorflow_serving_transformer.transform(input_path, content_type='application/x
 
 ### Creating an Endpoint
 
+A SageMaker Endpoint hosts your TensorFlow Serving model for real-time inference. The [InvokeEndpoint](https://docs.aws.amazon.com/sagemaker/latest/dg/API_runtime_InvokeEndpoint.html) API
+is used to send data for predictions to your TensorFlow Serving model.
+
 #### AWS CLI
 
 ```bash
@@ -511,7 +516,7 @@ aws sagemaker create-endpoint \
 predictor = tensorflow_serving_model.deploy(initial_instance_count=1,
                                             framework_version='1.12',
                                             instance_type='ml.p2.xlarge')
-
+predictor.predict(data)
 ```
 
 
