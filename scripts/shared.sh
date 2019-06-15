@@ -63,7 +63,7 @@ function get_device_type() {
 function parse_std_args() {
     # defaults
     arch='cpu'
-    version='1.12.0'
+    version='1.13.0'
     repository='sagemaker-tensorflow-serving'
 
     aws_region=$(get_default_region)
@@ -85,6 +85,11 @@ function parse_std_args() {
         ;;
         -r|--region)
         aws_region="$2"
+        shift
+        shift
+        ;;
+        -p|--repository)
+        repository="$2"
         shift
         shift
         ;;

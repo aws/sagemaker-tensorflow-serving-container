@@ -6,9 +6,9 @@ SageMaker TensorFlow Serving Container is an a open source project that builds
 Docker images for running TensorFlow Serving on 
 [Amazon SageMaker](https://aws.amazon.com/documentation/sagemaker/).
 
-This documentation covers building and testing these Docker images.
+This documentation covers building, testing and using these Docker images.
 
-For information about using TensorFlow Serving on SageMaker, see: 
+For information about using TensorFlow Serving on SageMaker, see:
 [Deploying to TensorFlow Serving Endpoints](https://github.com/aws/sagemaker-python-sdk/blob/master/src/sagemaker/tensorflow/deploying_tensorflow_serving.rst)
 in the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk) documentation.
 
@@ -26,7 +26,7 @@ For notebook examples, see: [Amazon SageMaker Examples](https://github.com/awsla
 
 ### Prerequisites
 
-Make sure you have installed all of the following prerequisites on your 
+Make sure you have installed all of the following prerequisites on your
 development machine:
 
 - [Docker](https://www.docker.com/)
@@ -43,46 +43,46 @@ To test GPU images locally, you will also need:
 
 - [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)
 
-**Note:** Some of the build and tests scripts interact with resources in your AWS account. Be sure to 
-set your default AWS credentials and region using `aws configure` before using these scripts. 
+**Note:** Some of the build and tests scripts interact with resources in your AWS account. Be sure to
+set your default AWS credentials and region using `aws configure` before using these scripts.
 
 ## Building your image
 
 Amazon SageMaker uses Docker containers to run all training jobs and inference endpoints.
 
-The Docker images are built from the Dockerfiles in 
+The Docker images are built from the Dockerfiles in
 [docker/](https://github.com/aws/sagemaker-tensorflow-serving-container/tree/master/docker>).
 
 The Dockerfiles are grouped based on the version of TensorFlow Serving they support. Each supported
-processor type (e.g. "cpu", "gpu", "ei") has a different Dockerfile in each group.  
+processor type (e.g. "cpu", "gpu", "ei") has a different Dockerfile in each group.
 
 To build an image, run the `./scripts/build.sh` script:
 
 ```bash
-./scripts/build.sh --version 1.11 --arch cpu
-./scripts/build.sh --version 1.11 --arch gpu
-./scripts/build.sh --version 1.11 --arch eia
+./scripts/build.sh --version 1.13 --arch cpu
+./scripts/build.sh --version 1.13 --arch gpu
+./scripts/build.sh --version 1.13 --arch eia
 ```
 
 
 If your are testing locally, building the image is enough. But if you want to your updated image
-in SageMaker, you need to publish it to an ECR repository in your account. The 
+in SageMaker, you need to publish it to an ECR repository in your account. The
 `./scripts/publish.sh` script makes that easy:
- 
+
 ```bash
-./scripts/publish.sh --version 1.11 --arch cpu
-./scripts/publish.sh --version 1.11 --arch gpu
-./scripts/publish.sh --version 1.11 --arch eia
+./scripts/publish.sh --version 1.13 --arch cpu
+./scripts/publish.sh --version 1.13 --arch gpu
+./scripts/publish.sh --version 1.13 --arch eia
 ```
 
-Note: this will publish to ECR in your default region. Use the `--region` argument to 
+Note: this will publish to ECR in your default region. Use the `--region` argument to
 specify a different region.
 
 ### Running your image in local docker
 
-You can also run your container locally in Docker to test different models and input 
-inference requests by hand. Standard `docker run` commands (or `nvidia-docker run` for 
-GPU images) will work for this, or you can use the provided `start.sh` 
+You can also run your container locally in Docker to test different models and input
+inference requests by hand. Standard `docker run` commands (or `nvidia-docker run` for
+GPU images) will work for this, or you can use the provided `start.sh`
 and `stop.sh` scripts:
 
 ```bash
@@ -95,17 +95,17 @@ and an example using the `curl` command:
 
 ```bash
 curl -X POST --data-binary @test/resources/inputs/test.json \
-     -H 'Content-Type: application/json' \ 
-     -H 'X-Amzn-SageMaker-Custom-Attributes: tfs-model-name=half_plus_three' \ 
+     -H 'Content-Type: application/json' \
+     -H 'X-Amzn-SageMaker-Custom-Attributes: tfs-model-name=half_plus_three' \
      http://localhost:8080/invocations
 ```
 
-Additional `curl` examples can be found in `./scripts/curl.sh`. 
+Additional `curl` examples can be found in `./scripts/curl.sh`.
 
 ## Running the tests
 
-The package includes automated tests and code checks. The tests use Docker to run the container 
-image locally, and do not access resources in AWS. You can run the tests and static code 
+The package includes automated tests and code checks. The tests use Docker to run the container
+image locally, and do not access resources in AWS. You can run the tests and static code
 checkers using `tox`:
 
 ```bash
@@ -131,12 +131,12 @@ To test against Elastic Inference with Accelerator, you will need an AWS account
         [--versions <version>,...]
 
 For example:
-    
+
     tox -e py36 -- test/integration/sagemaker/test_ei.py \
         --repo sagemaker-tensorflow-serving-eia \
         --instance_type ml.m5.xlarge \
         --accelerator-type ml.eia1.medium \
-        --versions 1.12.0
+        --versions 1.13.0
 
 
 ## Pre/Post-Processing
@@ -293,7 +293,7 @@ There are occasions when you might want to have complete control over the reques
 import json
 import requests
 
-    
+
 def handler(data, context):
     """Handle request.
     Args:
@@ -331,7 +331,7 @@ def _process_output(data, context):
     prediction = data.content
     return prediction, response_content_type
 ```
-    
+
 You can also bring in external dependencies to help with your data processing. There are 2 ways to do this:
 1. If your model archive contains `code/requirements.txt`, the container will install the Python dependencies at runtime using `pip install -r`.
 2. If you are working in a network-isolation situation or if you don't want to install dependencies at runtime everytime your Endpoint starts or Batch Transform job runs, you may want to put pre-downloaded dependencies under `code/lib` directory in your model archive, the container will then add the modules to the Python path. Note that if both `code/lib` and `code/requirements.txt` are present in the model archive, the `requirements.txt` will be ignored.
@@ -388,7 +388,13 @@ where "12345" is your TensorFlow serving model version which contains your Saved
 After uploading your `model.tar.gz` to an S3 URI, such as `s3://your-bucket/your-models/model.tar.gz`, create a [SageMaker Model](https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateModel.html) which will be used to generate inferences. Set `PrimaryContainer.ModelDataUrl` to the S3 URI where you uploaded the `model.tar.gz`, and set `PrimaryContainer.Image` to an image following this format:
 
 ```
-520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving:{TENSORFLOW_SERVING_VERSION}-{cpu|gpu|eia}
+520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving:{TENSORFLOW_SERVING_VERSION}-{cpu|gpu}
+```
+
+For those using Elastic Inference set the image following this format instead:
+
+```
+520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving-eia:{TENSORFLOW_SERVING_VERSION}-cpu
 ```
 
 Where `REGION` is your AWS region, such as "us-east-1" or "eu-west-1"; `TENSORFLOW_SERVING_VERSION` is one of the supported versions: "1.11" or "1.12"; and "gpu" for use on GPU-based instance types like ml.p3.2xlarge, or "cpu" for use on CPU-based instances like `ml.c5.xlarge`.
@@ -538,10 +544,10 @@ prediction = predictor.predict(data)
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://github.com/aws/sagemaker-tensorflow-serving-container/blob/master/CONTRIBUTING.md) 
+Please read [CONTRIBUTING.md](https://github.com/aws/sagemaker-tensorflow-serving-container/blob/master/CONTRIBUTING.md)
 for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## License
 
-This library is licensed under the Apache 2.0 License. 
+This library is licensed under the Apache 2.0 License.
 

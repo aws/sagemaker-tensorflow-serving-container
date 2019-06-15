@@ -1,5 +1,39 @@
 # Changelog
 
+## v1.4.4 (2019-06-12)
+
+### Bug fixes and other changes
+
+ * move SageMaker tests to release build
+
+## v1.4.3 (2019-06-12)
+
+### Bug fixes and other changes
+
+ * use p2.xlarge by default in tests
+
+## v1.4.2 (2019-06-12)
+
+### Bug fixes and other changes
+
+ * add Tensorflow 1.13
+
+## v1.4.1 (2019-06-11)
+
+### Bug fixes and other changes
+
+ * make tox run any pytest tests
+
+## v1.4.0 (2019-06-03)
+
+### Features
+
+ * support jsonlines output
+
+### Documentation changes
+
+ * update README.md for EI image
+
 ## v1.3.2 (2019-05-29)
 
 ### Bug fixes and other changes
