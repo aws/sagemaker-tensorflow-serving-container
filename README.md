@@ -20,8 +20,7 @@ For notebook examples, see: [Amazon SageMaker Examples](https://github.com/awsla
 2. [Building your image](#building-your-image)
 3. [Running the tests](#running-the-tests)
 4. [Pre/Post-Processing](#pre/post-processing)
-5. [Packaging SageMaker Models for TensorFlow Serving](#packaging-sagemaker-models-for-tensorflow-serving)
-6. [Deploying a TensorFlow Serving Model for Batch or Real-Time Inference](#deploying-a-tensorflow-serving-model-for-batch-or-real-time-inference)
+5. [Deploying a TensorFlow Serving Model for Offline or Online Inference](#deploying-a-tensorflow-serving-model-for-offline-or-online-inference)
 
 ## Getting Started
 
@@ -142,11 +141,19 @@ For example:
 
 ## Pre/Post-Processing
 
-SageMaker TensorFlow Serving Container supports Content-Types 'application/json', 'text/csv', and 'application/jsonlines', defaulting to 'application/json' if not specified,
-and Accept types 'application/json' and 'application/jsonlines', also defaulting to 'application/json' if not specified.
+OutSageMaker TensorFlow Serving Container supports the following Content-Types for requests out of the box:
+
+* `application/json` (default)
+* `text/csv`
+* `application/jsonlines`
+
+And the following Accept types for responses:
+
+* `application/json` (default)
+* `application/jsonlines`
 
 The container will convert data in these formats to [TensorFlow Serving REST API](https://www.tensorflow.org/tfx/serving/api_rest) requests,
-and will send these requests to the default serving signature of your model.
+and will send these requests using the default serving signature of your SavedModel.
 
 But you can also add customized Python code to process your input and output data. To make it work, here are some few things you need to pay attention:
 1. The customized Python code file should be named `inference.py` and it should be under `code` directory of your model archive.
@@ -360,7 +367,7 @@ Your untarred model directory structure may look like this if you have downloade
                 |__external_module
             |__inference.py
 
-## Deploying a TensorFlow Serving Model for Offline or Real-Time Inference
+## Deploying a TensorFlow Serving Model for Offline or Online Inference
 
 To use your TensorFlow Serving model on SageMaker, you first need to create a SageMaker Model. After creating a SageMaker Model, you can use it to create [SageMaker Batch Transform Jobs](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-batch.html)
  for offline inference, or create [SageMaker Endpoints](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-hosting.html) for real-time inference.
@@ -444,11 +451,12 @@ After creating a SageMaker Model, you can refer to the model name to create Tran
 
 ### Creating a Batch Transform Job
 
-A Batch Transform job runs an offline-inference job using your TensorFlow Serving model.
+A Batch Transform job runs an offline-inference job using your TensorFlow Serving model. Input data in S3 is converted to HTTP requests,
+and responses are saved to an output bucket in S3.
 
 #### CLI
 ```bash
-TRANSFORM_JOB_NAME="tfs-image-classification-transform-job"
+TRANSFORM_JOB_NAME="tfs-transform-job"
 TRANSFORM_S3_INPUT="s3://my-sagemaker-input-bucket/sagemaker-transform-input-data/"
 TRANSFORM_S3_OUTPUT="s3://my-sagemaker-output-bucket/sagemaker-transform-output-data/"
 
@@ -459,7 +467,7 @@ INSTANCE_TYPE="ml.p2.xlarge"
 INSTANCE_COUNT=2
 
 MAX_PAYLOAD_IN_MB=1
-MAX_CONCURRENT_TRANSFORMS=64
+MAX_CONCURRENT_TRANSFORMS=16
 
 aws sagemaker create-transform-job \
     --model-name $MODEL_NAME \
@@ -479,7 +487,7 @@ tensorflow_serving_transformer = tensorflow_serving_model.transformer(
                                      framework_version = '1.12',
                                      instance_count=2,
                                      instance_type='ml.p2.xlarge',
-                                     max_concurrent_transforms=64,
+                                     max_concurrent_transforms=16,
                                      max_payload=1,
                                      output_path=output_path)
 
@@ -505,9 +513,17 @@ aws sagemaker create-endpoint-config \
 
 ENDPOINT_NAME="my-tfs-endpoint"
 aws sagemaker create-endpoint \
-    --endpoint-name $ENDPOINT_NAME
+    --endpoint-name $ENDPOINT_NAME \
     --endpoint-config-name $ENDPOINT_CONFIG_NAME
 
+BODY="fileb://myfile.jpeg"
+CONTENT_TYPE='application/x-image'
+OUTFILE="response.json"
+aws sagemaker-runtime invoke-endpoint \
+    --endpoint-name $ENDPOINT_NAME \
+    --content-type=$CONTENT_TYPE \
+    --body $BODY \
+    $OUTFILE
 ```
 
 #### SageMaker Python SDK
@@ -516,7 +532,7 @@ aws sagemaker create-endpoint \
 predictor = tensorflow_serving_model.deploy(initial_instance_count=1,
                                             framework_version='1.12',
                                             instance_type='ml.p2.xlarge')
-predictor.predict(data)
+prediction = predictor.predict(data)
 ```
 
 
