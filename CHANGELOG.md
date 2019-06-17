@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.5 (2019-06-17)
+
+### Bug fixes and other changes
+
+ * add batch transform integration test
+
 ## v1.4.4 (2019-06-12)
 
 ### Bug fixes and other changes
