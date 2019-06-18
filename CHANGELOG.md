@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.6 (2019-06-18)
+
+### Bug fixes and other changes
+
+ * fix broken ei tests
+
 ## v1.4.5 (2019-06-17)
 
 ### Bug fixes and other changes
