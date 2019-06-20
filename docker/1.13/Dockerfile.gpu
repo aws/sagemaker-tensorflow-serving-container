@@ -92,11 +92,11 @@ RUN \
     apt-get clean
 
 RUN ${PIP} install -U --no-cache-dir awscli==1.16.130 \
-                                     cython \
-                                     falcon \
-                                     gunicorn \
-                                     gevent \
-                                     requests
+                                     cython==0.29.10 \
+                                     falcon==2.0.0 \
+                                     gunicorn==19.9.0 \
+                                     gevent==1.4.0 \
+                                     requests==2.22.0
 
 COPY ./ /
 
