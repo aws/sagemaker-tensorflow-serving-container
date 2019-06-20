@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.0 (2019-06-20)
+
+### Features
+
+ * add 1.13 EIA containers
+
 ## v1.4.6 (2019-06-18)
 
 ### Bug fixes and other changes
