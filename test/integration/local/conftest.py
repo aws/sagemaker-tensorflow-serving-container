@@ -20,7 +20,7 @@ TFS_DOCKER_BASE_NAME = 'sagemaker-tensorflow-serving'
 def pytest_addoption(parser):
     parser.addoption('--docker-base-name', default=TFS_DOCKER_BASE_NAME)
     parser.addoption('--framework-version', default=FRAMEWORK_LATEST_VERSION, required=True)
-    parser.addoption('--processor', default='cpu')
+    parser.addoption('--processor', default='cpu', choices=['cpu', 'gpu'])
     parser.addoption('--tag')
 
 
@@ -37,6 +37,14 @@ def framework_version(request):
 @pytest.fixture(scope='module')
 def processor(request):
     return request.config.getoption('--processor')
+
+
+@pytest.fixture(scope='module')
+def runtime_config(request, processor):
+    if processor == 'gpu':
+        return '--runtime=nvidia '
+    else:
+        return ''
 
 
 @pytest.fixture(scope='module')
