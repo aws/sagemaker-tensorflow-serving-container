@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.1 (2019-06-21)
+
+### Bug fixes and other changes
+
+ * use nvidia-docker for local gpu tests
+
 ## v1.5.0 (2019-06-20)
 
 ### Features
