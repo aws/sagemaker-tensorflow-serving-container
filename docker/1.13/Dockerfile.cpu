@@ -41,7 +41,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
 # cython, falcon, gunicorn
 RUN \
-    ${PIP} install cython==0.29.10 falcon==2.0.0 gunicorn==19.9.0 gevent==1.4.0 requests==2.22.0
+    ${PIP} install cython==0.29.10 falcon==2.0.0 gunicorn==19.9.0 gevent==1.4.0 requests==2.21.0
 
 COPY ./ /
 
