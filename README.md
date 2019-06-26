@@ -367,7 +367,7 @@ Your untarred model directory structure may look like this if you have downloade
                 |__external_module
             |__inference.py
 
-## Deploying a TensorFlow Serving Model for Real-Time or Batch Inference
+## Deploying a TensorFlow Serving Model
 
 To use your TensorFlow Serving model on SageMaker, you first need to create a SageMaker Model. After creating a SageMaker Model, you can use it to create [SageMaker Batch Transform Jobs](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-batch.html)
  for offline inference, or create [SageMaker Endpoints](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-hosting.html) for real-time inference.
