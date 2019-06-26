@@ -62,7 +62,7 @@ phases:
             "dest": ["1.13.0-gpu", "1.13-gpu", "1.13.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py::test_tfs_model --versions 1.13.0 --region {region} --registry 520713654638"
+            "tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py::test_tfs_model --versions 1.13.0 --region {region} --registry {aws-id}"
           ]
         }, {
           "repository": "sagemaker-tensorflow-serving-eia",
@@ -77,7 +77,7 @@ phases:
             "dest": ["1.13.0-cpu", "1.13-cpu", "1.13.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "tox -e py36 -- test/integration/sagemaker/test_ei.py -n 8 --region {region} --registry 520713654638"
+            "tox -e py36 -- test/integration/sagemaker/test_ei.py -n 8 --region {region} --registry {aws-id}"
           ]
         }]' > deployments.json
         fi
