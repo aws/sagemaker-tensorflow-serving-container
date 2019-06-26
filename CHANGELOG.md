@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.5.1 (2019-06-21)
+
+### Bug fixes and other changes
+
+ * use nvidia-docker for local gpu tests
+
+## v1.5.0 (2019-06-20)
+
+### Features
+
+ * add 1.13 EIA containers
+
+## v1.4.6 (2019-06-18)
+
+### Bug fixes and other changes
+
+ * fix broken ei tests
+
+## v1.4.5 (2019-06-17)
+
+### Bug fixes and other changes
+
+ * add batch transform integration test
+
 ## v1.4.4 (2019-06-12)
 
 ### Bug fixes and other changes
