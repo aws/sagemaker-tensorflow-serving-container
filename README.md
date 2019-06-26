@@ -20,7 +20,7 @@ For notebook examples, see: [Amazon SageMaker Examples](https://github.com/awsla
 2. [Building your image](#building-your-image)
 3. [Running the tests](#running-the-tests)
 4. [Pre/Post-Processing](#pre/post-processing)
-5. [Deploying a TensorFlow Serving Model for Offline or Online Inference](#deploying-a-tensorflow-serving-model-for-offline-or-online-inference)
+5. [Deploying a TensorFlow Serving Model](#deploying-a-tensorflow-serving-model)
 
 ## Getting Started
 
@@ -141,23 +141,23 @@ For example:
 
 ## Pre/Post-Processing
 
-OutSageMaker TensorFlow Serving Container supports the following Content-Types for requests out of the box:
+SageMaker TensorFlow Serving Container supports the following Content-Types for requests:
 
 * `application/json` (default)
 * `text/csv`
 * `application/jsonlines`
 
-And the following Accept types for responses:
+And the following content types for responses:
 
 * `application/json` (default)
 * `application/jsonlines`
 
 The container will convert data in these formats to [TensorFlow Serving REST API](https://www.tensorflow.org/tfx/serving/api_rest) requests,
-and will send these requests using the default serving signature of your SavedModel.
+and will send these requests to the default serving signature of your SavedModel bundle.
 
-But you can also add customized Python code to process your input and output data. To make it work, here are some few things you need to pay attention:
-1. The customized Python code file should be named `inference.py` and it should be under `code` directory of your model archive.
-2. `inference.py` should implement either a pair of `input_handler` and `output_handler` functions or a single `handler` function. Note that if `handler` function is implemented, `input_handler` and `output_handler` will be ignored.
+You can also add customized Python code to process your input and output data. To use this feature, you need to:
+1. Add a python file named `inference.py` to the code directory inside your model archive.
+2. In `inference.py`, implement either a pair of `input_handler` and `output_handler` functions or a single `handler` function. Note that if `handler` function is implemented, `input_handler` and `output_handler` will be ignored.
 
 To implement pre/post-processing handler(s), you will need to make use of the `Context` object created by Python service. The `Context` is a `namedtuple` with following attributes:
 - `model_name (string)`: the name of the model you will to use for inference, for example 'half_plus_three'
@@ -287,7 +287,7 @@ signature_def['serving_default']:
 ```
 
 
-There are occasions when you might want to have complete control over the request handler. For example, making TFS request (REST or GRPC) to first model, inspecting results and making request to a second model. In this case, you may implement the `handler` instead of the `input_handler` and `output_handler` pair:
+There are occasions when you might want to have complete control over the request handler. For example, making TFS request (REST or GRPC) to one model, and then making a request to a second model. In this case, you may implement the `handler` instead of the `input_handler` and `output_handler` pair:
 
 ```python
 import json
@@ -367,7 +367,7 @@ Your untarred model directory structure may look like this if you have downloade
                 |__external_module
             |__inference.py
 
-## Deploying a TensorFlow Serving Model for Offline or Online Inference
+## Deploying a TensorFlow Serving Model for Real-Time or Batch Inference
 
 To use your TensorFlow Serving model on SageMaker, you first need to create a SageMaker Model. After creating a SageMaker Model, you can use it to create [SageMaker Batch Transform Jobs](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-batch.html)
  for offline inference, or create [SageMaker Endpoints](https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-hosting.html) for real-time inference.
@@ -377,7 +377,7 @@ To use your TensorFlow Serving model on SageMaker, you first need to create a Sa
 
 A SageMaker Model contains references to a `model.tar.gz` file in S3 containing serialized model data, and a Docker image used to serve predictions with that model.
 
-You can package the contents in model directory (including models, inference.py and external modules) in .tar.gz format in a file named "model.tar.gz" and upload it to S3. If you're on a Unix-based operating system, you can create a "model.tar.gz" using the `tar` utility:
+You must package the contents in a model directory (including models, inference.py and external modules) in .tar.gz format in a file named "model.tar.gz" and upload it to S3. If you're on a Unix-based operating system, you can create a "model.tar.gz" using the `tar` utility:
 
 ```
 tar -czvf model.tar.gz 12345 code
