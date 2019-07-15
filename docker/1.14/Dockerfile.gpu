@@ -91,12 +91,12 @@ RUN \
     apt-get -y install --no-install-recommends nginx nginx-module-njs && \
     apt-get clean
 
-RUN ${PIP} install -U --no-cache-dir awscli==1.16.130 \
-                                     cython==0.29.10 \
+RUN ${PIP} install -U --no-cache-dir awscli==1.16.196 \
+                                     cython==0.29.12 \
                                      falcon==2.0.0 \
                                      gunicorn==19.9.0 \
                                      gevent==1.4.0 \
-                                     requests==2.21.0
+                                     requests==2.22.0
 
 COPY ./ /
 
