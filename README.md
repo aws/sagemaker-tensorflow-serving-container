@@ -544,7 +544,10 @@ prediction = predictor.predict(data)
 ## Enabling Batching
 
 You can configure SageMaker TensorFlow Serving Container to batch multiple records together before
-performing an inference. You may be able to significantly improve throughput, especially on GPU instances, by
+performing an inference. This uses [TensorFlow Serving's](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/batching/README.md)
+underlying batching feature.
+
+You may be able to significantly improve throughput, especially on GPU instances, by
 enabling and configuring batching. To get the best performance, it may be necessary to tune batching parameters,
 especially the batch size and batch timeout, to your model, input data, and instance type.
 
