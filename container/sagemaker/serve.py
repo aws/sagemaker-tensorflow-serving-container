@@ -184,13 +184,13 @@ class ServiceManager(object):
 
     def _setup_gunicorn(self):
         python_path_content = []
-        use_python_path = ''
+        python_path_option = ''
 
         if self._enable_python_service:
             lib_path_exists = os.path.exists(PYTHON_LIB_PATH)
             requirements_exists = os.path.exists(REQUIREMENTS_PATH)
             python_path_content = ['/opt/ml/model/code']
-            use_python_path = '--pythonpath '
+            python_path_option = '--pythonpath '
 
             if lib_path_exists:
                 python_path_content.append(PYTHON_LIB_PATH)
@@ -212,8 +212,8 @@ class ServiceManager(object):
         gunicorn_command = (
             'gunicorn -b unix:/tmp/gunicorn.sock -k gevent --chdir /sagemaker '
             '{}{} -e TFS_GRPC_PORT={} -e SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT={} '
-            'gunicorn_service:app').format(use_python_path, ','.join(python_path_content),
-                                           self._tfs_grpc_port, self._tfs_enable_dynamic_endpoint)
+            'python_service:app').format(python_path_option, ','.join(python_path_content),
+                                         self._tfs_grpc_port, self._tfs_enable_dynamic_endpoint)
 
         log.info('gunicorn command: {}'.format(gunicorn_command))
         self._gunicorn_command = gunicorn_command

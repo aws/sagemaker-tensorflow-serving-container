@@ -19,7 +19,8 @@ RUN \
 
 # cython, falcon, gunicorn
 RUN \
-    pip3 install cython falcon gunicorn gevent requests tensorflow-serving-api
+    pip3 install cython falcon gunicorn gevent requests grpcio protobuf tensorflow && \
+    pip3 install --no-dependencies tensorflow-serving-api
 
 COPY ./ /
 

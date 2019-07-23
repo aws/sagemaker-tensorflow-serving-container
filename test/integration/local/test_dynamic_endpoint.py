@@ -29,11 +29,11 @@ def volume():
     try:
         model_dir = os.path.abspath('test/resources/models')
         subprocess.check_call(
-            'docker volume create --name model_volume --opt type=none '
+            'docker volume create --name dynamic_endpoint_model_volume --opt type=none '
             '--opt device={} --opt o=bind'.format(model_dir).split())
         yield model_dir
     finally:
-        subprocess.check_call('docker volume rm model_volume'.split())
+        subprocess.check_call('docker volume rm dynamic_endpoint_model_volume'.split())
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -41,7 +41,7 @@ def container(request, docker_base_name, tag, runtime_config):
     try:
         command = (
             'docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080'
-            ' --mount type=volume,source=model_volume,target=/opt/ml/models,readonly'
+            ' --mount type=volume,source=dynamic_endpoint_model_volume,target=/opt/ml/models,readonly'
             ' -e SAGEMAKER_TFS_DEFAULT_MODEL_NAME=half_plus_three'
             ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
             ' -e SAGEMAKER_BIND_TO_PORT=8080'
@@ -119,13 +119,17 @@ def test_load_two_models():
     assert res1 == 'Successfully loaded model {}'.format(model_name_1)
 
     # load second model
-    command = 'curl -d\'{"name":"cifar", "uri":"/opt/ml/models/cifar"}\'' \
+    command = 'curl -d\'{"name":"half_plus_three", "uri":"/opt/ml/models/half_plus_three"}\'' \
               ' -X POST http://localhost:8080/models'
     subprocess.check_call(command.split())
+
     # make invocation request to the first model
-    x1 = {
+    x = {
         'instances': [1.0, 2.0, 5.0]
     }
-    y1 = make_invocation_request(json.dumps(x1), model_name_1)
+    y1 = make_invocation_request(json.dumps(x), model_name_1)
     assert y1 == {'predictions': [2.5, 3.0, 4.5]}
 
+    # make invocation request to the second model
+    y2 = make_invocation_request(json.dumps(x), 'half_plus_three')
+    assert y2 == {'predictions': [3.5, 4.0, 5.5]}
