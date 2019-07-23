@@ -46,7 +46,7 @@ class ModelManagerResource(object):
             msg = self.grpc_client.add_model(model_name, base_path)
             res.body = msg
             res.status = falcon.HTTP_200
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0703
             res.status = falcon.HTTP_507
             res.body = json.dumps({
                 'error': str(e)

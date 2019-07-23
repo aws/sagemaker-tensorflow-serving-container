@@ -25,12 +25,12 @@ class ServiceResources(object):
         self._enable_python_service = os.path.exists(INFERENCE_SCRIPT_PATH)
         self._enable_model_manager = os.environ.get('SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT')
 
-    def add_routes(self, app):
+    def add_routes(self, application):
         if self._enable_python_service:
             ping_resource = PingResource()
             invocation_resource = InvocationResource()
-            app.add_route('/ping', ping_resource)
-            app.add_route('/invocations', invocation_resource)
+            application.add_route('/ping', ping_resource)
+            application.add_route('/invocations', invocation_resource)
 
         if self._enable_model_manager:
             model_manager_resource = ModelManagerResource()

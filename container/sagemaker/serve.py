@@ -45,7 +45,8 @@ class ServiceManager(object):
         self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', None)
 
         _enable_batching = os.environ.get('SAGEMAKER_TFS_ENABLE_BATCHING', 'false').lower()
-        _enable_dynamic_endpoint = os.environ.get('SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT', 'false').lower()
+        _enable_dynamic_endpoint = os.environ.get('SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT',
+                                                  'false').lower()
 
         if _enable_batching not in ['true', 'false']:
             raise ValueError('SAGEMAKER_TFS_ENABLE_BATCHING must be "true" or "false"')

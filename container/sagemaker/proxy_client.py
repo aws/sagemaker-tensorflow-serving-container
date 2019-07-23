@@ -50,7 +50,7 @@ class GRPCProxyClient(object):
 
         try:
             res = self.stub.HandleReloadConfigRequest(req)
-        except Exception as e:
+        except Exception:
             log.exception('Exception handling request to load model {}: {}'
                           .format(model_name, res.status.error_message))
             raise Exception('error: {}; message: {}'
