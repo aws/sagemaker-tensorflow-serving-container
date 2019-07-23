@@ -15,7 +15,7 @@ RUN \
 
 # cython, falcon, gunicorn
 RUN \
-    pip3 install cython falcon gunicorn gevent requests
+    pip3 install cython falcon gunicorn gevent requests tensorflow-serving-api
 
 COPY ./ /
 RUN mv amazonei_tensorflow_model_server /usr/bin/tensorflow_model_server && \

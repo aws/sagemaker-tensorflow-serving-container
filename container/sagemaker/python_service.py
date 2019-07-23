@@ -10,6 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+
 import importlib.util
 import json
 import logging
@@ -126,13 +127,3 @@ class InvocationResource(object):
 class PingResource(object):
     def on_get(self, req, res):  # pylint: disable=W0613
         res.status = falcon.HTTP_200
-
-
-# receiving requests to /invocations and /ping
-ping_resource = PingResource()
-invocation_resource = InvocationResource()
-
-app = falcon.API()
-
-app.add_route('/ping', ping_resource)
-app.add_route('/invocations', invocation_resource)

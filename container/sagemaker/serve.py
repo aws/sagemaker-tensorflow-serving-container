@@ -38,17 +38,24 @@ class ServiceManager(object):
         self._tfs = None
         self._gunicorn = None
         self._gunicorn_command = None
-        self._use_gunicorn = os.path.exists(INFERENCE_PATH)
+        self._enable_python_service = os.path.exists(INFERENCE_PATH)
         self._tfs_version = os.environ.get('SAGEMAKER_TFS_VERSION', '1.13')
         self._nginx_http_port = os.environ.get('SAGEMAKER_BIND_TO_PORT', '8080')
         self._nginx_loglevel = os.environ.get('SAGEMAKER_TFS_NGINX_LOGLEVEL', 'error')
         self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', None)
 
         _enable_batching = os.environ.get('SAGEMAKER_TFS_ENABLE_BATCHING', 'false').lower()
+        _enable_dynamic_endpoint = os.environ.get('SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT', 'false').lower()
 
         if _enable_batching not in ['true', 'false']:
             raise ValueError('SAGEMAKER_TFS_ENABLE_BATCHING must be "true" or "false"')
         self._tfs_enable_batching = _enable_batching == 'true'
+
+        if _enable_dynamic_endpoint not in ['true', 'false']:
+            raise ValueError('SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT must be "true" or "false"')
+        self._tfs_enable_dynamic_endpoint = _enable_dynamic_endpoint == 'true'
+
+        self._use_gunicorn = self._enable_python_service or self._tfs_enable_dynamic_endpoint
 
         if 'SAGEMAKER_SAFE_PORT_RANGE' in os.environ:
             port_range = os.environ['SAGEMAKER_SAFE_PORT_RANGE']
@@ -70,29 +77,35 @@ class ServiceManager(object):
         os.environ['TFS_REST_PORT'] = self._tfs_rest_port
 
     def _create_tfs_config(self):
-        models = self._find_models()
-
-        if not models:
-            raise ValueError('no SavedModel bundles found!')
-
-        if self._tfs_default_model_name is None:
-            self._tfs_default_model_name = os.path.basename(models[0])
-            log.info('using default model name: {}'.format(self._tfs_default_model_name))
-
         # config (may) include duplicate 'config' keys, so we can't just dump a dict
-        config = 'model_config_list: {\n'
-        for m in models:
-            config += '  config: {\n'
-            config += '    name: "{}",\n'.format(os.path.basename(m))
-            config += '    base_path: "{}",\n'.format(m)
-            config += '    model_platform: "tensorflow"\n'
-            config += '  },\n'
-        config += '}\n'
+        if self._tfs_enable_dynamic_endpoint:
+            config = 'model_config_list: {\n'
+            config += '}\n'
+            with open('/sagemaker/model-config.cfg', 'w') as f:
+                f.write(config)
+        else:
+            models = self._find_models()
+            if not models:
+                raise ValueError('no SavedModel bundles found!')
 
-        log.info('tensorflow serving model config: \n%s\n', config)
+            if self._tfs_default_model_name is None:
+                self._tfs_default_model_name = os.path.basename(models[0])
+                log.info('using default model name: {}'.format(self._tfs_default_model_name))
 
-        with open('/sagemaker/model-config.cfg', 'w') as f:
-            f.write(config)
+            # config (may) include duplicate 'config' keys, so we can't just dump a dict
+            config = 'model_config_list: {\n'
+            for m in models:
+                config += '  config: {\n'
+                config += '    name: "{}",\n'.format(os.path.basename(m))
+                config += '    base_path: "{}",\n'.format(m)
+                config += '    model_platform: "tensorflow"\n'
+                config += '  },\n'
+            config += '}\n'
+
+            log.info('tensorflow serving model config: \n%s\n', config)
+
+            with open('/sagemaker/model-config.cfg', 'w') as f:
+                f.write(config)
 
     def _create_batching_config(self):
 
@@ -169,30 +182,37 @@ class ServiceManager(object):
                     yield os.path.join(path, e.name)
 
     def _setup_gunicorn(self):
-        lib_path_exists = os.path.exists(PYTHON_LIB_PATH)
-        requirements_exists = os.path.exists(REQUIREMENTS_PATH)
-        python_path_content = ['/opt/ml/model/code']
+        python_path_content = []
+        use_python_path = ''
 
-        if lib_path_exists:
-            python_path_content.append(PYTHON_LIB_PATH)
+        if self._enable_python_service:
+            lib_path_exists = os.path.exists(PYTHON_LIB_PATH)
+            requirements_exists = os.path.exists(REQUIREMENTS_PATH)
+            python_path_content = ['/opt/ml/model/code']
+            use_python_path = '--pythonpath '
 
-        if requirements_exists:
             if lib_path_exists:
-                log.warning('loading modules in "{}", ignoring requirements.txt'
-                            .format(PYTHON_LIB_PATH))
-            else:
-                log.info('installing packages from requirements.txt...')
-                pip_install_cmd = 'pip3 install -r {}'.format(REQUIREMENTS_PATH)
-                try:
-                    subprocess.check_call(pip_install_cmd.split())
-                except subprocess.CalledProcessError:
-                    log.error('failed to install required packages, exiting.')
-                    self._stop()
-                    raise ChildProcessError('failed to install required packages.')
+                python_path_content.append(PYTHON_LIB_PATH)
+
+            if requirements_exists:
+                if lib_path_exists:
+                    log.warning('loading modules in "{}", ignoring requirements.txt'
+                                .format(PYTHON_LIB_PATH))
+                else:
+                    log.info('installing packages from requirements.txt...')
+                    pip_install_cmd = 'pip3 install -r {}'.format(REQUIREMENTS_PATH)
+                    try:
+                        subprocess.check_call(pip_install_cmd.split())
+                    except subprocess.CalledProcessError:
+                        log.error('failed to install required packages, exiting.')
+                        self._stop()
+                        raise ChildProcessError('failed to install required packages.')
 
         gunicorn_command = (
             'gunicorn -b unix:/tmp/gunicorn.sock -k gevent --chdir /sagemaker '
-            '--pythonpath {} python_service:app').format(','.join(python_path_content))
+            '{}{} -e TFS_GRPC_PORT={} -e SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT={} '
+            'gunicorn_service:app').format(use_python_path, ','.join(python_path_content),
+                                           self._tfs_grpc_port, self._tfs_enable_dynamic_endpoint)
 
         log.info('gunicorn command: {}'.format(gunicorn_command))
         self._gunicorn_command = gunicorn_command
@@ -206,8 +226,8 @@ class ServiceManager(object):
             'TFS_DEFAULT_MODEL_NAME': self._tfs_default_model_name,
             'NGINX_HTTP_PORT': self._nginx_http_port,
             'NGINX_LOG_LEVEL': self._nginx_loglevel,
-            'FORWARD_PING_REQUESTS': GUNICORN_PING if self._use_gunicorn else JS_PING,
-            'FORWARD_INVOCATION_REQUESTS': GUNICORN_INVOCATIONS if self._use_gunicorn
+            'FORWARD_PING_REQUESTS': GUNICORN_PING if self._enable_python_service else JS_PING,
+            'FORWARD_INVOCATION_REQUESTS': GUNICORN_INVOCATIONS if self._enable_python_service
             else JS_INVOCATIONS,
         }
 
@@ -290,6 +310,9 @@ class ServiceManager(object):
         if self._tfs_enable_batching:
             log.info('batching is enabled')
             self._create_batching_config()
+
+        if self._tfs_enable_dynamic_endpoint:
+            log.info('dynamic endpooint is enabled')
 
         self._start_tfs()
 
