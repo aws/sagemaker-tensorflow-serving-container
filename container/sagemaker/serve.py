@@ -296,6 +296,10 @@ class ServiceManager(object):
         if self._use_gunicorn:
             self._setup_gunicorn()
             self._start_gunicorn()
+            while True:
+                if os.path.exists('/tmp/gunicorn.sock'):
+                    log.info('gunicorn server is ready!')
+                    break
 
         self._start_nginx()
         self._state = 'started'
