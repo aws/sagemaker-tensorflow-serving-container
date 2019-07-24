@@ -300,6 +300,12 @@ class ServiceManager(object):
         self._state = 'stopped'
         log.info('stopped')
 
+    def _wait_for_gunicorn(self):
+        while True:
+            if os.path.exists('/tmp/gunicorn.sock'):
+                log.info('gunicorn server is ready!')
+                return
+
     def start(self):
         log.info('starting services')
         self._state = 'starting'
@@ -320,6 +326,8 @@ class ServiceManager(object):
         if self._use_gunicorn:
             self._setup_gunicorn()
             self._start_gunicorn()
+            # make sure gunicorn is up
+            self._wait_for_gunicorn()
 
         self._start_nginx()
         self._state = 'started'
