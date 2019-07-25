@@ -12,18 +12,12 @@
 # language governing permissions and limitations under the License.
 
 import grpc
-import logging
-
 from google.protobuf import text_format
-from tensorflow_serving.apis import model_service_pb2_grpc
 from tensorflow_serving.apis import model_management_pb2
+from tensorflow_serving.apis import model_service_pb2_grpc
 from tensorflow_serving.config import model_server_config_pb2
 
-# TFS_GRPC_PORT = os.environ['TFS_GRPC_PORT']
 MODEL_CONFIG_FILE = '/sagemaker/model-config.cfg'
-
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
 
 
 class GRPCProxyClient(object):
@@ -49,12 +43,11 @@ class GRPCProxyClient(object):
         req.config.CopyFrom(model_server_config)
 
         try:
-            res = self.stub.HandleReloadConfigRequest(req)
-        except Exception:
-            log.exception('Exception handling request to load model {}: {}'
-                          .format(model_name, res.status.error_message))
-            raise Exception('error: {}; message: {}'
-                            .format(res.status.error_code, res.status.error_message))
+            self.stub.HandleReloadConfigRequest(req)
+        except grpc.RpcError as e:
+            status_code = e.code()[1]
+            msg = e.details()
+            raise Exception('error: {}; message: {}'.format(status_code, msg))
 
         # update local model-config.cfg file
         self._add_model_to_config_file(model_name, base_path, model_platform)

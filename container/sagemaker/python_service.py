@@ -11,7 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-import fcntl
 import importlib.util
 import json
 import logging
@@ -150,10 +149,6 @@ class ModelManagerResource(object):
         model_name = data['name']
         base_path = data['uri']
         try:
-            # prevent concurrent load model requests
-            lock_file = open(MODEL_CONFIG_FILE_PATH, 'w')
-            fd = lock_file.fileno()
-            fcntl.lockf(fd, fcntl.LOCK_EX)
             msg = self.grpc_client.add_model(model_name, base_path)
             res.body = msg
             res.status = falcon.HTTP_200
@@ -162,8 +157,6 @@ class ModelManagerResource(object):
             res.body = json.dumps({
                 'error': str(e)
             }).encode('utf-8')
-        finally:
-            fcntl.lockf(fd, fcntl.LOCK_UN)
 
 
 class ServiceResources(object):

@@ -80,8 +80,7 @@ class ServiceManager(object):
     def _create_tfs_config(self):
         # config (may) include duplicate 'config' keys, so we can't just dump a dict
         if self._tfs_enable_dynamic_endpoint:
-            config = 'model_config_list: {\n'
-            config += '}\n'
+            config = 'model_config_list: {\n}\n'
             with open('/sagemaker/model-config.cfg', 'w') as f:
                 f.write(config)
         else:
