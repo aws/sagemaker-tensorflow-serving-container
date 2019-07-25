@@ -11,6 +11,10 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+import fcntl
+import time
+from contextlib import contextmanager
+
 import grpc
 from google.protobuf import text_format
 from tensorflow_serving.apis import model_management_pb2
@@ -18,6 +22,21 @@ from tensorflow_serving.apis import model_service_pb2_grpc
 from tensorflow_serving.config import model_server_config_pb2
 
 MODEL_CONFIG_FILE = '/sagemaker/model-config.cfg'
+DEFAULT_LOCK_FILE = '/sagemaker/lock-file.lock'
+
+
+@contextmanager
+def lock(path=DEFAULT_LOCK_FILE):
+    f = open(path, 'w')
+    fd = f.fileno()
+    fcntl.lockf(fd, fcntl.LOCK_EX)
+
+    try:
+        yield
+    finally:
+        # prevent concurrent requests
+        time.sleep(5)
+        fcntl.lockf(fd, fcntl.LOCK_UN)
 
 
 class GRPCProxyClient(object):
@@ -27,30 +46,32 @@ class GRPCProxyClient(object):
 
     def add_model(self, model_name, base_path, model_platform='tensorflow'):
         # read model configs from existing model config file
-        config_file = self._read_model_config(MODEL_CONFIG_FILE)
         model_server_config = model_server_config_pb2.ModelServerConfig()
         config_list = model_server_config_pb2.ModelConfigList()
-        model_server_config = text_format.Parse(text=config_file, message=model_server_config)
 
-        new_model_config = config_list.config.add()
-        new_model_config.name = model_name
-        new_model_config.base_path = base_path
-        new_model_config.model_platform = model_platform
+        with lock(DEFAULT_LOCK_FILE):
+            try:
+                config_file = self._read_model_config(MODEL_CONFIG_FILE)
+                model_server_config = text_format.Parse(text=config_file,
+                                                        message=model_server_config)
 
-        # send HandleReloadConfigRequest to tensorflow model server
-        model_server_config.model_config_list.MergeFrom(config_list)
-        req = model_management_pb2.ReloadConfigRequest()
-        req.config.CopyFrom(model_server_config)
+                new_model_config = config_list.config.add()
+                new_model_config.name = model_name
+                new_model_config.base_path = base_path
+                new_model_config.model_platform = model_platform
 
-        try:
-            self.stub.HandleReloadConfigRequest(req)
-        except grpc.RpcError as e:
-            status_code = e.code()[1]
-            msg = e.details()
-            raise Exception('error: {}; message: {}'.format(status_code, msg))
+                # send HandleReloadConfigRequest to tensorflow model server
+                model_server_config.model_config_list.MergeFrom(config_list)
+                req = model_management_pb2.ReloadConfigRequest()
+                req.config.CopyFrom(model_server_config)
 
-        # update local model-config.cfg file
-        self._add_model_to_config_file(model_name, base_path, model_platform)
+                self.stub.HandleReloadConfigRequest(req)
+                self._add_model_to_config_file(model_name, base_path, model_platform)
+            except grpc.RpcError as e:
+                status_code = e.code()[1]
+                msg = e.details()
+                raise Exception('error: {}; message: {}'.format(status_code, msg))
+
         return 'Successfully loaded model {}'.format(model_name)
 
     def _read_model_config(self, model_config_file):

@@ -18,6 +18,8 @@ import re
 import signal
 import subprocess
 
+from contextlib import contextmanager
+
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
@@ -305,6 +307,18 @@ class ServiceManager(object):
                 log.info('gunicorn server is ready!')
                 return
 
+    @contextmanager
+    def _timeout(self, seconds):
+        def _raise_timeout_error(signum, frame):
+            raise TimeoutError('timed our after {} seconds'.format(seconds))
+
+        try:
+            signal.signal(signal.SIGALRM, _raise_timeout_error)
+            signal.alarm(seconds)
+            yield
+        finally:
+            signal.alarm(0)
+
     def start(self):
         log.info('starting services')
         self._state = 'starting'
@@ -326,7 +340,8 @@ class ServiceManager(object):
             self._setup_gunicorn()
             self._start_gunicorn()
             # make sure gunicorn is up
-            self._wait_for_gunicorn()
+            with self._timeout(seconds=30):
+                self._wait_for_gunicorn()
 
         self._start_nginx()
         self._state = 'started'

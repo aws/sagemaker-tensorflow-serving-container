@@ -16,7 +16,6 @@ http {
   default_type application/json;
   access_log /dev/stdout combined;
   js_include tensorflow-serving.js;
-  limit_conn_zone $binary_remote_addr zone=addr:10m;
 
   upstream tfs_upstream {
     server localhost:%TFS_REST_PORT%;
@@ -54,7 +53,6 @@ http {
 
     location /models {
         proxy_pass http://gunicorn_upstream/models;
-        limit_conn addr 1;
     }
 
     location / {
