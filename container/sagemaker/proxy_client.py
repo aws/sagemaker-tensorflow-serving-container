@@ -34,8 +34,7 @@ def lock(path=DEFAULT_LOCK_FILE):
     try:
         yield
     finally:
-        # prevent concurrent requests
-        time.sleep(5)
+        time.sleep(1)
         fcntl.lockf(fd, fcntl.LOCK_UN)
 
 

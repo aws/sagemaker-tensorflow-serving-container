@@ -133,3 +133,20 @@ def test_load_two_models():
     # make invocation request to the second model
     y2 = make_invocation_request(json.dumps(x), 'half_plus_three')
     assert y2 == {'predictions': [3.5, 4.0, 5.5]}
+
+
+def test_inference_unloaded_model():
+    model_name = 'cifar'
+    model_data = {
+        'name': model_name,
+        'uri': '/opt/ml/models/cifar'
+    }
+    res = make_load_model_request(json.dumps(model_data))
+    assert res == 'Successfully loaded model {}'.format(model_name)
+
+    # make invovation request to unloaded model
+    x = {
+        'instances': [1.0, 2.0, 5.0]
+    }
+    y = make_invocation_request(json.dumps(x), 'unloaded_model')
+    assert y['error'].startswith('Servable not found for request')

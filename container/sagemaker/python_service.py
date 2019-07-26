@@ -28,7 +28,6 @@ TFS_GRPC_PORT = os.environ.get('TFS_GRPC_PORT')
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-MODEL_CONFIG_FILE_PATH = '/sagemaker/model-config.cf'
 DEFAULT_CONTENT_TYPE = 'application/json'
 DEFAULT_ACCEPT_HEADER = 'application/json'
 CUSTOM_ATTRIBUTES_HEADER = 'X-Amzn-SageMaker-Custom-Attributes'
