@@ -51,6 +51,10 @@ http {
         %FORWARD_INVOCATION_REQUESTS%;
     }
 
+    location /models {
+        proxy_pass http://gunicorn_upstream/models;
+    }
+
     location / {
         return 404 '{"error": "Not Found"}';
     }
