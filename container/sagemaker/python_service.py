@@ -10,6 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+
 import importlib.util
 import json
 import logging
@@ -19,8 +20,10 @@ from collections import namedtuple
 
 import falcon
 import requests
+from proxy_client import GRPCProxyClient
 
 INFERENCE_SCRIPT_PATH = '/opt/ml/model/code/inference.py'
+TFS_GRPC_PORT = os.environ.get('TFS_GRPC_PORT')
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -128,11 +131,50 @@ class PingResource(object):
         res.status = falcon.HTTP_200
 
 
-# receiving requests to /invocations and /ping
-ping_resource = PingResource()
-invocation_resource = InvocationResource()
+class ModelManagerResource(object):
+
+    def __init__(self):
+        self.grpc_client = GRPCProxyClient(TFS_GRPC_PORT)
+
+    def on_get(self, req, res):  # pylint: disable=W0613
+        with open('/sagemaker/model-config.cfg') as f:
+            models = f.read()
+            res.body = models
+            res.status = falcon.HTTP_200
+
+    def on_post(self, req, res):
+        res.status = falcon.HTTP_200
+        data = json.loads(req.stream.read().decode('utf-8'))
+        model_name = data['name']
+        base_path = data['uri']
+        try:
+            msg = self.grpc_client.add_model(model_name, base_path)
+            res.body = msg
+            res.status = falcon.HTTP_200
+        except Exception as e:  # pylint: disable=W0703
+            res.status = falcon.HTTP_507
+            res.body = json.dumps({
+                'error': str(e)
+            }).encode('utf-8')
+
+
+class ServiceResources(object):
+    def __init__(self):
+        self._enable_python_service = os.path.exists(INFERENCE_SCRIPT_PATH)
+        self._enable_model_manager = os.environ.get('SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT')
+
+    def add_routes(self, application):
+        if self._enable_python_service:
+            ping_resource = PingResource()
+            invocation_resource = InvocationResource()
+            application.add_route('/ping', ping_resource)
+            application.add_route('/invocations', invocation_resource)
+
+        if self._enable_model_manager:
+            model_manager_resource = ModelManagerResource()
+            application.add_route('/models', model_manager_resource)
+
 
 app = falcon.API()
-
-app.add_route('/ping', ping_resource)
-app.add_route('/invocations', invocation_resource)
+resources = ServiceResources()
+resources.add_routes(app)
