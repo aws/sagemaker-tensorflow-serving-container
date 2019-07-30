@@ -17,9 +17,10 @@ RUN \
     apt-get -y install --no-install-recommends nginx nginx-module-njs python3 python3-pip python3-setuptools && \
     apt-get clean
 
-# cython, falcon, gunicorn
+# cython, falcon, gunicorn, tensorflow-serving
 RUN \
-    pip3 install cython falcon gunicorn gevent requests
+    pip3 install --no-cache-dir cython falcon gunicorn gevent requests grpcio protobuf tensorflow && \
+    pip3 install --no-dependencies --no-cache-dir tensorflow-serving-api
 
 COPY ./ /
 
