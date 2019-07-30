@@ -77,12 +77,22 @@ def make_invocation_request(data, model_name, content_type='application/json'):
     return json.loads(response.content.decode('utf-8'))
 
 
+def make_list_model_request():
+    response = requests.get(MODELS_URL)
+    return json.loads(response.content.decode('utf-8'))
+
+
 def make_load_model_request(data, content_type='application/json'):
     headers = {
         'Content-Type': content_type
     }
     response = requests.post(MODELS_URL, data=data, headers=headers)
     return response.content.decode('utf-8')
+
+
+def test_list_models_empty():
+    res = make_list_model_request()
+    assert res == {'models': []}
 
 
 def test_container_start_invocation_fail():
@@ -133,6 +143,18 @@ def test_load_two_models():
     # make invocation request to the second model
     y2 = make_invocation_request(json.dumps(x), 'half_plus_three')
     assert y2 == {'predictions': [3.5, 4.0, 5.5]}
+
+    res3 = make_list_model_request()['models']
+    models = [json.loads(model) for model in res3]
+    assert models == [
+        {
+            "name": "half_plus_three",
+            "uri": "/opt/ml/models/half_plus_three"
+        },
+        {
+            "name": "half_plus_two",
+            "uri": "/opt/ml/models/half_plus_two"
+        }]
 
 
 def test_inference_unloaded_model():

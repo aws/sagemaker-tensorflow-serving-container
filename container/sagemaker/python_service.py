@@ -23,6 +23,7 @@ import requests
 from proxy_client import GRPCProxyClient
 
 INFERENCE_SCRIPT_PATH = '/opt/ml/model/code/inference.py'
+MODEL_CONFIG_FILE_PATH = '/sagemaker/model-config.cfg'
 TFS_GRPC_PORT = os.environ.get('TFS_GRPC_PORT')
 
 logging.basicConfig(level=logging.INFO)
@@ -137,10 +138,11 @@ class ModelManagerResource(object):
         self.grpc_client = GRPCProxyClient(TFS_GRPC_PORT)
 
     def on_get(self, req, res):  # pylint: disable=W0613
-        with open('/sagemaker/model-config.cfg') as f:
-            models = f.read()
-            res.body = models
-            res.status = falcon.HTTP_200
+        models = self._read_model_config()
+        res.status = falcon.HTTP_200
+        res.body = json.dumps({
+            'models': models
+        })
 
     def on_post(self, req, res):
         res.status = falcon.HTTP_200
@@ -156,6 +158,24 @@ class ModelManagerResource(object):
             res.body = json.dumps({
                 'error': str(e)
             }).encode('utf-8')
+
+    def _read_model_config(self):
+        models = []
+        name_key = '    name: '
+        uri_key = '    base_path: '
+        with open(MODEL_CONFIG_FILE_PATH, 'r') as f:
+            line = f.readline()
+            while line:
+                if line.startswith(name_key):
+                    model_name = line[len(name_key) + 1:len(line) - 3]
+                    line = f.readline()
+                    uri = line[len(uri_key) + 1:len(line) - 3]
+                    models.append(json.dumps({
+                        'name': model_name,
+                        'uri': uri
+                    }))
+                line = f.readline()
+        return models
 
 
 class ServiceResources(object):
