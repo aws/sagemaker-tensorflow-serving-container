@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+import encodings
 import importlib.util
 import json
 import logging
@@ -60,7 +61,7 @@ class InvocationResource(object):
             res.status = falcon.HTTP_500
             res.body = json.dumps({
                 'error': str(e)
-            }).encode('utf-8')
+            }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
 
     def _import_handlers(self):
         spec = importlib.util.spec_from_file_location('inference', INFERENCE_SCRIPT_PATH)
@@ -146,7 +147,8 @@ class ModelManagerResource(object):
 
     def on_post(self, req, res):
         res.status = falcon.HTTP_200
-        data = json.loads(req.stream.read().decode('utf-8'))
+        data = json.loads(req.stream.read()
+                          .decode(encodings.utf_8.getregentry().name))  # pylint: disable=E1101
         model_name = data['name']
         base_path = data['uri']
         try:
@@ -157,19 +159,19 @@ class ModelManagerResource(object):
             res.status = falcon.HTTP_507
             res.body = json.dumps({
                 'error': str(e)
-            }).encode('utf-8')
+            }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
 
     def _read_model_config(self):
         models = []
-        name_key = '    name: '
-        uri_key = '    base_path: '
+        name_key = re.compile(r'( *)name:(.*)')
+        pattern = r'"([A-Za-z0-9_\./\\-]*)"'
         with open(MODEL_CONFIG_FILE_PATH, 'r') as f:
             line = f.readline()
             while line:
-                if line.startswith(name_key):
-                    model_name = line[len(name_key) + 1:len(line) - 3]
+                if name_key.search(line):
+                    model_name = re.search(pattern, line).group().strip('\"')
                     line = f.readline()
-                    uri = line[len(uri_key) + 1:len(line) - 3]
+                    uri = re.search(pattern, line).group().strip('\"')
                     models.append(json.dumps({
                         'name': model_name,
                         'uri': uri

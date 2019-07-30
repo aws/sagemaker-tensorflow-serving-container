@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+import encodings
 import json
 import os
 import subprocess
@@ -74,12 +75,12 @@ def make_invocation_request(data, model_name, content_type='application/json'):
             'tfs-model-name={},tfs-method=predict'.format(model_name)
     }
     response = requests.post(INVOCATION_URL, data=data, headers=headers)
-    return json.loads(response.content.decode('utf-8'))
+    return json.loads(response.content.decode(encodings.utf_8.getregentry().name))
 
 
 def make_list_model_request():
     response = requests.get(MODELS_URL)
-    return json.loads(response.content.decode('utf-8'))
+    return json.loads(response.content.decode(encodings.utf_8.getregentry().name))
 
 
 def make_load_model_request(data, content_type='application/json'):
