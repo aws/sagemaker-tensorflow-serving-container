@@ -541,6 +541,45 @@ predictor = tensorflow_serving_model.deploy(initial_instance_count=1,
 prediction = predictor.predict(data)
 ```
 
+## Enabling Batching
+
+You can configure SageMaker TensorFlow Serving Container to batch multiple records together before
+performing an inference. This uses [TensorFlow Serving's](https://github.com/tensorflow/serving/blob/master/tensorflow_serving/batching/README.md)
+underlying batching feature.
+
+You may be able to significantly improve throughput, especially on GPU instances, by
+enabling and configuring batching. To get the best performance, it may be necessary to tune batching parameters,
+especially the batch size and batch timeout, to your model, input data, and instance type.
+
+You can set the following environment variables on a SageMaker Model or Transform Job to enable
+and configure batching:
+
+```bash
+# Configures whether to enable record batching.
+# Defaults to false.
+SAGEMAKER_TFS_ENABLE_BATCHING="true"
+
+# Configures how many records 
+# Corresponds to "max_batch_size" in TensorFlow Serving.
+# Defaults to 8.
+SAGEMAKER_TFS_MAX_BATCH_SIZE="32"
+
+# Configures how long to wait for a full batch, in microseconds.
+# Corresponds to "batch_timeout_micros" in TensorFlow Serving.
+# Defaults to 1000 (1ms).
+SAGEMAKER_TFS_BATCH_TIMEOUT_MICROS="100000"
+
+# Configures how many batches to process concurrently.
+# Corresponds to "num_batch_threads" in TensorFlow Serving
+# Defaults to number of CPUs.
+SAGEMAKER_TFS_NUM_BATCH_THREADS="16"
+
+# Configures number of batches that can be enqueued.
+# Corresponds to "max_enqueued_batches" in TensorFlow Serving.
+# Defaults to number of CPUs for real-time inference,
+# or arbitrarily large for batch transform (because batch transform).
+SAGEMAKER_TFS_MAX_ENQUEUED_BATCHES="10000"
+```
 
 ## Contributing
 
