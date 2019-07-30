@@ -139,11 +139,18 @@ class ModelManagerResource(object):
         self.grpc_client = GRPCProxyClient(TFS_GRPC_PORT)
 
     def on_get(self, req, res):  # pylint: disable=W0613
-        models = self._read_model_config()
-        res.status = falcon.HTTP_200
-        res.body = json.dumps({
-            'models': models
-        })
+        try:
+            models = self._read_model_config()
+            res.status = falcon.HTTP_200
+            res.body = json.dumps({
+                'models': models
+            })
+        except ValueError as e:
+            log.exception('exception handling request: {}'.format(e))
+            res.status = falcon.HTTP_500
+            res.body = json.dumps({
+                'error': str(e)
+            }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
 
     def on_post(self, req, res):
         res.status = falcon.HTTP_200
@@ -163,7 +170,8 @@ class ModelManagerResource(object):
 
     def _read_model_config(self):
         models = []
-        name_key = re.compile(r'( *)name:(.*)')
+        name_key = re.compile(r'([ \t]*)name:(.*)')
+        uri_key = re.compile(r'([ \t]*)base_path:(.*)')
         pattern = r'"([A-Za-z0-9_\./\\-]*)"'
         with open(MODEL_CONFIG_FILE_PATH, 'r') as f:
             line = f.readline()
@@ -171,11 +179,14 @@ class ModelManagerResource(object):
                 if name_key.search(line):
                     model_name = re.search(pattern, line).group().strip('\"')
                     line = f.readline()
-                    uri = re.search(pattern, line).group().strip('\"')
-                    models.append(json.dumps({
-                        'name': model_name,
-                        'uri': uri
-                    }))
+                    if uri_key.search(line):
+                        uri = re.search(pattern, line).group().strip('\"')
+                        models.append(json.dumps({
+                            'name': model_name,
+                            'uri': uri
+                        }))
+                    else:
+                        raise ValueError('Malformed model-config.cfg file.')
                 line = f.readline()
         return models
 
