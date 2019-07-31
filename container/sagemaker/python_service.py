@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+import encodings
 import importlib.util
 import json
 import logging
@@ -23,6 +24,7 @@ import requests
 from proxy_client import GRPCProxyClient
 
 INFERENCE_SCRIPT_PATH = '/opt/ml/model/code/inference.py'
+MODEL_CONFIG_FILE_PATH = '/sagemaker/model-config.cfg'
 TFS_GRPC_PORT = os.environ.get('TFS_GRPC_PORT')
 
 logging.basicConfig(level=logging.INFO)
@@ -59,7 +61,7 @@ class InvocationResource(object):
             res.status = falcon.HTTP_500
             res.body = json.dumps({
                 'error': str(e)
-            }).encode('utf-8')
+            }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
 
     def _import_handlers(self):
         spec = importlib.util.spec_from_file_location('inference', INFERENCE_SCRIPT_PATH)
@@ -137,14 +139,23 @@ class ModelManagerResource(object):
         self.grpc_client = GRPCProxyClient(TFS_GRPC_PORT)
 
     def on_get(self, req, res):  # pylint: disable=W0613
-        with open('/sagemaker/model-config.cfg') as f:
-            models = f.read()
-            res.body = models
+        try:
+            models = self._read_model_config()
             res.status = falcon.HTTP_200
+            res.body = json.dumps({
+                'models': models
+            })
+        except ValueError as e:
+            log.exception('exception handling request: {}'.format(e))
+            res.status = falcon.HTTP_500
+            res.body = json.dumps({
+                'error': str(e)
+            }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
 
     def on_post(self, req, res):
         res.status = falcon.HTTP_200
-        data = json.loads(req.stream.read().decode('utf-8'))
+        data = json.loads(req.stream.read()
+                          .decode(encodings.utf_8.getregentry().name))  # pylint: disable=E1101
         model_name = data['name']
         base_path = data['uri']
         try:
@@ -155,7 +166,29 @@ class ModelManagerResource(object):
             res.status = falcon.HTTP_507
             res.body = json.dumps({
                 'error': str(e)
-            }).encode('utf-8')
+            }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
+
+    def _read_model_config(self):
+        models = []
+        name_key = re.compile(r'([ \t]*)name:(.*)')
+        uri_key = re.compile(r'([ \t]*)base_path:(.*)')
+        pattern = r'"([A-Za-z0-9_\./\\-]*)"'
+        with open(MODEL_CONFIG_FILE_PATH, 'r') as f:
+            line = f.readline()
+            while line:
+                if name_key.search(line):
+                    model_name = re.search(pattern, line).group().strip('\"')
+                    line = f.readline()
+                    if uri_key.search(line):
+                        uri = re.search(pattern, line).group().strip('\"')
+                        models.append(json.dumps({
+                            'name': model_name,
+                            'uri': uri
+                        }))
+                    else:
+                        raise ValueError('Malformed model-config.cfg file.')
+                line = f.readline()
+        return models
 
 
 class ServiceResources(object):
