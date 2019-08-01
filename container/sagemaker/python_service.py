@@ -46,22 +46,32 @@ class InvocationResource(object):
         self._tfs_grpc_port = os.environ['TFS_GRPC_PORT']
         self._tfs_rest_port = os.environ['TFS_REST_PORT']
 
-        self._handler, self._input_handler, self._output_handler = self._import_handlers()
-        self._handlers = self._make_handler(self._handler,
-                                            self._input_handler,
-                                            self._output_handler)
-
-    def on_post(self, req, res):
-        data, context = self._parse_request(req)
+    def on_post(self, req, res, model_name=None):
         try:
-            res.status = falcon.HTTP_200
-            res.body, res.content_type = self._handlers(data, context)
+            if model_name:
+                res.status = falcon.HTTP_200
+                res.body = self._dynamic_endpoint_invocation(req, model_name)
+            else:
+                self._handler, self._input_handler, self._output_handler = self._import_handlers()
+                self._handlers = self._make_handler(self._handler,
+                                                    self._input_handler,
+                                                    self._output_handler)
+                data, context = self._parse_request(req)
+                res.status = falcon.HTTP_200
+                res.body, res.content_type = self._handlers(data, context)
         except Exception as e:  # pylint: disable=broad-except
             log.exception('exception handling request: {}'.format(e))
             res.status = falcon.HTTP_500
             res.body = json.dumps({
                 'error': str(e)
             }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
+
+    def _dynamic_endpoint_invocation(self, req, model_name):
+        tfs_attributes = self._parse_tfs_custom_attributes(req)
+        tfs_attributes['tfs-model-name'] = model_name
+        tfs_uri = self._tfs_uri(self._tfs_rest_port, tfs_attributes)
+        data = req.stream
+        return requests.post(tfs_uri, data=data).content
 
     def _import_handlers(self):
         spec = importlib.util.spec_from_file_location('inference', INFERENCE_SCRIPT_PATH)
@@ -195,17 +205,18 @@ class ServiceResources(object):
     def __init__(self):
         self._enable_python_service = os.path.exists(INFERENCE_SCRIPT_PATH)
         self._enable_model_manager = os.environ.get('SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT')
+        self._invocation_resource = InvocationResource()
 
     def add_routes(self, application):
         if self._enable_python_service:
             ping_resource = PingResource()
-            invocation_resource = InvocationResource()
             application.add_route('/ping', ping_resource)
-            application.add_route('/invocations', invocation_resource)
+            application.add_route('/invocations/', self._invocation_resource)
 
         if self._enable_model_manager:
             model_manager_resource = ModelManagerResource()
             application.add_route('/models', model_manager_resource)
+            application.add_route('/models/{model_name}/invoke', self._invocation_resource)
 
 
 app = falcon.API()
