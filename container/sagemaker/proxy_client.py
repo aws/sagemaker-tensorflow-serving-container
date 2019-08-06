@@ -87,12 +87,14 @@ class GRPCProxyClient(object):
                 config_json = json.loads(config_json)
 
                 if config_json['modelConfigList']:
-                    config_json['modelConfigList']['config'] = [c for c in config_json['modelConfigList']['config']
-                                                                if model_name != c['name']]
-                    model_server_config = json_format.Parse(json.dumps(config_json), message=model_server_config)
+                    config_json['modelConfigList']['config'] = \
+                        [c for c in config_json['modelConfigList']['config']
+                         if model_name != c['name']]
+                    model_server_config = json_format.Parse(json.dumps(config_json),
+                                                            message=model_server_config)
                     config_proto = json_format.Parse(json.dumps(config_json),
-                                                    message=model_server_config,
-                                                    ignore_unknown_fields=False)
+                                                     message=model_server_config,
+                                                     ignore_unknown_fields=False)
                     req = model_management_pb2.ReloadConfigRequest()
                     req.config.CopyFrom(model_server_config)
                     self.stub.HandleReloadConfigRequest(req)
