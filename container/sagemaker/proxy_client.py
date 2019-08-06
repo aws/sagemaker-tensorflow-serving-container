@@ -12,11 +12,12 @@
 # language governing permissions and limitations under the License.
 
 import fcntl
+import json
 import time
 from contextlib import contextmanager
 
 import grpc
-from google.protobuf import text_format
+from google.protobuf import text_format, json_format
 from tensorflow_serving.apis import model_management_pb2
 from tensorflow_serving.apis import model_service_pb2_grpc
 from tensorflow_serving.config import model_server_config_pb2
@@ -73,6 +74,36 @@ class GRPCProxyClient(object):
 
         return 'Successfully loaded model {}'.format(model_name)
 
+    def delete_model(self, model_name):
+        model_server_config = model_server_config_pb2.ModelServerConfig()
+
+        with lock(DEFAULT_LOCK_FILE):
+            try:
+                config_file = self._read_model_config(MODEL_CONFIG_FILE)
+                model_server_config = text_format.Parse(text=config_file,
+                                                        message=model_server_config)
+
+                config_json = json_format.MessageToJson(model_server_config)
+                config_json = json.loads(config_json)
+
+                if config_json['modelConfigList']:
+                    config_json['modelConfigList']['config'] = [c for c in config_json['modelConfigList']['config']
+                                                                if model_name != c['name']]
+                    model_server_config = json_format.Parse(json.dumps(config_json), message=model_server_config)
+                    config_proto = json_format.Parse(json.dumps(config_json),
+                                                    message=model_server_config,
+                                                    ignore_unknown_fields=False)
+                    req = model_management_pb2.ReloadConfigRequest()
+                    req.config.CopyFrom(model_server_config)
+                    self.stub.HandleReloadConfigRequest(req)
+                    self._delete_model_from_config_file(config_proto)
+            except grpc.RpcError as e:
+                status_code = e.code()[1]
+                msg = e.details()
+                raise Exception('error: {}; message: {}'.format(status_code, msg))
+
+        return 'Model {} not running on model server.'.format(model_name)
+
     def _read_model_config(self, model_config_file):
         with open(model_config_file, 'r') as f:
             model_config = f.read()
@@ -93,9 +124,14 @@ class GRPCProxyClient(object):
         config += '    name: "{}",\n'.format(model_name)
         config += '    base_path: "{}",\n'.format(base_path)
         config += '    model_platform: "{}"\n'.format(model_platform)
-        config += '  },\n'
+        config += '  }\n'
         config += '}\n'
 
         # write back to model-config.cfg
         with open(MODEL_CONFIG_FILE, 'w') as f:
             f.write(config)
+
+    def _delete_model_from_config_file(self, config_proto=None):
+        if config_proto:
+            with open(MODEL_CONFIG_FILE, 'w') as f:
+                f.write(str(config_proto))
