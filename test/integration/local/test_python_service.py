@@ -24,7 +24,6 @@ import requests
 
 PING_URL = 'http://localhost:8080/ping'
 INVOCATIONS_URL = 'http://localhost:8080/invocations'
-DYNAMIC_ENDPOINT_URL = 'http://localhost:8080/models/{}/invoke'
 
 
 @pytest.fixture(scope='module', autouse=True, params=['1', '2', '3', '4', '5'])
@@ -89,17 +88,6 @@ def test_predict_json():
     headers = make_headers('application/json', 'predict')
     data = '{"instances": [1.0, 2.0, 5.0]}'
     response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
-    assert response == {'predictions': [3.5, 4.0, 5.5]}
-
-
-def test_dynamic_endpoint_invocation_url():
-    headers = {
-        'Content-Type': 'application/json',
-        'X-Amzn-SageMaker-Custom-Attributes': 'tfs-method=predict'
-    }
-    model_name = 'half_plus_three'
-    data = '{"instances": [1.0, 2.0, 5.0]}'
-    response = requests.post(DYNAMIC_ENDPOINT_URL.format(model_name), data=data, headers=headers).json()
     assert response == {'predictions': [3.5, 4.0, 5.5]}
 
 

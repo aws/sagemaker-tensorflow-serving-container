@@ -51,8 +51,8 @@ class InvocationResource(object):
                                             self._input_handler,
                                             self._output_handler)
 
-    def on_post(self, req, res, model_name=None):
-        data, context = self._parse_request(req, model_name)
+    def on_post(self, req, res):
+        data, context = self._parse_request(req)
         try:
             res.status = falcon.HTTP_200
             res.body, res.content_type = self._handlers(data, context)
@@ -90,8 +90,8 @@ class InvocationResource(object):
 
         return handler
 
-    def _parse_request(self, req, model_name):
-        tfs_attributes = self._parse_tfs_custom_attributes(req, model_name)
+    def _parse_request(self, req):
+        tfs_attributes = self._parse_tfs_custom_attributes(req)
         tfs_uri = self._tfs_uri(self._tfs_rest_port, tfs_attributes)
 
         context = Context(tfs_attributes.get('tfs-model-name'),
@@ -107,10 +107,8 @@ class InvocationResource(object):
         data = req.stream
         return data, context
 
-    def _parse_tfs_custom_attributes(self, req, model_name):
+    def _parse_tfs_custom_attributes(self, req):
         attributes = {}
-        if model_name:
-            attributes['tfs-model-name'] = model_name
         header = req.get_header(CUSTOM_ATTRIBUTES_HEADER)
         if header:
             for attribute in re.findall(r'(tfs-[a-z\-]+=[^,]+)', header):
@@ -204,7 +202,6 @@ class ServiceResources(object):
             invocation_resource = InvocationResource()
             application.add_route('/ping', ping_resource)
             application.add_route('/invocations', invocation_resource)
-            application.add_route('/models/{model_name}/invoke', invocation_resource)
 
         if self._enable_model_manager:
             model_manager_resource = ModelManagerResource()
