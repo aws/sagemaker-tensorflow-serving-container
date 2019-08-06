@@ -93,7 +93,7 @@ function tfs_json_request(r, json) {
 function make_tfs_uri(r, with_method) {
     var attributes = parse_custom_attributes(r)
 
-    var uri = tfs_base_uri + (attributes['tfs-model-name'] || r.variables.default_tfs_model)
+    var uri = tfs_base_uri + attributes['tfs-model-name']
     if ('tfs-model-version' in attributes) {
         uri += '/versions/' + attributes['tfs-model-version']
     }
@@ -120,6 +120,19 @@ function parse_custom_attributes(r) {
             }
         }
     }
+
+    // for dynamic endpoint invocations, tfs-model-name is in the uri, or use default_tfs_model
+    if (!attributes['tfs-model-name']) {
+        var uri_pattern = /\/models\/[^,]+\/invoke/g
+        var model_name = r.uri.match(uri_pattern)
+        if (model_name[0]) {
+            model_name = r.uri.replace('/models/', '').replace('/invoke', '')
+            attributes['tfs-model-name'] = model_name
+        } else {
+            attributes['tfs-model-name'] = r.variables.default_tfs_model
+        }
+    }
+
     return attributes
 }
 
