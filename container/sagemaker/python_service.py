@@ -11,7 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-import encodings
 import importlib.util
 import json
 import logging
@@ -61,7 +60,7 @@ class InvocationResource(object):
             res.status = falcon.HTTP_500
             res.body = json.dumps({
                 'error': str(e)
-            }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
+            }).encode('utf-8')
 
     def _import_handlers(self):
         spec = importlib.util.spec_from_file_location('inference', INFERENCE_SCRIPT_PATH)
@@ -150,11 +149,11 @@ class ModelManagerResource(object):
             res.status = falcon.HTTP_500
             res.body = json.dumps({
                 'error': str(e)
-            }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
+            }).encode('utf-8')
 
     def on_post(self, req, res):
         data = json.loads(req.stream.read()
-                          .decode(encodings.utf_8.getregentry().name))  # pylint: disable=E1101
+                          .decode('utf-8'))
         model_name = data['name']
         base_path = data['uri']
         try:
@@ -165,7 +164,7 @@ class ModelManagerResource(object):
             res.status = falcon.HTTP_507
             res.body = json.dumps({
                 'error': str(e)
-            }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
+            }).encode('utf-8')
 
     def on_delete(self, req, res, model_name):  # pylint: disable=W0613
         try:
@@ -176,7 +175,7 @@ class ModelManagerResource(object):
             res.status = falcon.HTTP_400
             res.body = json.dumps({
                 'error': str(e)
-            }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
+            }).encode('utf-8')
 
     def _read_model_config(self):
         models = []

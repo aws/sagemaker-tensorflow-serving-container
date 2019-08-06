@@ -92,13 +92,10 @@ class GRPCProxyClient(object):
                          if model_name != c['name']]
                     model_server_config = json_format.Parse(json.dumps(config_json),
                                                             message=model_server_config)
-                    config_proto = json_format.Parse(json.dumps(config_json),
-                                                     message=model_server_config,
-                                                     ignore_unknown_fields=False)
                     req = model_management_pb2.ReloadConfigRequest()
                     req.config.CopyFrom(model_server_config)
                     self.stub.HandleReloadConfigRequest(req)
-                    self._delete_model_from_config_file(config_proto)
+                    self._delete_model_from_config_file(model_server_config)
             except grpc.RpcError as e:
                 status_code = e.code()[1]
                 msg = e.details()
@@ -133,7 +130,7 @@ class GRPCProxyClient(object):
         with open(MODEL_CONFIG_FILE, 'w') as f:
             f.write(config)
 
-    def _delete_model_from_config_file(self, config_proto=None):
-        if config_proto:
+    def _delete_model_from_config_file(self, model_server_config):
+        if model_server_config:
             with open(MODEL_CONFIG_FILE, 'w') as f:
-                f.write(str(config_proto))
+                f.write(str(model_server_config))
