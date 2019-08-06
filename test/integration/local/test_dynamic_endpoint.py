@@ -21,7 +21,7 @@ import time
 import pytest
 import requests
 
-INVOCATION_URL = 'http://localhost:8080/invocations'
+INVOCATION_URL = 'http://localhost:8080/models/{}/invoke'
 MODELS_URL = 'http://localhost:8080/models'
 
 
@@ -71,10 +71,9 @@ def container(request, docker_base_name, tag, runtime_config):
 def make_invocation_request(data, model_name, content_type='application/json'):
     headers = {
         'Content-Type': content_type,
-        'X-Amzn-SageMaker-Custom-Attributes':
-            'tfs-model-name={},tfs-method=predict'.format(model_name)
+        'X-Amzn-SageMaker-Custom-Attributes': 'tfs-method=predict'
     }
-    response = requests.post(INVOCATION_URL, data=data, headers=headers)
+    response = requests.post(INVOCATION_URL.format(model_name), data=data, headers=headers)
     return json.loads(response.content.decode(encodings.utf_8.getregentry().name))
 
 
