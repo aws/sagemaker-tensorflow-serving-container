@@ -60,7 +60,7 @@ class InvocationResource(object):
             res.status = falcon.HTTP_500
             res.body = json.dumps({
                 'error': str(e)
-            }).encode(encodings.utf_8.getregentry().name)  # pylint: disable=E1101
+            }).encode('utf-8')  # pylint: disable=E1101
 
     def _import_handlers(self):
         spec = importlib.util.spec_from_file_location('inference', INFERENCE_SCRIPT_PATH)
