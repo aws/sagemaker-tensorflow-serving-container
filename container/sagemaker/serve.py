@@ -101,7 +101,7 @@ class ServiceManager(object):
                 config += '    name: "{}",\n'.format(os.path.basename(m))
                 config += '    base_path: "{}",\n'.format(m)
                 config += '    model_platform: "tensorflow"\n'
-                config += '  },\n'
+                config += '  }\n'
             config += '}\n'
 
             log.info('tensorflow serving model config: \n%s\n', config)

@@ -23,6 +23,7 @@ import requests
 
 INVOCATION_URL = 'http://localhost:8080/models/{}/invoke'
 MODELS_URL = 'http://localhost:8080/models'
+DELETE_MODEL_URL = 'http://localhost:8080/models/{}'
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -87,7 +88,41 @@ def make_load_model_request(data, content_type='application/json'):
         'Content-Type': content_type
     }
     response = requests.post(MODELS_URL, data=data, headers=headers)
-    return response.content.decode('utf-8')
+    return response.content.decode(encodings.utf_8.getregentry().name)
+
+
+def make_unload_model_request(model_name):
+    response = requests.delete(DELETE_MODEL_URL.format(model_name))
+    return response.content.decode(encodings.utf_8.getregentry().name)
+
+
+def test_delete_unloaded_model_no_op():
+    # unloads the given model/version, no-op if not loaded
+    model_name = 'non-existing-model'
+    res = make_unload_model_request(model_name)
+    assert res == 'Model {} not running on model server.'.format(model_name)
+
+
+def test_delete_model():
+    model_name = 'half_plus_three'
+    model_data = {
+        'name': model_name,
+        'uri': '/opt/ml/models/half_plus_three'
+    }
+    res = make_load_model_request(json.dumps(model_data))
+    assert res == 'Successfully loaded model {}'.format(model_name)
+
+    x = {
+        'instances': [1.0, 2.0, 5.0]
+    }
+    y = make_invocation_request(json.dumps(x), model_name)
+    assert y == {'predictions': [3.5, 4.0, 5.5]}
+
+    res2 = make_unload_model_request(model_name)
+    assert res2 == 'Model {} not running on model server.'.format(model_name)
+
+    y2 = make_invocation_request(json.dumps(x), model_name)
+    assert y2['error'].startswith('Servable not found for request')
 
 
 def test_list_models_empty():

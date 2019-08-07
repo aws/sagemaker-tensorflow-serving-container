@@ -73,6 +73,32 @@ class GRPCProxyClient(object):
 
         return 'Successfully loaded model {}'.format(model_name)
 
+    def delete_model(self, model_name):
+        model_server_config = model_server_config_pb2.ModelServerConfig()
+        config_list = model_server_config_pb2.ModelConfigList()
+
+        with lock(DEFAULT_LOCK_FILE):
+            try:
+                config_file = self._read_model_config(MODEL_CONFIG_FILE)
+                config_list_text = config_file.strip('\n').strip('}').strip('model_config_list: {')
+                config_list = text_format.Parse(text=config_list_text, message=config_list)
+
+                for config in config_list.config:
+                    if config.name == model_name:
+                        config_list.config.remove(config)
+
+                model_server_config.model_config_list.CopyFrom(config_list)
+                req = model_management_pb2.ReloadConfigRequest()
+                req.config.CopyFrom(model_server_config)
+                self.stub.HandleReloadConfigRequest(req)
+                self._delete_model_from_config_file(model_server_config)
+            except grpc.RpcError as e:
+                status_code = e.code()[1]
+                msg = e.details()
+                raise Exception('error: {}; message: {}'.format(status_code, msg))
+
+        return 'Model {} not running on model server.'.format(model_name)
+
     def _read_model_config(self, model_config_file):
         with open(model_config_file, 'r') as f:
             model_config = f.read()
@@ -93,9 +119,14 @@ class GRPCProxyClient(object):
         config += '    name: "{}",\n'.format(model_name)
         config += '    base_path: "{}",\n'.format(base_path)
         config += '    model_platform: "{}"\n'.format(model_platform)
-        config += '  },\n'
+        config += '  }\n'
         config += '}\n'
 
         # write back to model-config.cfg
         with open(MODEL_CONFIG_FILE, 'w') as f:
             f.write(config)
+
+    def _delete_model_from_config_file(self, model_server_config):
+        if model_server_config:
+            with open(MODEL_CONFIG_FILE, 'w') as f:
+                f.write(str(model_server_config))
