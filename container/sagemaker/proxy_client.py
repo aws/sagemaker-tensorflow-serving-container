@@ -12,12 +12,11 @@
 # language governing permissions and limitations under the License.
 
 import fcntl
-import json
 import time
 from contextlib import contextmanager
 
 import grpc
-from google.protobuf import text_format, json_format
+from google.protobuf import text_format
 from tensorflow_serving.apis import model_management_pb2
 from tensorflow_serving.apis import model_service_pb2_grpc
 from tensorflow_serving.config import model_server_config_pb2
@@ -76,26 +75,23 @@ class GRPCProxyClient(object):
 
     def delete_model(self, model_name):
         model_server_config = model_server_config_pb2.ModelServerConfig()
+        config_list = model_server_config_pb2.ModelConfigList()
 
         with lock(DEFAULT_LOCK_FILE):
             try:
                 config_file = self._read_model_config(MODEL_CONFIG_FILE)
-                model_server_config = text_format.Parse(text=config_file,
-                                                        message=model_server_config)
+                config_list_text = config_file.strip('\n').strip('}').strip('model_config_list: {')
+                config_list = text_format.Parse(text=config_list_text, message=config_list)
 
-                config_json = json_format.MessageToJson(model_server_config)
-                config_json = json.loads(config_json)
+                for config in config_list.config:
+                    if config.name == model_name:
+                        config_list.config.remove(config)
 
-                if config_json['modelConfigList']:
-                    config_json['modelConfigList']['config'] = \
-                        [c for c in config_json['modelConfigList']['config']
-                         if model_name != c['name']]
-                    model_server_config = json_format.Parse(json.dumps(config_json),
-                                                            message=model_server_config)
-                    req = model_management_pb2.ReloadConfigRequest()
-                    req.config.CopyFrom(model_server_config)
-                    self.stub.HandleReloadConfigRequest(req)
-                    self._delete_model_from_config_file(model_server_config)
+                model_server_config.model_config_list.CopyFrom(config_list)
+                req = model_management_pb2.ReloadConfigRequest()
+                req.config.CopyFrom(model_server_config)
+                self.stub.HandleReloadConfigRequest(req)
+                self._delete_model_from_config_file(model_server_config)
             except grpc.RpcError as e:
                 status_code = e.code()[1]
                 msg = e.details()
