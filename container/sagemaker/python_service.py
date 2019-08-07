@@ -203,7 +203,7 @@ class ModelManagerResource(object):
 class ServiceResources(object):
     def __init__(self):
         self._enable_python_service = os.path.exists(INFERENCE_SCRIPT_PATH)
-        self._enable_model_manager = os.environ.get('SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT')
+        self._enable_model_manager = os.environ.get('SAGEMAKER_MULTI_MODEL')
 
     def add_routes(self, application):
         if self._enable_python_service:

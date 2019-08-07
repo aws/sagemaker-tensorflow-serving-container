@@ -48,7 +48,7 @@ def container(request, docker_base_name, tag, runtime_config):
             ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
             ' -e SAGEMAKER_BIND_TO_PORT=8080'
             ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
-            ' -e SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT=true'
+            ' -e SAGEMAKER_MULTI_MODEL=true'
             ' {}:{} serve'
         ).format(runtime_config, docker_base_name, tag)
 
