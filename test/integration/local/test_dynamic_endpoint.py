@@ -48,7 +48,7 @@ def container(request, docker_base_name, tag, runtime_config):
             ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
             ' -e SAGEMAKER_BIND_TO_PORT=8080'
             ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
-            ' -e SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT=true'
+            ' -e SAGEMAKER_MULTI_MODEL=true'
             ' {}:{} serve'
         ).format(runtime_config, docker_base_name, tag)
 
@@ -106,8 +106,8 @@ def test_delete_unloaded_model_no_op():
 def test_delete_model():
     model_name = 'half_plus_three'
     model_data = {
-        'name': model_name,
-        'uri': '/opt/ml/models/half_plus_three'
+        'model_name': model_name,
+        'url': '/opt/ml/models/half_plus_three'
     }
     res = make_load_model_request(json.dumps(model_data))
     assert res == 'Successfully loaded model {}'.format(model_name)
@@ -141,8 +141,8 @@ def test_container_start_invocation_fail():
 def test_load_one_model():
     model_name = 'half_plus_three'
     model_data = {
-        'name': model_name,
-        'uri': '/opt/ml/models/half_plus_three'
+        'model_name': model_name,
+        'url': '/opt/ml/models/half_plus_three'
     }
     res = make_load_model_request(json.dumps(model_data))
     assert res == 'Successfully loaded model {}'.format(model_name)
@@ -157,8 +157,8 @@ def test_load_one_model():
 def test_load_two_models():
     model_name_1 = 'half_plus_two'
     model_data_1 = {
-        'name': model_name_1,
-        'uri': '/opt/ml/models/half_plus_two'
+        'model_name': model_name_1,
+        'url': '/opt/ml/models/half_plus_two'
     }
     res1 = make_load_model_request(json.dumps(model_data_1))
     assert res1 == 'Successfully loaded model {}'.format(model_name_1)
@@ -183,20 +183,20 @@ def test_load_two_models():
     models = [json.loads(model) for model in res3]
     assert models == [
         {
-            "name": "half_plus_three",
-            "uri": "/opt/ml/models/half_plus_three"
+            "modelName": "half_plus_three",
+            "modelUrl": "/opt/ml/models/half_plus_three"
         },
         {
-            "name": "half_plus_two",
-            "uri": "/opt/ml/models/half_plus_two"
+            "modelName": "half_plus_two",
+            "modelUrl": "/opt/ml/models/half_plus_two"
         }]
 
 
 def test_inference_unloaded_model():
     model_name = 'cifar'
     model_data = {
-        'name': model_name,
-        'uri': '/opt/ml/models/cifar'
+        'model_name': model_name,
+        'url': '/opt/ml/models/cifar'
     }
     res = make_load_model_request(json.dumps(model_data))
     assert res == 'Successfully loaded model {}'.format(model_name)

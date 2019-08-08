@@ -47,7 +47,7 @@ class ServiceManager(object):
         self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', None)
 
         _enable_batching = os.environ.get('SAGEMAKER_TFS_ENABLE_BATCHING', 'false').lower()
-        _enable_dynamic_endpoint = os.environ.get('SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT',
+        _enable_dynamic_endpoint = os.environ.get('SAGEMAKER_MULTI_MODEL',
                                                   'false').lower()
 
         if _enable_batching not in ['true', 'false']:
@@ -55,7 +55,7 @@ class ServiceManager(object):
         self._tfs_enable_batching = _enable_batching == 'true'
 
         if _enable_dynamic_endpoint not in ['true', 'false']:
-            raise ValueError('SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT must be "true" or "false"')
+            raise ValueError('SAGEMAKER_MULTI_MODEL must be "true" or "false"')
         self._tfs_enable_dynamic_endpoint = _enable_dynamic_endpoint == 'true'
 
         self._use_gunicorn = self._enable_python_service or self._tfs_enable_dynamic_endpoint
@@ -212,7 +212,7 @@ class ServiceManager(object):
 
         gunicorn_command = (
             'gunicorn -b unix:/tmp/gunicorn.sock -k gevent --chdir /sagemaker '
-            '{}{} -e TFS_GRPC_PORT={} -e SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT={} '
+            '{}{} -e TFS_GRPC_PORT={} -e SAGEMAKER_MULTI_MODEL={} '
             'python_service:app').format(python_path_option, ','.join(python_path_content),
                                          self._tfs_grpc_port, self._tfs_enable_dynamic_endpoint)
 

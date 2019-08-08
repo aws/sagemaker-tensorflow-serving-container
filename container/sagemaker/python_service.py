@@ -154,8 +154,8 @@ class ModelManagerResource(object):
     def on_post(self, req, res):
         data = json.loads(req.stream.read()
                           .decode('utf-8'))
-        model_name = data['name']
-        base_path = data['uri']
+        model_name = data['model_name']
+        base_path = data['url']
         try:
             msg = self.grpc_client.add_model(model_name, base_path)
             res.body = msg
@@ -191,8 +191,8 @@ class ModelManagerResource(object):
                     if uri_key.search(line):
                         uri = re.search(pattern, line).group().strip('\"')
                         models.append(json.dumps({
-                            'name': model_name,
-                            'uri': uri
+                            'modelName': model_name,
+                            'modelUrl': uri
                         }))
                     else:
                         raise ValueError('Malformed model-config.cfg file.')
@@ -203,7 +203,7 @@ class ModelManagerResource(object):
 class ServiceResources(object):
     def __init__(self):
         self._enable_python_service = os.path.exists(INFERENCE_SCRIPT_PATH)
-        self._enable_model_manager = os.environ.get('SAGEMAKER_TFS_ENABLE_DYNAMIC_ENDPOINT')
+        self._enable_model_manager = os.environ.get('SAGEMAKER_MULTI_MODEL')
 
     def add_routes(self, application):
         if self._enable_python_service:
