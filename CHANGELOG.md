@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.6.0 (2019-08-09)
+
+### Features
+
+ * delete models
+ * different  invocation url
+ * list models
+ * add model
+
+### Bug fixes and other changes
+
+ * update request/response model and url key names
+ * README changes
+
+### Documentation changes
+
+ * add batching to readme
+
 ## v1.5.1 (2019-06-21)
 
 ### Bug fixes and other changes
