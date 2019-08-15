@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.1 (2019-08-15)
+
+### Bug fixes and other changes
+
+ * Update no-p2 and no-p3 regions
+
 ## v1.6.0 (2019-08-09)
 
 ### Features
