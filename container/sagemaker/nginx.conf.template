@@ -32,7 +32,7 @@ http {
     subrequest_output_buffer_size 100m;
 
     set $tfs_version %TFS_VERSION%;
-    set $default_tfs_model %TFS_DEFAULT_MODEL_NAME%;
+    %SET_DEFAULT_TFS_MODEL%
 
     location /tfs {
         rewrite ^/tfs/(.*) /$1  break;
