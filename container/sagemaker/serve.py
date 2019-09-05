@@ -225,8 +225,7 @@ class ServiceManager(object):
         template_values = {
             'TFS_VERSION': self._tfs_version,
             'TFS_REST_PORT': self._tfs_rest_port,
-            'SET_DEFAULT_TFS_MODEL': 'set $default_tfs_model {};'.format(
-                self._tfs_default_model_name) if not self._tfs_enable_dynamic_endpoint else '',
+            'TFS_DEFAULT_MODEL_NAME': self._tfs_default_model_name,
             'NGINX_HTTP_PORT': self._nginx_http_port,
             'NGINX_LOG_LEVEL': self._nginx_loglevel,
             'FORWARD_PING_REQUESTS': GUNICORN_PING if self._enable_python_service else JS_PING,
@@ -262,10 +261,7 @@ class ServiceManager(object):
     def _start_gunicorn(self):
         self._log_version('gunicorn --version', 'gunicorn version info:')
         env = os.environ.copy()
-
-        if not self._tfs_enable_dynamic_endpoint:
-            env['TFS_DEFAULT_MODEL_NAME'] = self._tfs_default_model_name
-
+        env['TFS_DEFAULT_MODEL_NAME'] = self._tfs_default_model_name
         p = subprocess.Popen(self._gunicorn_command.split(), env=env)
         log.info('started gunicorn (pid: %d)', p.pid)
         self._gunicorn = p
