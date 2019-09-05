@@ -33,10 +33,6 @@ REQUIREMENTS_PATH = '/opt/ml/model/code/requirements.txt'
 INFERENCE_PATH = '/opt/ml/model/code/inference.py'
 
 
-class TimeoutError(Exception):
-    pass
-
-
 class ServiceManager(object):
     def __init__(self):
         self._state = 'initializing'
