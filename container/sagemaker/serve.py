@@ -33,6 +33,10 @@ REQUIREMENTS_PATH = '/opt/ml/model/code/requirements.txt'
 INFERENCE_PATH = '/opt/ml/model/code/inference.py'
 
 
+class TimeoutError(Exception):
+    pass
+
+
 class ServiceManager(object):
     def __init__(self):
         self._state = 'initializing'
@@ -225,7 +229,7 @@ class ServiceManager(object):
         template_values = {
             'TFS_VERSION': self._tfs_version,
             'TFS_REST_PORT': self._tfs_rest_port,
-            'TFS_DEFAULT_MODEL_NAME': self._tfs_default_model_name,
+            'TFS_DEFAULT_MODEL_NAME': self._tfs_default_model_name or 'None',
             'NGINX_HTTP_PORT': self._nginx_http_port,
             'NGINX_LOG_LEVEL': self._nginx_loglevel,
             'FORWARD_PING_REQUESTS': GUNICORN_PING if self._enable_python_service else JS_PING,
@@ -261,7 +265,10 @@ class ServiceManager(object):
     def _start_gunicorn(self):
         self._log_version('gunicorn --version', 'gunicorn version info:')
         env = os.environ.copy()
-        env['TFS_DEFAULT_MODEL_NAME'] = self._tfs_default_model_name
+
+        if not self._tfs_enable_dynamic_endpoint:
+            env['TFS_DEFAULT_MODEL_NAME'] = self._tfs_default_model_name
+
         p = subprocess.Popen(self._gunicorn_command.split(), env=env)
         log.info('started gunicorn (pid: %d)', p.pid)
         self._gunicorn = p
