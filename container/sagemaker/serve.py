@@ -44,7 +44,7 @@ class ServiceManager(object):
         self._tfs_version = os.environ.get('SAGEMAKER_TFS_VERSION', '1.13')
         self._nginx_http_port = os.environ.get('SAGEMAKER_BIND_TO_PORT', '8080')
         self._nginx_loglevel = os.environ.get('SAGEMAKER_TFS_NGINX_LOGLEVEL', 'error')
-        self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', None)
+        self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', "None")
 
         _enable_batching = os.environ.get('SAGEMAKER_TFS_ENABLE_BATCHING', 'false').lower()
         _enable_dynamic_endpoint = os.environ.get('SAGEMAKER_MULTI_MODEL',
