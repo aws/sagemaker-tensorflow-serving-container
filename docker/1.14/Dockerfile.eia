@@ -1,9 +1,9 @@
 FROM ubuntu:16.04
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
-ARG TFS_SHORT_VERSION=1.14
-ARG TFS_VERSION=1-14-0
-ARG TFS_EI_VERSION=1-2
+ARG TFS_SHORT_VERSION
+ARG S3_TF_VERSION=1-14-0
+ARG S3_TF_EI_VERSION=1-2
 ARG PYTHON=python3
 ARG PIP=pip3
 ARG PYTHON_VERSION=3.6.6
@@ -59,13 +59,13 @@ EXPOSE 8500
 # REST
 EXPOSE 8501
 
-RUN wget https://amazonei-tensorflow.s3.amazonaws.com/tensorflow-serving/v1.14/ubuntu/archive/tensorflow-serving-${TFS_VERSION}-ubuntu-ei-${TFS_EI_VERSION}.tar.gz \
-            -O /tmp/tensorflow-serving-${TFS_VERSION}-ubuntu-ei-${TFS_EI_VERSION}.tar.gz && \
+RUN wget https://amazonei-tensorflow.s3.amazonaws.com/tensorflow-serving/v1.14/ubuntu/archive/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
+            -O /tmp/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz && \
     cd /tmp && \
-    tar zxf tensorflow-serving-${TFS_VERSION}-ubuntu-ei-${TFS_EI_VERSION}.tar.gz && \
-    mv tensorflow-serving-${TFS_VERSION}-ubuntu-ei-${TFS_EI_VERSION}/amazonei_tensorflow_model_server /usr/bin/tensorflow_model_server && \
+    tar zxf tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz && \
+    mv tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}/amazonei_tensorflow_model_server /usr/bin/tensorflow_model_server && \
     chmod +x /usr/bin/tensorflow_model_server && \
-    rm -rf tensorflow-serving-${TFS_VERSION}*
+    rm -rf tensorflow-serving-${S3_TF_VERSION}*
 
 # Set where models should be stored in the container
 ENV MODEL_BASE_PATH=/models
