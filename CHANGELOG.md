@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.3 (2019-09-13)
+
+### Bug fixes and other changes
+
+ * add Dockerfile for 1.14 in py3 with EIA
+
 ## v1.6.2 (2019-09-09)
 
 ### Bug fixes and other changes
