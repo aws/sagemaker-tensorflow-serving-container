@@ -55,11 +55,21 @@ RUN wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSIO
  && make \
  && make install \
  && rm -rf ../Python-$PYTHON_VERSION* \
- && ln -s /usr/local/bin/pip3 /usr/bin/pip
+ && ln -s /usr/local/bin/pip3 /usr/bin/pip \
+ && ln -s $(which ${PYTHON}) /usr/local/bin/python
 
 # Some TF tools expect a "python" binary
-RUN ln -s $(which ${PYTHON}) /usr/local/bin/python \
- && pip install -U --no-cache-dir --upgrade pip setuptools cython falcon gunicorn gevent requests docutils==0.14 awscli==1.16.196
+RUN pip install -U --no-cache-dir --upgrade \
+    pip \
+    setuptools \
+ && pip install -U --no-cache-dir \
+    cython==0.29.13 \
+    falcon==2.0.0 \
+    gunicorn==19.9.0 \
+    gevent==1.4.0 \
+    requests==2.22.0 \
+    docutils==0.14 \
+    awscli==1.16.196
 
 COPY sagemaker /sagemaker
 
@@ -69,11 +79,7 @@ RUN wget https://amazonei-healthcheck.s3.amazonaws.com/v${HEALTH_CHECK_VERSION}/
  && chmod a+x /opt/ei_health_check/bin/health_check
 
 # Expose ports
-# gRPC
-EXPOSE 8500
-
-# REST
-EXPOSE 8501
+EXPOSE 8500 8501
 
 RUN wget https://amazonei-tensorflow.s3.amazonaws.com/tensorflow-serving/v1.14/ubuntu/archive/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
             -O /tmp/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
