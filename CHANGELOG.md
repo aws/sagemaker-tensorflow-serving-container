@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.6.2 (2019-09-09)
+
+### Bug fixes and other changes
+
+ * require defaul model env var
+ * default SAGEMAKER_TFS_DEFAULT_MODEL_NAME to string value
+ * remove unused fixture
+
 ## v1.6.1 (2019-08-15)
 
 ### Bug fixes and other changes

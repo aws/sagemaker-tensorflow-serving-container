@@ -119,7 +119,6 @@ python -m pytest test/integration/local
     [--docker-name-base <docker_name_base>]
     [--framework-version <framework_version>]
     [--processor-type <processor_type>]
-    [--enable-batch <ues_bactch>]
 ```
 
 To test against Elastic Inference with Accelerator, you will need an AWS account, publish your built image to ECR repository and run the following command:
