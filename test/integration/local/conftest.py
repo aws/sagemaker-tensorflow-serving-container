@@ -48,11 +48,6 @@ def runtime_config(request, processor):
 
 
 @pytest.fixture(scope='module')
-def enable_batch(request):
-    return request.config.getoption('--enable-batch') == 'True'
-
-
-@pytest.fixture(scope='module')
 def tag(request, framework_version, processor):
     image_tag = request.config.getoption('--tag')
     if not image_tag:
