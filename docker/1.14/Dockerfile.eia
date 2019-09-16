@@ -1,7 +1,7 @@
 FROM ubuntu:16.04
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
-ARG TFS_SHORT_VERSION
+ARG TFS_SHORT_VERSION=1.14
 ARG S3_TF_VERSION=1-14-0
 ARG S3_TF_EI_VERSION=1-2
 ARG PYTHON=python3
@@ -61,8 +61,9 @@ RUN wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSIO
 # Some TF tools expect a "python" binary
 RUN pip install -U --no-cache-dir --upgrade \
     pip \
-    setuptools \
- && pip install -U --no-cache-dir \
+    setuptools
+
+RUN pip install -U --no-cache-dir \
     cython==0.29.13 \
     falcon==2.0.0 \
     gunicorn==19.9.0 \
