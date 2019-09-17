@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.4 (2019-09-17)
+
+### Bug fixes and other changes
+
+ * TFS_SHORT_VERSION explicitly defined in dockerfile
+
 ## v1.6.3 (2019-09-13)
 
 ### Bug fixes and other changes
