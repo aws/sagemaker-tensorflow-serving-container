@@ -77,7 +77,7 @@ RUN ${PIP} --no-cache-dir install --upgrade pip setuptools
 # Some TF tools expect a "python" binary
 RUN ln -s $(which ${PYTHON}) /usr/local/bin/python
 
-RUN curl https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/Serving/GPU/tensorflow_model_server --output tensorflow_model_server && \
+RUN curl https://tensorflow-aws.s3-us-west-2.amazonaws.com/1.14/Serving/GPU/tensorflow_model_server --output tensorflow_model_server && \
 chmod 555 tensorflow_model_server && cp tensorflow_model_server /usr/bin/tensorflow_model_server && \
 rm -f tensorflow_model_server
 
@@ -91,14 +91,16 @@ RUN \
     apt-get -y install --no-install-recommends nginx nginx-module-njs && \
     apt-get clean
 
-# cython, falcon, gunicorn, tensorflow-serving
-RUN \
-    pip3 install --no-cache-dir cython falcon gunicorn gevent requests grpcio protobuf tensorflow && \
-    pip3 install --no-dependencies --no-cache-dir tensorflow-serving-api
+RUN ${PIP} install -U --no-cache-dir awscli==1.16.196 \
+                                     cython==0.29.12 \
+                                     falcon==2.0.0 \
+                                     gunicorn==19.9.0 \
+                                     gevent==1.4.0 \
+                                     requests==2.22.0
 
 COPY ./ /
 
-ARG TFS_SHORT_VERSION=1.13
+ARG TFS_SHORT_VERSION=1.14
 ENV SAGEMAKER_TFS_VERSION "${TFS_SHORT_VERSION}"
 ENV PATH "$PATH:/sagemaker"
 
