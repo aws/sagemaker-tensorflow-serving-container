@@ -93,8 +93,15 @@ RUN \
 
 # cython, falcon, gunicorn, tensorflow-serving
 RUN \
-    pip3 install --no-cache-dir cython falcon gunicorn gevent requests grpcio protobuf tensorflow && \
-    pip3 install --no-dependencies --no-cache-dir tensorflow-serving-api
+    pip3 install --no-cache-dir cython==0.29.13 \
+                                falcon==2.0.0 \
+                                gunicorn==19.9.0 \
+                                gevent==1.4.0 \
+                                requests==2.22.0 \
+                                grpcio==1.23.0 \
+                                protobuf==3.9.1 \
+                                tensorflow==1.13.0 && \
+    pip3 install --no-dependencies --no-cache-dir tensorflow-serving-api==1.13.0
 
 COPY ./ /
 
