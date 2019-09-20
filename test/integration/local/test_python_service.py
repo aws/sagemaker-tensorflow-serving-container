@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -47,17 +47,17 @@ def volume(tmpdir_factory, request):
 
 
 @pytest.fixture(scope='module', autouse=True)
-def container(volume, docker_base_name, tag):
+def container(volume, docker_base_name, tag, runtime_config):
     try:
         command = (
-            'docker run --name sagemaker-tensorflow-serving-test -p 8080:8080'
+            'docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080'
             ' --mount type=volume,source={},target=/opt/ml/model,readonly'
             ' -e SAGEMAKER_TFS_DEFAULT_MODEL_NAME=half_plus_three'
             ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
             ' -e SAGEMAKER_BIND_TO_PORT=8080'
             ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
             ' {}:{} serve'
-        ).format(volume, docker_base_name, tag)
+        ).format(runtime_config, volume, docker_base_name, tag)
 
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 

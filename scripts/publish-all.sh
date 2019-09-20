@@ -14,3 +14,4 @@ ${DIR}/publish.sh --version 1.13.0 --arch cpu
 ${DIR}/publish.sh --version 1.13.0 --arch gpu
 ${DIR}/publish.sh --version 1.11 --arch eia
 ${DIR}/publish.sh --version 1.12 --arch eia
+${DIR}/publish.sh --version 1.13 --arch eia

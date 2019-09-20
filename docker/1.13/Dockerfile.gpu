@@ -91,12 +91,10 @@ RUN \
     apt-get -y install --no-install-recommends nginx nginx-module-njs && \
     apt-get clean
 
-RUN ${PIP} install -U --no-cache-dir awscli==1.16.130 \
-                                     cython==0.29.10 \
-                                     falcon==2.0.0 \
-                                     gunicorn==19.9.0 \
-                                     gevent==1.4.0 \
-                                     requests==2.21.0
+# cython, falcon, gunicorn, tensorflow-serving
+RUN \
+    pip3 install --no-cache-dir cython falcon gunicorn gevent requests grpcio protobuf tensorflow && \
+    pip3 install --no-dependencies --no-cache-dir tensorflow-serving-api
 
 COPY ./ /
 

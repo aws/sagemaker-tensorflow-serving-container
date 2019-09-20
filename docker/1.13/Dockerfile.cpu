@@ -22,9 +22,10 @@ ARG PIP=pip3
 # Python won’t try to write .pyc or .pyo files on the import of source modules
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
-# cython, falcon, gunicorn
+# cython, falcon, gunicorn, tensorflow-serving
 RUN \
-    ${PIP} install cython==0.29.10 falcon==2.0.0 gunicorn==19.9.0 gevent==1.4.0 requests==2.21.0
+    pip3 install --no-cache-dir cython falcon gunicorn gevent requests grpcio protobuf tensorflow && \
+    pip3 install --no-dependencies --no-cache-dir tensorflow-serving-api
 
 COPY ./ /
 

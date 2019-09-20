@@ -1,5 +1,73 @@
 # Changelog
 
+## v1.6.4 (2019-09-17)
+
+### Bug fixes and other changes
+
+ * TFS_SHORT_VERSION explicitly defined in dockerfile
+
+## v1.6.3 (2019-09-13)
+
+### Bug fixes and other changes
+
+ * add Dockerfile for 1.14 in py3 with EIA
+
+## v1.6.2 (2019-09-09)
+
+### Bug fixes and other changes
+
+ * require defaul model env var
+ * default SAGEMAKER_TFS_DEFAULT_MODEL_NAME to string value
+ * remove unused fixture
+
+## v1.6.1 (2019-08-15)
+
+### Bug fixes and other changes
+
+ * Update no-p2 and no-p3 regions
+
+## v1.6.0 (2019-08-09)
+
+### Features
+
+ * delete models
+ * different  invocation url
+ * list models
+ * add model
+
+### Bug fixes and other changes
+
+ * update request/response model and url key names
+ * README changes
+
+### Documentation changes
+
+ * add batching to readme
+
+## v1.5.1 (2019-06-21)
+
+### Bug fixes and other changes
+
+ * use nvidia-docker for local gpu tests
+
+## v1.5.0 (2019-06-20)
+
+### Features
+
+ * add 1.13 EIA containers
+
+## v1.4.6 (2019-06-18)
+
+### Bug fixes and other changes
+
+ * fix broken ei tests
+
+## v1.4.5 (2019-06-17)
+
+### Bug fixes and other changes
+
+ * add batch transform integration test
+
 ## v1.4.4 (2019-06-12)
 
 ### Bug fixes and other changes

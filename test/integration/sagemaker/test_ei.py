@@ -76,9 +76,9 @@ def skip_if_non_supported_ei_region(region):
 
 @pytest.mark.skip_if_non_supported_ei_region()
 @pytest.mark.skip_if_no_accelerator()
-def test_invoke_endpoint(region, boto_session, sagemaker_client, sagemaker_runtime_client,
+def test_invoke_endpoint(boto_session, sagemaker_client, sagemaker_runtime_client,
                          model_name, model_data, image_uri, instance_type, accelerator_type,
                          input_data):
-    util.create_and_invoke_endpoint(region, boto_session, sagemaker_client,
+    util.create_and_invoke_endpoint(boto_session, sagemaker_client,
                                     sagemaker_runtime_client, model_name, model_data, image_uri,
                                     instance_type, accelerator_type, input_data)

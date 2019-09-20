@@ -10,6 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+
 import importlib.util
 import json
 import logging
@@ -19,8 +20,11 @@ from collections import namedtuple
 
 import falcon
 import requests
+from proxy_client import GRPCProxyClient
 
 INFERENCE_SCRIPT_PATH = '/opt/ml/model/code/inference.py'
+MODEL_CONFIG_FILE_PATH = '/sagemaker/model-config.cfg'
+TFS_GRPC_PORT = os.environ.get('TFS_GRPC_PORT')
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -56,7 +60,7 @@ class InvocationResource(object):
             res.status = falcon.HTTP_500
             res.body = json.dumps({
                 'error': str(e)
-            }).encode('utf-8')
+            }).encode('utf-8')  # pylint: disable=E1101
 
     def _import_handlers(self):
         spec = importlib.util.spec_from_file_location('inference', INFERENCE_SCRIPT_PATH)
@@ -128,11 +132,92 @@ class PingResource(object):
         res.status = falcon.HTTP_200
 
 
-# receiving requests to /invocations and /ping
-ping_resource = PingResource()
-invocation_resource = InvocationResource()
+class ModelManagerResource(object):
+
+    def __init__(self):
+        self.grpc_client = GRPCProxyClient(TFS_GRPC_PORT)
+
+    def on_get(self, req, res):  # pylint: disable=W0613
+        try:
+            models = self._read_model_config()
+            res.status = falcon.HTTP_200
+            res.body = json.dumps({
+                'models': models
+            })
+        except ValueError as e:
+            log.exception('exception handling request: {}'.format(e))
+            res.status = falcon.HTTP_500
+            res.body = json.dumps({
+                'error': str(e)
+            }).encode('utf-8')
+
+    def on_post(self, req, res):
+        data = json.loads(req.stream.read()
+                          .decode('utf-8'))
+        model_name = data['model_name']
+        base_path = data['url']
+        try:
+            msg = self.grpc_client.add_model(model_name, base_path)
+            res.body = msg
+            res.status = falcon.HTTP_200
+        except Exception as e:  # pylint: disable=W0703
+            res.status = falcon.HTTP_507
+            res.body = json.dumps({
+                'error': str(e)
+            }).encode('utf-8')
+
+    def on_delete(self, req, res, model_name):  # pylint: disable=W0613
+        try:
+            msg = self.grpc_client.delete_model(model_name)
+            res.body = msg
+            res.status = falcon.HTTP_200
+        except Exception as e:  # pylint: disable=W0703
+            res.status = falcon.HTTP_400
+            res.body = json.dumps({
+                'error': str(e)
+            }).encode('utf-8')
+
+    def _read_model_config(self):
+        models = []
+        name_key = re.compile(r'([ \t]*)name:(.*)')
+        uri_key = re.compile(r'([ \t]*)base_path:(.*)')
+        pattern = r'"([A-Za-z0-9_\./\\-]*)"'
+        with open(MODEL_CONFIG_FILE_PATH, 'r') as f:
+            line = f.readline()
+            while line:
+                if name_key.search(line):
+                    model_name = re.search(pattern, line).group().strip('\"')
+                    line = f.readline()
+                    if uri_key.search(line):
+                        uri = re.search(pattern, line).group().strip('\"')
+                        models.append(json.dumps({
+                            'modelName': model_name,
+                            'modelUrl': uri
+                        }))
+                    else:
+                        raise ValueError('Malformed model-config.cfg file.')
+                line = f.readline()
+        return models
+
+
+class ServiceResources(object):
+    def __init__(self):
+        self._enable_python_service = os.path.exists(INFERENCE_SCRIPT_PATH)
+        self._enable_model_manager = os.environ.get('SAGEMAKER_MULTI_MODEL')
+
+    def add_routes(self, application):
+        if self._enable_python_service:
+            ping_resource = PingResource()
+            invocation_resource = InvocationResource()
+            application.add_route('/ping', ping_resource)
+            application.add_route('/invocations', invocation_resource)
+
+        if self._enable_model_manager:
+            model_manager_resource = ModelManagerResource()
+            application.add_route('/models', model_manager_resource)
+            application.add_route('/models/{model_name}', model_manager_resource)
+
 
 app = falcon.API()
-
-app.add_route('/ping', ping_resource)
-app.add_route('/invocations', invocation_resource)
+resources = ServiceResources()
+resources.add_routes(app)

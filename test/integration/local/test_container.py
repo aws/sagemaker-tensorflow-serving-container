@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -36,14 +36,14 @@ def volume():
 
 
 @pytest.fixture(scope='module', autouse=True, params=[True, False])
-def container(request, docker_base_name, tag):
+def container(request, docker_base_name, tag, runtime_config):
     try:
         if request.param:
             batching_config = ' -e SAGEMAKER_TFS_ENABLE_BATCHING=true'
         else:
             batching_config = ''
         command = (
-            'docker run --name sagemaker-tensorflow-serving-test -p 8080:8080'
+            'docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080'
             ' --mount type=volume,source=model_volume,target=/opt/ml/model,readonly'
             ' -e SAGEMAKER_TFS_DEFAULT_MODEL_NAME=half_plus_three'
             ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
@@ -51,7 +51,7 @@ def container(request, docker_base_name, tag):
             ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
             ' {}'
             ' {}:{} serve'
-        ).format(batching_config, docker_base_name, tag)
+        ).format(runtime_config, batching_config, docker_base_name, tag)
 
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
@@ -240,6 +240,7 @@ def test_predict_no_custom_attributes_header():
     y = json.loads(response.content.decode('utf-8'))
 
     assert y == {'predictions': [3.5, 4.0, 5.5]}
+
 
 def test_predict_with_jsonlines():
     x = {
