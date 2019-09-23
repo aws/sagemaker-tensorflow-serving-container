@@ -46,7 +46,8 @@ RUN curl https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/Serving/CPU-WITH
 ENV LD_LIBRARY_PATH '/usr/local/lib:$LD_LIBRARY_PATH'
 
 RUN curl https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/Serving/CPU-WITH-MKL/tensorflow_model_server -o tensorflow_model_server \
- && chmod 555 tensorflow_model_server && cp tensorflow_model_server /usr/bin/tensorflow_model_server
+ && chmod 555 tensorflow_model_server \
+ && cp tensorflow_model_server /usr/bin/tensorflow_model_server \
  && rm -f tensorflow_model_server
 
 RUN ${PIP} install -U --no-cache-dir awscli==1.16.130
