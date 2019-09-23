@@ -11,7 +11,8 @@ RUN \
     echo 'deb http://nginx.org/packages/ubuntu/ bionic nginx' >> /etc/apt/sources.list && \
     apt-get update && \
     apt-get -y install --no-install-recommends nginx nginx-module-njs python3 python3-pip python3-setuptools && \
-    apt-get clean
+    apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # See http://bugs.python.org/issue19846
 ENV LANG C.UTF-8

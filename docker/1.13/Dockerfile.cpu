@@ -3,6 +3,24 @@ FROM ubuntu:18.04
 LABEL maintainer="Amazon AI"
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
+# See http://bugs.python.org/issue19846
+ENV LANG C.UTF-8
+
+# Python won’t try to write .pyc or .pyo files on the import of source modules
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}" \
+    PATH="$PATH:/sagemaker" \
+    LD_LIBRARY_PATH='/usr/local/lib:$LD_LIBRARY_PATH' \
+    MODEL_BASE_PATH=/models \
+    # The only required piece is the model name in order to differentiate endpoints
+    MODEL_NAME=model
+
+
+ARG PYTHON=python3
+ARG PIP=pip3
+ARG TFS_SHORT_VERSION=1.13
+
 # nginx + njs
 RUN apt-get update \
  && apt-get -y install --no-install-recommends curl gnupg2 ca-certificates git wget vim build-essential zlib1g-dev \
@@ -10,16 +28,8 @@ RUN apt-get update \
  && echo 'deb http://nginx.org/packages/ubuntu/ bionic nginx' >> /etc/apt/sources.list \
  && apt-get update \
  && apt-get -y install --no-install-recommends nginx nginx-module-njs python3 python3-pip python3-setuptools \
- && apt-get clean
-
-# See http://bugs.python.org/issue19846
-ENV LANG C.UTF-8
-
-ARG PYTHON=python3
-ARG PIP=pip3
-
-# Python won’t try to write .pyc or .pyo files on the import of source modules
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
 # cython, falcon, gunicorn
 RUN ${PIP} install \
@@ -31,19 +41,14 @@ RUN ${PIP} install \
 
 COPY ./ /
 
-ARG TFS_SHORT_VERSION=1.13
-ENV SAGEMAKER_TFS_VERSION "${TFS_SHORT_VERSION}"
-ENV PATH "$PATH:/sagemaker"
-
 RUN ${PIP} --no-cache-dir install --upgrade pip setuptools
 
 # Some TF tools expect a "python" binary
-RUN ln -s $(which ${PYTHON}) /usr/local/bin/python
+RUN ln -s $(which ${PYTHON}) /usr/local/bin/python \
+ && ln -s /usr/local/bin/pip3 /usr/bin/pip
 
 RUN curl https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/Serving/CPU-WITH-MKL/libiomp5.so -o /usr/local/lib/libiomp5.so
 RUN curl https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/Serving/CPU-WITH-MKL/libmklml_intel.so -o /usr/local/lib/libmklml_intel.so
-
-ENV LD_LIBRARY_PATH '/usr/local/lib:$LD_LIBRARY_PATH'
 
 RUN curl https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/Serving/CPU-WITH-MKL/tensorflow_model_server -o tensorflow_model_server \
  && chmod 555 tensorflow_model_server \
@@ -53,18 +58,11 @@ RUN curl https://s3-us-west-2.amazonaws.com/tensorflow-aws/1.13/Serving/CPU-WITH
 RUN ${PIP} install -U --no-cache-dir awscli==1.16.130
 
 # Expose ports
-# gRPC
-EXPOSE 8500
-
-# REST
-EXPOSE 8501
+# gRPC and REST
+EXPOSE 8500 8501
 
 # Set where models should be stored in the container
-ENV MODEL_BASE_PATH=/models
 RUN mkdir -p ${MODEL_BASE_PATH}
-
-# The only required piece is the model name in order to differentiate endpoints
-ENV MODEL_NAME=model
 
 # Create a script that runs the model server so we can use environment variables
 # while also passing in arguments from the docker command line

@@ -3,9 +3,24 @@ FROM nvidia/cuda:10.0-base-ubuntu16.04
 LABEL maintainer="Amazon AI"
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
-ENV NCCL_VERSION=2.4.7-1+cuda10.0
-ENV CUDNN_VERSION=7.5.1.10-1+cuda10.0
-ENV TF_TENSORRT_VERSION=5.0.2
+# See http://bugs.python.org/issue19846
+ENV LANG C.UTF-8
+
+ENV NCCL_VERSION=2.4.7-1+cuda10.0 \
+    CUDNN_VERSION=7.5.1.10-1+cuda10.0 \
+    TF_TENSORRT_VERSION=5.0.2 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    # Python won’t try to write .pyc or .pyo files on the import of source modules
+    PYTHONUNBUFFERED=1 \
+    SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}" \
+    PATH="$PATH:/sagemaker" \
+    MODEL_BASE_PATH=/models \
+    # The only required piece is the model name in order to differentiate endpoints
+    MODEL_NAME=model
+
+ARG PYTHON_VERSION=3.6.6
+ARG TFS_SHORT_VERSION=1.14
+
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -45,32 +60,13 @@ RUN apt-get update && \
     rm /usr/lib/x86_64-linux-gnu/libnvcaffe_parser* && \
     rm /usr/lib/x86_64-linux-gnu/libnvparsers*
 
-
-# See http://bugs.python.org/issue19846
-ENV LANG C.UTF-8
-
-# Add arguments to achieve the version, python and url
-#  PYTHON=python for 2.7
-#  PYTHON=python3 for 3.5, 3.6 is not available directly on 16.04
-ARG PYTHON=python3
-
-# user python-pip or python3-pip
-ARG PYTHON_PIP=python3-pip
-
-#  PIP=pip for 2.7
-#  PIP=pip3 for 3.5, 3.6 is not available directly on 16.04
-ARG PIP=pip3
-ARG PYTHON_VERSION=3.6.6
-
 RUN wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz && \
     tar -xvf Python-$PYTHON_VERSION.tgz && cd Python-$PYTHON_VERSION && \
     ./configure && make && make install && \
     apt-get update && apt-get install -y --no-install-recommends libreadline-gplv2-dev libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev && \
     make && make install && rm -rf ../Python-$PYTHON_VERSION* && \
-    ln -s /usr/local/bin/pip3 /usr/bin/pip
-
-# Python won’t try to write .pyc or .pyo files on the import of source modules
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+    ln -s /usr/local/bin/pip3 /usr/bin/pip \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN ${PIP} --no-cache-dir install --upgrade pip setuptools
 
@@ -100,21 +96,11 @@ RUN ${PIP} install -U --no-cache-dir awscli==1.16.196 \
 
 COPY ./ /
 
-ARG TFS_SHORT_VERSION=1.14
-ENV SAGEMAKER_TFS_VERSION "${TFS_SHORT_VERSION}"
-ENV PATH "$PATH:/sagemaker"
-
-EXPOSE 8500
-
-# REST
-EXPOSE 8501
+# Expose gRPC and REST port
+EXPOSE 8500 8501
 
 # Set where models should be stored in the container
-ENV MODEL_BASE_PATH=/models
 RUN mkdir -p ${MODEL_BASE_PATH}
-
-# The only required piece is the model name in order to differentiate endpoints
-ENV MODEL_NAME=model
 
 # Create a script that runs the model server so we can use environment variables
 # while also passing in arguments from the docker command line
