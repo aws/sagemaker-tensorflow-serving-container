@@ -1,6 +1,15 @@
 FROM ubuntu:16.04
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
+# See http://bugs.python.org/issue19846
+ENV LANG=C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV MODEL_BASE_PATH=/models
+ENV MODEL_NAME=model
+ENV SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}"
+ENV PATH="$PATH:/sagemaker"
+
 ARG TFS_SHORT_VERSION=1.14
 ARG S3_TF_VERSION=1-14-0
 ARG S3_TF_EI_VERSION=1-2
@@ -25,15 +34,6 @@ RUN apt-get update \
  && apt-get -y install --no-install-recommends nginx wget nginx-module-njs \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
-
-# See http://bugs.python.org/issue19846
-ENV LANG=C.UTF-8 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    MODEL_BASE_PATH=/models \
-    MODEL_NAME=model \
-    SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}" \
-    PATH="$PATH:/sagemaker"
 
 RUN wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz \
  && tar -xvf Python-$PYTHON_VERSION.tgz \
@@ -91,7 +91,7 @@ RUN wget https://amazonei-tensorflow.s3.amazonaws.com/tensorflow-serving/v1.14/u
  && rm -rf tensorflow-serving-${S3_TF_VERSION}*
 
 # Set where models should be stored in the container
-RUN mkdir -p ${MODEL_BASE_PATH}
+RUN mkdir -p "${MODEL_BASE_PATH}"
 
 RUN echo '#!/bin/bash \n\n' > /usr/bin/tf_serving_entrypoint.sh \
  && echo '/usr/bin/tensorflow_model_server --port=8500 --rest_api_port=8501 --model_name=${MODEL_NAME} --model_base_path=${MODEL_BASE_PATH}/${MODEL_NAME} "$@"' >> /usr/bin/tf_serving_entrypoint.sh \

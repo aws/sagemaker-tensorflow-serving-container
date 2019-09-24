@@ -5,16 +5,15 @@ LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
 # See http://bugs.python.org/issue19846
 ENV LANG C.UTF-8
-
 # Python won’t try to write .pyc or .pyo files on the import of source modules
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}" \
-    PATH="$PATH:/sagemaker" \
-    LD_LIBRARY_PATH='/usr/local/lib:$LD_LIBRARY_PATH' \
-    MODEL_BASE_PATH=/models \
-    # The only required piece is the model name in order to differentiate endpoints
-    MODEL_NAME=model
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}"
+ENV PATH="$PATH:/sagemaker"
+ENV LD_LIBRARY_PATH='/usr/local/lib:$LD_LIBRARY_PATH'
+ENV MODEL_BASE_PATH=/models
+# The only required piece is the model name in order to differentiate endpoints
+ENV MODEL_NAME=model
 
 
 ARG PYTHON=python3

@@ -1,6 +1,9 @@
 FROM ubuntu:16.04
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
+ENV SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}"
+ENV PATH="$PATH:/sagemaker"
+
 ARG TFS_SHORT_VERSION
 
 # nginx + njs
@@ -21,6 +24,3 @@ RUN \
 COPY ./ /
 RUN mv amazonei_tensorflow_model_server /usr/bin/tensorflow_model_server && \
     chmod +x /usr/bin/tensorflow_model_server
-
-ENV SAGEMAKER_TFS_VERSION "${TFS_SHORT_VERSION}"
-ENV PATH "$PATH:/sagemaker"
