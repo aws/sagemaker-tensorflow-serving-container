@@ -120,7 +120,7 @@ COPY ./ /
 EXPOSE 8500 8501
 
 # Set where models should be stored in the container
-RUN mkdir -p "${MODEL_BASE_PATH}"
+RUN mkdir -p ${MODEL_BASE_PATH}
 
 # Create a script that runs the model server so we can use environment variables
 # while also passing in arguments from the docker command line
