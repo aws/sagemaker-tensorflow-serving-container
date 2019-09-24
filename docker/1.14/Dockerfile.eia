@@ -91,7 +91,7 @@ RUN wget https://amazonei-tensorflow.s3.amazonaws.com/tensorflow-serving/v1.14/u
  && rm -rf tensorflow-serving-${S3_TF_VERSION}*
 
 # Set where models should be stored in the container
-RUN mkdir -p "${MODEL_BASE_PATH}"
+RUN mkdir -p ${MODEL_BASE_PATH}
 
 RUN echo '#!/bin/bash \n\n' > /usr/bin/tf_serving_entrypoint.sh \
  && echo '/usr/bin/tensorflow_model_server --port=8500 --rest_api_port=8501 --model_name=${MODEL_NAME} --model_base_path=${MODEL_BASE_PATH}/${MODEL_NAME} "$@"' >> /usr/bin/tf_serving_entrypoint.sh \
