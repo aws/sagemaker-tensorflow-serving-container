@@ -7,8 +7,6 @@ LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 #  PYTHON=python for 2.7
 #  PYTHON=python3 for 3.5, 3.6 is not available directly on 16.04
 ARG PYTHON=python3
-# user python-pip or python3-pip
-ARG PYTHON_PIP=python3-pip
 #  PIP=pip for 2.7
 #  PIP=pip3 for 3.5, 3.6 is not available directly on 16.04
 ARG PIP=pip3
@@ -67,7 +65,8 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && rm /usr/lib/x86_64-linux-gnu/libnvinfer_plugin* \
  && rm /usr/lib/x86_64-linux-gnu/libnvcaffe_parser* \
- && rm /usr/lib/x86_64-linux-gnu/libnvparsers*
+ && rm /usr/lib/x86_64-linux-gnu/libnvparsers* \
+ && rm -rf /var/lib/apt/lists/*
 
 RUN wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz \
  && tar -xvf Python-$PYTHON_VERSION.tgz && cd Python-$PYTHON_VERSION \
