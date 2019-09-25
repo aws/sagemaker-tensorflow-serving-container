@@ -3,6 +3,18 @@ FROM nvidia/cuda:10.0-base-ubuntu16.04
 LABEL maintainer="Amazon AI"
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 
+# Add arguments to achieve the version, python and url
+#  PYTHON=python for 2.7
+#  PYTHON=python3 for 3.5, 3.6 is not available directly on 16.04
+ARG PYTHON=python3
+# user python-pip or python3-pip
+ARG PYTHON_PIP=python3-pip
+#  PIP=pip for 2.7
+#  PIP=pip3 for 3.5, 3.6 is not available directly on 16.04
+ARG PIP=pip3
+ARG PYTHON_VERSION=3.6.6
+ARG TFS_SHORT_VERSION=1.13
+
 # See http://bugs.python.org/issue19846
 ENV LANG C.UTF-8
 ENV NCCL_VERSION=2.4.7-1+cuda10.0
@@ -16,21 +28,6 @@ ENV PATH="$PATH:/sagemaker"
 ENV MODEL_BASE_PATH=/models
 # The only required piece is the model name in order to differentiate endpoints
 ENV MODEL_NAME=model
-
-# Add arguments to achieve the version, python and url
-#  PYTHON=python for 2.7
-#  PYTHON=python3 for 3.5, 3.6 is not available directly on 16.04
-ARG PYTHON=python3
-
-# user python-pip or python3-pip
-ARG PYTHON_PIP=python3-pip
-
-#  PIP=pip for 2.7
-#  PIP=pip3 for 3.5, 3.6 is not available directly on 16.04
-ARG PIP=pip3
-ARG PYTHON_VERSION=3.6.6
-
-ARG TFS_SHORT_VERSION=1.13
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
