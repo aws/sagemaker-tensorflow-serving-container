@@ -7,8 +7,6 @@ LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 #  PYTHON=python for 2.7
 #  PYTHON=python3 for 3.5, 3.6 is not available directly on 16.04
 ARG PYTHON=python3
-# user python-pip or python3-pip
-ARG PYTHON_PIP=python3-pip
 #  PIP=pip for 2.7
 #  PIP=pip3 for 3.5, 3.6 is not available directly on 16.04
 ARG PIP=pip3
