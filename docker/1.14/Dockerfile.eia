@@ -4,7 +4,6 @@ LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 ARG TFS_SHORT_VERSION=1.14
 ARG S3_TF_VERSION=1-14-0
 ARG S3_TF_EI_VERSION=1-2
-ARG PIP=pip3
 ARG PYTHON=python3
 ARG PYTHON_VERSION=3.6.6
 ARG HEALTH_CHECK_VERSION=1.3.3
