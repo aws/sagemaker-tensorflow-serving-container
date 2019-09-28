@@ -2,11 +2,11 @@
 
 # SageMaker TensorFlow Serving Container
 
-SageMaker TensorFlow Serving Container is an a open source project that builds
-docker images for running TensorFlow Serving on
+SageMaker TensorFlow Serving Container is an a open source project that builds 
+Docker images for running TensorFlow Serving on 
 [Amazon SageMaker](https://aws.amazon.com/documentation/sagemaker/).
 
-This documentation covers building and testing these docker images.
+This documentation covers building, testing and using these Docker images.
 
 For information about using TensorFlow Serving on SageMaker, see:
 [Deploying to TensorFlow Serving Endpoints](https://github.com/aws/sagemaker-python-sdk/blob/master/src/sagemaker/tensorflow/deploying_tensorflow_serving.rst)
@@ -136,6 +136,7 @@ For example:
         --instance_type ml.m5.xlarge \
         --accelerator-type ml.eia1.medium \
         --versions 1.13.0
+
 
 ## Pre/Post-Processing
 
