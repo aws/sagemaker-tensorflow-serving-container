@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.6.5 (2019-09-30)
+
+### Bug fixes and other changes
+
+ * "change: merge asimov branch to master branch (#80)"
+ * merge asimov branch to master branch
+
 ## v1.6.4 (2019-09-17)
 
 ### Bug fixes and other changes
