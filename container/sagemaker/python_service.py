@@ -173,7 +173,7 @@ class ModelManagerResource(object):
             res.body = msg
             res.status = falcon.HTTP_200
         except Exception as e:  # pylint: disable=W0703
-            e = eval(str(e))
+            e = eval(str(e))  # pylint: disable=W0123
             if e[0] == 409:
                 res.status = falcon.HTTP_409
             else:
@@ -185,8 +185,8 @@ class ModelManagerResource(object):
             msg = self.grpc_client.delete_model(model_name)
             res.body = msg
             res.status = falcon.HTTP_200
-        except Exception as e:
-            e = eval(str(e))
+        except Exception as e:  # pylint: disable=W0703
+            e = eval(str(e))  # pylint: disable=W0123
             if e[0] == 404:
                 res.status = falcon.HTTP_404
             else:
