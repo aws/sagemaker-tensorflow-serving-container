@@ -137,13 +137,25 @@ class ModelManagerResource(object):
     def __init__(self):
         self.grpc_client = GRPCProxyClient(TFS_GRPC_PORT)
 
-    def on_get(self, req, res):  # pylint: disable=W0613
+    def on_get(self, req, res, model_name=None):  # pylint: disable=W0613
         try:
             models = self._read_model_config()
-            res.status = falcon.HTTP_200
-            res.body = json.dumps({
-                'models': models
-            })
+            if model_name:
+                for model in models:
+                    if model['modelName'] == model_name:
+                        res.body = json.dumps({
+                            'modelName': model_name,
+                            'modelUrl': model['modelUrl']
+                        })
+                res.status = falcon.HTTP_404
+                res.body = json.dumps({
+                    'error': '{} is not loaded.'.format(model_name)
+                })
+            else:
+                res.status = falcon.HTTP_200
+                res.body = json.dumps({
+                    'models': models
+                })
         except ValueError as e:
             log.exception('exception handling request: {}'.format(e))
             res.status = falcon.HTTP_500
@@ -161,21 +173,25 @@ class ModelManagerResource(object):
             res.body = msg
             res.status = falcon.HTTP_200
         except Exception as e:  # pylint: disable=W0703
-            res.status = falcon.HTTP_507
-            res.body = json.dumps({
-                'error': str(e)
-            }).encode('utf-8')
+            e = eval(str(e))
+            if e[0] == 409:
+                res.status = falcon.HTTP_409
+            else:
+                res.status = falcon.HTTP_500
+            res.body = e[1].encode('utf-8')
 
     def on_delete(self, req, res, model_name):  # pylint: disable=W0613
         try:
             msg = self.grpc_client.delete_model(model_name)
             res.body = msg
             res.status = falcon.HTTP_200
-        except Exception as e:  # pylint: disable=W0703
-            res.status = falcon.HTTP_400
-            res.body = json.dumps({
-                'error': str(e)
-            }).encode('utf-8')
+        except Exception as e:
+            e = eval(str(e))
+            if e[0] == 404:
+                res.status = falcon.HTTP_404
+            else:
+                res.status = falcon.HTTP_500
+            res.body = e[1].encode('utf-8')
 
     def _read_model_config(self):
         models = []

@@ -67,9 +67,10 @@ class GRPCProxyClient(object):
                 self.stub.HandleReloadConfigRequest(req)
                 self._add_model_to_config_file(model_name, base_path, model_platform)
             except grpc.RpcError as e:
-                status_code = e.code()[1]
-                msg = e.details()
-                raise Exception('error: {}; message: {}'.format(status_code, msg))
+                if e.code() is grpc.StatusCode.INVALID_ARGUMENT:
+                    raise Exception(409, e.details())
+                else:
+                    raise Exception(e.code(), e.details())
 
         return 'Successfully loaded model {}'.format(model_name)
 
@@ -86,18 +87,18 @@ class GRPCProxyClient(object):
                 for config in config_list.config:
                     if config.name == model_name:
                         config_list.config.remove(config)
+                        model_server_config.model_config_list.CopyFrom(config_list)
+                        req = model_management_pb2.ReloadConfigRequest()
+                        req.config.CopyFrom(model_server_config)
+                        self.stub.HandleReloadConfigRequest(req)
+                        self._delete_model_from_config_file(model_server_config)
 
-                model_server_config.model_config_list.CopyFrom(config_list)
-                req = model_management_pb2.ReloadConfigRequest()
-                req.config.CopyFrom(model_server_config)
-                self.stub.HandleReloadConfigRequest(req)
-                self._delete_model_from_config_file(model_server_config)
+                # no such model exists
+                raise Exception(404, '{} not loaded yet.'.format(model_name))
             except grpc.RpcError as e:
-                status_code = e.code()[1]
-                msg = e.details()
-                raise Exception('error: {}; message: {}'.format(status_code, msg))
+                raise Exception(e.code(), e.details())
 
-        return 'Model {} not running on model server.'.format(model_name)
+        return 'Model {} unloaded.'.format(model_name)
 
     def _read_model_config(self, model_config_file):
         with open(model_config_file, 'r') as f:
