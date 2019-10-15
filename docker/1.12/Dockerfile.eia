@@ -15,10 +15,15 @@ RUN \
 
 # cython, falcon, gunicorn, tensorflow-serving
 RUN \
-    pip3 install --no-cache-dir cython falcon gunicorn gevent requests grpcio protobuf tensorflow && \
-    pip3 install --no-dependencies --no-cache-dir tensorflow-serving-api
+    pip3 install --no-cache-dir cython falcon gunicorn gevent requests grpcio protobuf && \
+    pip3 install --no-dependencies --no-cache-dir tensorflow-serving-api==1.12.0
 
 COPY ./ /
+
+# put tensorflow library (with only error_codes) to python dist-packages
+WORKDIR /
+RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/dist-packages/
+
 RUN mv amazonei_tensorflow_model_server /usr/bin/tensorflow_model_server && \
     chmod +x /usr/bin/tensorflow_model_server
 

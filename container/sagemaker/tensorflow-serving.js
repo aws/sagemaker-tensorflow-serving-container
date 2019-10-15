@@ -13,47 +13,9 @@ function invocations(r) {
     }
 }
 
+// ping check does not POST to a specific model, because MME starts with 0 model
 function ping(r) {
-    if ('1.11' == r.variables.tfs_version) {
-        return ping_tfs_1_11(r)
-    }
-
-    var uri = make_tfs_uri(r, false)
-
-    function callback (reply) {
-        if (reply.status == 200 && reply.responseBody.includes('"AVAILABLE"')) {
-            r.return(200)
-        } else {
-            r.error('failed ping' + reply.responseBody)
-            r.return(502)
-        }
-    }
-
-    r.subrequest(uri, callback)
-}
-
-function ping_tfs_1_11(r) {
-    // hack for TF 1.11
-    // send an arbitrary fixed request to the default model.
-    // if response is 400, the model is ok (but input was bad), so return 200
-    // also return 200 in unlikely case our request was really valid
-
-    var uri = make_tfs_uri(r, true)
-    var options = {
-        method: 'POST',
-        body: '{"instances": "invalid"}'
-    }
-
-    function callback (reply) {
-        if (reply.status == 200 || reply.status == 400) {
-            r.return(200)
-        } else {
-            r.error('failed ping' + reply.responseBody)
-            r.return(502)
-        }
-    }
-
-    r.subrequest(uri, options, callback)
+    r.return(200, "OK!")
 }
 
 function return_error(r, code, message) {
@@ -121,7 +83,7 @@ function parse_custom_attributes(r) {
         }
     }
 
-    // for dynamic endpoint invocations, tfs-model-name is in the uri, or use default_tfs_model
+    // for MME invocations, tfs-model-name is in the uri, or use default_tfs_model
     if (!attributes['tfs-model-name']) {
         var uri_pattern = /\/models\/[^,]+\/invoke/g
         var model_name = r.uri.match(uri_pattern)
