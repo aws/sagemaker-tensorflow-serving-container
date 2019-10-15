@@ -1,5 +1,6 @@
 FROM ubuntu:16.04
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
+LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
 
 ARG TFS_SHORT_VERSION=1.14
 ARG S3_TF_VERSION=1-14-0
@@ -7,6 +8,15 @@ ARG S3_TF_EI_VERSION=1-2
 ARG PYTHON=python3
 ARG PYTHON_VERSION=3.6.6
 ARG HEALTH_CHECK_VERSION=1.3.3
+
+# See http://bugs.python.org/issue19846
+ENV LANG=C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV MODEL_BASE_PATH=/models
+ENV MODEL_NAME=model
+ENV SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}"
+ENV PATH="$PATH:/sagemaker"
 
 # nginx + njs
 RUN apt-get update \
@@ -25,15 +35,6 @@ RUN apt-get update \
  && apt-get -y install --no-install-recommends nginx wget nginx-module-njs \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
-
-# See http://bugs.python.org/issue19846
-ENV LANG=C.UTF-8 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    MODEL_BASE_PATH=/models \
-    MODEL_NAME=model \
-    SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}" \
-    PATH="$PATH:/sagemaker"
 
 RUN wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz \
  && tar -xvf Python-$PYTHON_VERSION.tgz \
@@ -63,14 +64,21 @@ RUN pip install -U --no-cache-dir --upgrade \
     pip \
     setuptools
 
-RUN pip install -U --no-cache-dir \
+# cython, falcon, gunicorn, grpc
+RUN pip install --no-cache-dir \
     cython==0.29.13 \
     falcon==2.0.0 \
     gunicorn==19.9.0 \
     gevent==1.4.0 \
     requests==2.22.0 \
     docutils==0.14 \
-    awscli==1.16.196
+    awscli==1.16.196 \
+    grpcio==1.24.1 \
+	protobuf==3.10.0
+
+# tensorflow-serving-api
+RUN ${PIP} install --no-dependencies --no-cache-dir \
+    tensorflow-serving-api==1.14.0
 
 COPY sagemaker /sagemaker
 
