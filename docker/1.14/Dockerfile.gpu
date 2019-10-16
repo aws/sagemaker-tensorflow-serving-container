@@ -106,13 +106,18 @@ RUN ${PIP} install -U --no-cache-dir \
     falcon==2.0.0 \
     gunicorn==19.9.0 \
     gevent==1.4.0 \
-    requests==2.22.0
-
-# tensorflow-serving-api
-RUN ${PIP} install --no-dependencies --no-cache-dir \
+    requests==2.22.0 \
+    grpcio==1.24.1 \
+    protobuf==3.10.0 \
+# using --no-dependencies to avoid installing tensorflow binary
+ && ${PIP} install --no-dependencies --no-cache-dir \
     tensorflow-serving-api==1.14.0
 
 COPY ./ /
+
+# put tensorflow library (with only error_codes) to python dist-packages
+WORKDIR /
+RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/dist-packages/
 
 # Expose gRPC and REST port
 EXPOSE 8500 8501

@@ -12,6 +12,9 @@ ${DIR}/build.sh --version 1.12.0 --arch cpu
 ${DIR}/build.sh --version 1.12.0 --arch gpu
 ${DIR}/build.sh --version 1.13.0 --arch cpu
 ${DIR}/build.sh --version 1.13.0 --arch gpu
+${DIR}/build.sh --version 1.14.0 --arch cpu
+${DIR}/build.sh --version 1.14.0 --arch gpu
 ${DIR}/build.sh --version 1.11 --arch eia
 ${DIR}/build.sh --version 1.12 --arch eia
 ${DIR}/build.sh --version 1.13 --arch eia
+${DIR}/build.sh --version 1.14 --arch eia
