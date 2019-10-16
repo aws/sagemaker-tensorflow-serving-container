@@ -76,14 +76,14 @@ RUN pip install --no-cache-dir \
     grpcio==1.24.1 \
     protobuf==3.10.0 \
 # using --no-dependencies to avoid installing tensorflow binary
- && ${PIP} install --no-dependencies --no-cache-dir \
+ && pip install --no-dependencies --no-cache-dir \
     tensorflow-serving-api==1.14.0
 
 COPY sagemaker /sagemaker
 
 # put tensorflow library (with only error_codes) to python dist-packages
 WORKDIR /
-RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/dist-packages/
+RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/site-packages/
 
 RUN wget https://amazonei-healthcheck.s3.amazonaws.com/v${HEALTH_CHECK_VERSION}/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz -O /opt/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz \
  && tar -xvf /opt/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz -C /opt/ \
