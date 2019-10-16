@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.6 (2019-10-16)
+
+### Bug fixes and other changes
+
+ * mme improvements
+
 ## v1.6.5 (2019-09-30)
 
 ### Bug fixes and other changes
