@@ -10,6 +10,8 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+import signal
+from contextlib import contextmanager
 
 import importlib.util
 import json
@@ -25,6 +27,7 @@ from proxy_client import GRPCProxyClient
 INFERENCE_SCRIPT_PATH = '/opt/ml/model/code/inference.py'
 MODEL_CONFIG_FILE_PATH = '/sagemaker/model-config.cfg'
 TFS_GRPC_PORT = os.environ.get('TFS_GRPC_PORT')
+TFS_REST_PORT = os.environ.get('TFS_REST_PORT')
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -42,8 +45,8 @@ class InvocationResource(object):
 
     def __init__(self):
         self._tfs_default_model_name = os.environ['TFS_DEFAULT_MODEL_NAME']
-        self._tfs_grpc_port = os.environ['TFS_GRPC_PORT']
-        self._tfs_rest_port = os.environ['TFS_REST_PORT']
+        self._tfs_grpc_port = TFS_GRPC_PORT
+        self._tfs_rest_port = TFS_REST_PORT
 
         self._handler, self._input_handler, self._output_handler = self._import_handlers()
         self._handlers = self._make_handler(self._handler,
@@ -168,21 +171,41 @@ class ModelManagerResource(object):
                           .decode('utf-8'))
         model_name = data['model_name']
         base_path = data['url']
-        try:
-            msg = self.grpc_client.add_model(model_name, base_path)
-            res.body = msg
-            res.status = falcon.HTTP_200
-        except Exception as e:  # pylint: disable=W0703
-            e = eval(str(e))  # pylint: disable=W0123
-            if e[0] == 409:
-                res.status = falcon.HTTP_409
-            else:
-                res.status = falcon.HTTP_500
-            res.body = e[1].encode('utf-8')
+        if os.path.exists(base_path):
+            try:
+                msg = self.grpc_client.add_model(model_name, base_path)
+
+                # make sure all versions of model is ready before returning the call
+                with self._timeout(seconds=60):
+                    while True:
+                        model_status = self._get_model_status(model_name)
+                        if self._check_all_versions_available(model_status):
+                            break
+
+                res.body = msg
+                res.status = falcon.HTTP_200
+            except Exception as e:  # pylint: disable=W0703
+                e = eval(str(e))  # pylint: disable=W0123
+                if e[0] == 409:
+                    res.status = falcon.HTTP_409
+                else:
+                    res.status = falcon.HTTP_500
+                res.body = e[1].encode('utf-8')
+        else:
+            res.status = falcon.HTTP_404
+            res.body = 'Could not find base path {} for servable {}'.format(base_path, model_name)
 
     def on_delete(self, req, res, model_name):  # pylint: disable=W0613
         try:
             msg = self.grpc_client.delete_model(model_name)
+
+            # make sure all versions of model is unloaded before returning the call
+            with self._timeout(seconds=60):
+                while True:
+                    model_status = self._get_model_status(model_name)
+                    if self._check_all_versions_unloaded(model_status):
+                        break
+
             res.body = msg
             res.status = falcon.HTTP_200
         except Exception as e:  # pylint: disable=W0703
@@ -214,6 +237,48 @@ class ModelManagerResource(object):
                         raise ValueError('Malformed model-config.cfg file.')
                 line = f.readline()
         return models
+
+    def _get_model_status(self, model_name):
+        url = 'http://localhost:{}/v1/models/{}'.format(TFS_REST_PORT, model_name)
+        try:
+            response = requests.get(url).json()
+            version_states = []
+            for version in response['model_version_status']:
+                version_states.append({
+                    'version': version['version'],
+                    'state': version['state']
+                })
+            return version_states
+        except Exception as e: # pylint: disable=W0703
+            raise Exception(502, e.message)
+
+    def _check_all_versions_available(self, model_status):
+        if not model_status:
+            raise Exception(404, 'No model versions found')
+        for version in model_status:
+            if version['state'] != 'AVAILABLE':
+                return False
+        return True
+
+    def _check_all_versions_unloaded(self, model_status):
+        if not model_status:
+            raise Exception(404, 'No model versions found')
+        for version in model_status:
+            if version['state'] != 'END':
+                return False
+        return True
+
+    @contextmanager
+    def _timeout(self, seconds):
+        def _raise_timeout_error(signum, frame):
+            raise Exception(408, 'timed our after {} seconds'.format(seconds))
+
+        try:
+            signal.signal(signal.SIGALRM, _raise_timeout_error)
+            signal.alarm(seconds)
+            yield
+        finally:
+            signal.alarm(0)
 
 
 class ServiceResources(object):
