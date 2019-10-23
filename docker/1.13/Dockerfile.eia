@@ -2,11 +2,11 @@ FROM ubuntu:16.04
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
 
-ENV SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}"
-ENV PATH="$PATH:/sagemaker"
-
 ARG PIP=pip3
 ARG TFS_SHORT_VERSION
+
+ENV SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}"
+ENV PATH="$PATH:/sagemaker"
 
 # nginx + njs
 RUN apt-get update \
