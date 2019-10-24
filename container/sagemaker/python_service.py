@@ -249,8 +249,8 @@ class ModelManagerResource(object):
                     'state': version['state']
                 })
             return version_states
-        except Exception as e: # pylint: disable=W0703
-            raise Exception(502, e.message)
+        except Exception as e:  # pylint: disable=W0703
+            raise Exception(502, str(e))
 
     def _check_all_versions_available(self, model_status):
         if not model_status:
