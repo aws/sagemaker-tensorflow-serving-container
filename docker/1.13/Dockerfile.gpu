@@ -5,11 +5,9 @@ LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
 
 # Add arguments to achieve the version, python and url
-#  PYTHON=python for 2.7
-#  PYTHON=python3 for 3.5, 3.6 is not available directly on 16.04
+#  PYTHON=python for 2.7, PYTHON=python3 for 3.5, 3.6 is not available directly on 16.04
 ARG PYTHON=python3
-#  PIP=pip for 2.7
-#  PIP=pip3 for 3.5, 3.6 is not available directly on 16.04
+#  PIP=pip for 2.7, PIP=pip3 for 3.5, 3.6 is not available directly on 16.04
 ARG PIP=pip3
 ARG PYTHON_VERSION=3.6.6
 ARG TFS_SHORT_VERSION=1.13
