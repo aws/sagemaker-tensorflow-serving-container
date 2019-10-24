@@ -25,7 +25,7 @@ function get_short_version() {
 }
 
 function get_aws_account() {
-    aws sts get-caller-identity --query 'Account' --output text
+    aws --region $AWS_DEFAULT_REGION sts --endpoint-url https://sts.$AWS_DEFAULT_REGION.amazonaws.com get-caller-identity --query 'Account' --output text
 }
 
 function get_ei_executable() {

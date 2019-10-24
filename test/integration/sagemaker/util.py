@@ -63,7 +63,12 @@ def _production_variants(model_name, instance_type, accelerator_type):
 
 
 def _test_bucket(region, boto_session):
-    account = boto_session.client('sts').get_caller_identity()['Account']
+    sts = boto_session.client(
+        'sts',
+        region_name=region,
+        endpoint_url='https://sts.{}.amazonaws.com'.format(region)
+    )
+    account = sts.get_caller_identity()['Account']
     return f'sagemaker-{region}-{account}'
 
 
