@@ -102,7 +102,10 @@ class GRPCProxyClient(object):
                 # no such model exists
                 raise Exception(404, '{} not loaded yet.'.format(model_name))
             except grpc.RpcError as e:
-                raise Exception(e.code(), e.details())
+                if e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
+                    raise Exception(408, e.details())
+                else:
+                    raise Exception(e.code(), e.details())
 
         return 'Model {} unloaded.'.format(model_name)
 
