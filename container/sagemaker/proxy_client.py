@@ -64,11 +64,15 @@ class GRPCProxyClient(object):
                 req = model_management_pb2.ReloadConfigRequest()
                 req.config.CopyFrom(model_server_config)
 
-                self.stub.HandleReloadConfigRequest(req)
+                self.stub.HandleReloadConfigRequest(request=req,
+                                                    timeout=5,
+                                                    wait_for_ready=True)
                 self._add_model_to_config_file(model_name, base_path, model_platform)
             except grpc.RpcError as e:
                 if e.code() is grpc.StatusCode.INVALID_ARGUMENT:
                     raise Exception(409, e.details())
+                elif e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
+                    raise Exception(408, e.details())
                 else:
                     raise Exception(e.code(), e.details())
 
@@ -90,7 +94,9 @@ class GRPCProxyClient(object):
                         model_server_config.model_config_list.CopyFrom(config_list)
                         req = model_management_pb2.ReloadConfigRequest()
                         req.config.CopyFrom(model_server_config)
-                        self.stub.HandleReloadConfigRequest(req)
+                        self.stub.HandleReloadConfigRequest(request=req,
+                                                            timeout=5,
+                                                            wait_for_ready=True)
                         self._delete_model_from_config_file(model_server_config)
 
                 # no such model exists

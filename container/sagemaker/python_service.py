@@ -19,6 +19,7 @@ import logging
 import os
 import re
 from collections import namedtuple
+from time import sleep
 
 import falcon
 import requests
@@ -181,6 +182,7 @@ class ModelManagerResource(object):
                         model_status = self._get_model_status(model_name)
                         if self._check_all_versions_available(model_status):
                             break
+                        sleep(1)
 
                 res.body = msg
                 res.status = falcon.HTTP_200
@@ -188,6 +190,8 @@ class ModelManagerResource(object):
                 e = eval(str(e))  # pylint: disable=W0123
                 if e[0] == 409:
                     res.status = falcon.HTTP_409
+                elif e[0] == 408:
+                    res.status = falcon.HTTP_408
                 else:
                     res.status = falcon.HTTP_500
                 res.body = e[1].encode('utf-8')
@@ -205,6 +209,7 @@ class ModelManagerResource(object):
                     model_status = self._get_model_status(model_name)
                     if self._check_all_versions_unloaded(model_status):
                         break
+                    sleep(1)
 
             res.body = msg
             res.status = falcon.HTTP_200
