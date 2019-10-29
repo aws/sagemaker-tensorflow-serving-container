@@ -1,6 +1,5 @@
 FROM ubuntu:16.04
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
-LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
 
 ARG TFS_SHORT_VERSION=1.14
 ARG S3_TF_VERSION=1-14-0
