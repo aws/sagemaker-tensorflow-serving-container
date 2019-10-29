@@ -172,7 +172,7 @@ class ModelManagerResource(object):
                           .decode('utf-8'))
         model_name = data['model_name']
         base_path = data['url']
-        if os.path.exists(base_path):
+        if self.validate_model_dir(base_path):
             try:
                 msg = self.grpc_client.add_model(model_name, base_path)
 
@@ -242,6 +242,18 @@ class ModelManagerResource(object):
                         raise ValueError('Malformed model-config.cfg file.')
                 line = f.readline()
         return models
+
+    def validate_model_dir(self, model_path):
+        # model base path doesn't exits
+        if not os.path.exists(model_path):
+            return False
+        # model versions doesn't exist
+        versions = []
+        for _, dirs, _ in os.walk(model_path):
+            for dirname in dirs:
+                if dirname.isdigit():
+                    versions.append(dirname)
+        return bool(versions)
 
     def _get_model_status(self, model_name):
         url = 'http://localhost:{}/v1/models/{}'.format(TFS_REST_PORT, model_name)

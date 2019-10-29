@@ -74,7 +74,7 @@ class GRPCProxyClient(object):
                 elif e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
                     raise Exception(408, e.details())
                 else:
-                    raise Exception(e.code(), e.details())
+                    raise Exception(500, e.details())
 
         return 'Successfully loaded model {}'.format(model_name)
 

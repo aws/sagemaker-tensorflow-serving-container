@@ -254,7 +254,11 @@ class ServiceManager(object):
     def _start_tfs(self):
         self._log_version('tensorflow_model_server --version', 'tensorflow version info:')
         tfs_config_path = '/sagemaker/model-config.cfg'
-        cmd = "tensorflow_model_server --port={} --rest_api_port={} --model_config_file={} {}"\
+        cmd = "tensorflow_model_server " \
+              "--port={} " \
+              "--rest_api_port={} " \
+              "--model_config_file={} " \
+              "--max_num_load_retries=0 {}"\
             .format(self._tfs_grpc_port, self._tfs_rest_port, tfs_config_path,
                     self._get_tfs_batching_args())
         log.info('tensorflow serving command: {}'.format(cmd))
