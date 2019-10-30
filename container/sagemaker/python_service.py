@@ -188,13 +188,16 @@ class ModelManagerResource(object):
                 res.status = falcon.HTTP_200
             except Exception as e:  # pylint: disable=W0703
                 e = eval(str(e))  # pylint: disable=W0123
+                res.body = e[1].encode('utf-8')
                 if e[0] == 409:
                     res.status = falcon.HTTP_409
+                    res.body = e[1].encode('utf-8')
                 elif e[0] == 408:
                     res.status = falcon.HTTP_408
+                    res.body = e[1].encode('utf-8')
                 else:
                     res.status = falcon.HTTP_500
-                res.body = e[1].encode('utf-8')
+                    res.body += b'\n' + bytes(str(self._get_model_status(model_name)), 'utf-8')
         else:
             res.status = falcon.HTTP_404
             res.body = 'Could not find base path {} for servable {}'.format(base_path, model_name)
