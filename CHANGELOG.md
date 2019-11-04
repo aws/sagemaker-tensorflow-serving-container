@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.6.8 (2019-10-25)
+
+### Bug fixes and other changes
+
+ * update publish-all.sh to match the versions in build-all.sh
+ * upgrade pillow to 6.2.0 in requirements.txt test
+ * use regional endpoint for STS in builds and tests
+ * merge dockerfiles
+
 ## v1.6.7 (2019-10-22)
 
 ### Bug fixes and other changes
