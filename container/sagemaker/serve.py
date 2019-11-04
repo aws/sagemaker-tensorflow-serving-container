@@ -318,7 +318,7 @@ class ServiceManager(object):
     @contextmanager
     def _timeout(self, seconds):
         def _raise_timeout_error(signum, frame):
-            raise Exception('timed our after {} seconds'.format(seconds))
+            raise TimeoutError('time out after {} seconds'.format(seconds))
 
         try:
             signal.signal(signal.SIGALRM, _raise_timeout_error)
