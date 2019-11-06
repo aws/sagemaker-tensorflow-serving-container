@@ -196,7 +196,7 @@ class ModelManagerResource(object):
                     res.status = falcon.HTTP_408
                     res.body = e[1].encode('utf-8')
                 else:
-                    res.status = falcon.HTTP_500
+                    res.status = e[0]
                     res.body += b'\n' + bytes(str(self._get_model_status(model_name)), 'utf-8')
         else:
             res.status = falcon.HTTP_404
@@ -221,7 +221,7 @@ class ModelManagerResource(object):
             if e[0] == 404:
                 res.status = falcon.HTTP_404
             else:
-                res.status = falcon.HTTP_500
+                res.status = e[0]
             res.body = e[1].encode('utf-8')
 
     def _read_model_config(self):
@@ -256,7 +256,9 @@ class ModelManagerResource(object):
             for dirname in dirs:
                 if dirname.isdigit():
                     versions.append(dirname)
-        return bool(versions)
+        if versions:
+            return True
+        return False
 
     def _get_model_status(self, model_name):
         url = 'http://localhost:{}/v1/models/{}'.format(TFS_REST_PORT, model_name)
@@ -291,7 +293,7 @@ class ModelManagerResource(object):
     @contextmanager
     def _timeout(self, seconds):
         def _raise_timeout_error(signum, frame):
-            raise Exception(408, 'timed our after {} seconds'.format(seconds))
+            raise Exception(408, 'Timed our after {} seconds'.format(seconds))
 
         try:
             signal.signal(signal.SIGALRM, _raise_timeout_error)
