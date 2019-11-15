@@ -4,10 +4,10 @@ LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
 
 ARG TFS_SHORT_VERSION=1.14
 ARG S3_TF_VERSION=1-14-0
-ARG S3_TF_EI_VERSION=1-2
+ARG S3_TF_EI_VERSION=1-4
 ARG PYTHON=python3
 ARG PYTHON_VERSION=3.6.6
-ARG HEALTH_CHECK_VERSION=1.3.3
+ARG HEALTH_CHECK_VERSION=1.5.0
 
 # See http://bugs.python.org/issue19846
 ENV LANG=C.UTF-8
@@ -85,17 +85,18 @@ COPY sagemaker /sagemaker
 WORKDIR /
 RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/site-packages/
 
-RUN wget https://amazonei-healthcheck.s3.amazonaws.com/v${HEALTH_CHECK_VERSION}/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz -O /opt/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz \
+RUN wget https://amazonei-tools.s3.amazonaws.com/v${HEALTH_CHECK_VERSION}/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz -O /opt/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz \
  && tar -xvf /opt/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz -C /opt/ \
  && rm -rf /opt/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz \
- && chmod a+x /opt/ei_health_check/bin/health_check
+ && chmod a+x /opt/ei_tools/bin/health_check
 
 # Expose ports
 EXPOSE 8500 8501
 
-RUN wget https://amazonei-tensorflow.s3.amazonaws.com/tensorflow-serving/v1.14/ubuntu/archive/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
-            -O /tmp/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
- && cd /tmp \
+#RUN wget https://amazonei-tensorflow.s3.amazonaws.com/tensorflow-serving/v1.14/ubuntu/archive/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
+#            -O /tmp/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
+COPY tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz /tmp/
+RUN cd /tmp \
  && tar zxf tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
  && mv tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}/amazonei_tensorflow_model_server /usr/bin/tensorflow_model_server \
  && chmod +x /usr/bin/tensorflow_model_server \
