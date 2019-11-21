@@ -98,7 +98,7 @@ EXPOSE 8500 8501
 
 RUN wget https://amazonei-tensorflow.s3.amazonaws.com/tensorflow-serving/v1.14/ubuntu/archive/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
             -O /tmp/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
-RUN cd /tmp \
+ && cd /tmp \
  && tar zxf tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
  && mv tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}/amazonei_tensorflow_model_server /usr/bin/tensorflow_model_server \
  && chmod +x /usr/bin/tensorflow_model_server \
