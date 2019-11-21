@@ -89,7 +89,7 @@ RUN wget https://amazonei-tools.s3.amazonaws.com/v${HEALTH_CHECK_VERSION}/ei_too
  && tar -xvf /opt/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz -C /opt/ \
  && rm -rf /opt/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz \
  && chmod a+x /opt/ei_tools/bin/health_check \
- && mkdir -p /opt/ei_health_check \
+ && mkdir -p /opt/ei_health_check/bin \
  && ln -s /opt/ei_tools/bin/health_check /opt/ei_health_check/bin/health_check \
  && ln -s /opt/ei_tools/lib /opt/ei_health_check/lib
 
