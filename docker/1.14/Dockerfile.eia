@@ -4,10 +4,10 @@ LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
 
 ARG TFS_SHORT_VERSION=1.14
 ARG S3_TF_VERSION=1-14-0
-ARG S3_TF_EI_VERSION=1-2
+ARG S3_TF_EI_VERSION=1-4
 ARG PYTHON=python3
 ARG PYTHON_VERSION=3.6.6
-ARG HEALTH_CHECK_VERSION=1.3.3
+ARG HEALTH_CHECK_VERSION=1.5.3
 
 # See http://bugs.python.org/issue19846
 ENV LANG=C.UTF-8
@@ -85,10 +85,13 @@ COPY sagemaker /sagemaker
 WORKDIR /
 RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/site-packages/
 
-RUN wget https://amazonei-healthcheck.s3.amazonaws.com/v${HEALTH_CHECK_VERSION}/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz -O /opt/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz \
- && tar -xvf /opt/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz -C /opt/ \
- && rm -rf /opt/ei_health_check_${HEALTH_CHECK_VERSION}.tar.gz \
- && chmod a+x /opt/ei_health_check/bin/health_check
+RUN wget https://amazonei-tools.s3.amazonaws.com/v${HEALTH_CHECK_VERSION}/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz -O /opt/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz \
+ && tar -xvf /opt/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz -C /opt/ \
+ && rm -rf /opt/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz \
+ && chmod a+x /opt/ei_tools/bin/health_check \
+ && mkdir -p /opt/ei_health_check/bin \
+ && ln -s /opt/ei_tools/bin/health_check /opt/ei_health_check/bin/health_check \
+ && ln -s /opt/ei_tools/lib /opt/ei_health_check/lib
 
 # Expose ports
 EXPOSE 8500 8501
