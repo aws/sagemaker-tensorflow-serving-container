@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.9 (2019-11-25)
+
+### Bug fixes and other changes
+
+ * Update EI Dockerfile 1.14 with New Health check, and new binaries
+
 ## v1.6.8 (2019-10-25)
 
 ### Bug fixes and other changes
