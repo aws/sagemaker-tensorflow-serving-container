@@ -3,8 +3,8 @@
 set -e
 
 arch=${1:-'cpu'}
-aws_account=$(aws sts get-caller-identity --query 'Account' --output text)
 aws_region=$(aws configure get region)
+aws_account=$(aws --region $aws_region sts --endpoint-url https://sts.$aws_region.amazonaws.com get-caller-identity --query 'Account' --output text)
 
 # change this to match SageMaker execution role in your account
 sagemaker_role="arn:aws:iam::$aws_account:role/service-role/AmazonSageMaker-ExecutionRole-20180510T114550"

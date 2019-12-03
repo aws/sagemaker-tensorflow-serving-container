@@ -76,11 +76,16 @@ def region(request):
 
 
 @pytest.fixture(scope='session')
-def registry(request):
+def registry(request, region):
     if request.config.getoption('--registry'):
         return request.config.getoption('--registry')
 
-    return boto3.client('sts').get_caller_identity()['Account']
+    sts = boto3.client(
+        'sts',
+        region_name=region,
+        endpoint_url='https://sts.{}.amazonaws.com'.format(region)
+    )
+    return sts.get_caller_identity()['Account']
 
 
 @pytest.fixture(scope='session')

@@ -19,9 +19,8 @@ phases:
       - ./scripts/build-all.sh
 
       # run local tests
-      - tox -e py36 -- test/integration/local --framework-version 1.11
-      - tox -e py36 -- test/integration/local --framework-version 1.12
       - tox -e py36 -- test/integration/local --framework-version 1.13
+      - tox -e py36 -- test/integration/local --framework-version 1.14
 
       # push docker images to ECR
       - |
@@ -43,18 +42,6 @@ phases:
           echo '[{
           "repository": "sagemaker-tensorflow-serving",
           "tags": [{
-            "source": "1.11.1-cpu",
-            "dest": ["1.11.1-cpu", "1.11-cpu", "1.11.1-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
-          },{
-            "source": "1.11.1-gpu",
-            "dest": ["1.11.1-gpu", "1.11-gpu", "1.11.1-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
-          },{
-            "source": "1.12.0-cpu",
-            "dest": ["1.12.0-cpu", "1.12-cpu", "1.12.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
-          },{
-            "source": "1.12.0-gpu",
-            "dest": ["1.12.0-gpu", "1.12-gpu", "1.12.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
-          },{
             "source": "1.13.0-cpu",
             "dest": ["1.13.0-cpu", "1.13-cpu", "1.13.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
           },{
@@ -67,12 +54,6 @@ phases:
         }, {
           "repository": "sagemaker-tensorflow-serving-eia",
           "tags": [{
-            "source": "1.11-cpu",
-            "dest": ["1.11.0-cpu", "1.11.1-cpu", "1.11-cpu", "1.11.1-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
-          },{
-            "source": "1.12-cpu",
-            "dest": ["1.12.0-cpu", "1.12-cpu", "1.12.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
-          },{
             "source": "1.13-cpu",
             "dest": ["1.13.0-cpu", "1.13-cpu", "1.13.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
