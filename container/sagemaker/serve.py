@@ -24,6 +24,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 JS_PING = 'js_content ping'
+JS_MME_PING = 'js_content mme_ping'
 JS_INVOCATIONS = 'js_content invocations'
 GUNICORN_PING = 'proxy_pass http://gunicorn_upstream/ping'
 GUNICORN_INVOCATIONS = 'proxy_pass http://gunicorn_upstream/invocations'
@@ -226,13 +227,19 @@ class ServiceManager(object):
     def _create_nginx_config(self):
         template = self._read_nginx_template()
         pattern = re.compile(r'%(\w+)%')
+        ping_request = JS_PING
+        if self._enable_python_service:
+            ping_request = GUNICORN_PING
+        if self._tfs_enable_dynamic_endpoint:
+            ping_request = JS_MME_PING
+
         template_values = {
             'TFS_VERSION': self._tfs_version,
             'TFS_REST_PORT': self._tfs_rest_port,
             'TFS_DEFAULT_MODEL_NAME': self._tfs_default_model_name,
             'NGINX_HTTP_PORT': self._nginx_http_port,
             'NGINX_LOG_LEVEL': self._nginx_loglevel,
-            'FORWARD_PING_REQUESTS': GUNICORN_PING if self._enable_python_service else JS_PING,
+            'FORWARD_PING_REQUESTS': ping_request,
             'FORWARD_INVOCATION_REQUESTS': GUNICORN_INVOCATIONS if self._enable_python_service
             else JS_INVOCATIONS,
         }
