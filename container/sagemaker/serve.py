@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 JS_PING = 'js_content ping'
-JS_MME_PING = 'js_content mme_ping'
+JS_1_11_MME_PING = 'js_content ping_tfs_1_11_or_mme'
 JS_INVOCATIONS = 'js_content invocations'
 GUNICORN_PING = 'proxy_pass http://gunicorn_upstream/ping'
 GUNICORN_INVOCATIONS = 'proxy_pass http://gunicorn_upstream/invocations'
@@ -230,8 +230,8 @@ class ServiceManager(object):
         ping_request = JS_PING
         if self._enable_python_service:
             ping_request = GUNICORN_PING
-        if self._tfs_enable_dynamic_endpoint:
-            ping_request = JS_MME_PING
+        if self._tfs_enable_dynamic_endpoint or self._tfs_version:
+            ping_request = JS_1_11_MME_PING
 
         template_values = {
             'TFS_VERSION': self._tfs_version,

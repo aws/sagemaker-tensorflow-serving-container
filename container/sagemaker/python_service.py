@@ -186,18 +186,16 @@ class ModelManagerResource(object):
 
                 res.body = msg
                 res.status = falcon.HTTP_200
-            except Exception as e:  # pylint: disable=W0703
-                e = eval(str(e))  # pylint: disable=W0123
-                res.body = e[1].encode('utf-8')
-                if e[0] == 409:
+            except requests.exceptions.RequestException as request_exception:
+                if request_exception.errno == 409:
                     res.status = falcon.HTTP_409
-                    res.body = e[1].encode('utf-8')
-                elif e[0] == 408:
+                    res.body = request_exception.strerror
+                elif request_exception.errno == 408:
                     res.status = falcon.HTTP_408
-                    res.body = e[1].encode('utf-8')
-                else:
-                    res.status = e[0]
-                    res.body += b'\n' + bytes(str(self._get_model_status(model_name)), 'utf-8')
+                    res.body = request_exception.strerror
+            except Exception as e:  # pylint: disable=W0703
+                res.status = list(e)[0]
+                res.body += b'\n' + bytes(str(self._get_model_status(model_name)), 'utf-8')
         else:
             res.status = falcon.HTTP_404
             res.body = 'Could not find base path {} for servable {}'.format(base_path, model_name)
@@ -216,13 +214,13 @@ class ModelManagerResource(object):
 
             res.body = msg
             res.status = falcon.HTTP_200
-        except Exception as e:  # pylint: disable=W0703
-            e = eval(str(e))  # pylint: disable=W0123
-            if e[0] == 404:
+        except requests.exceptions.RequestException as request_exception:
+            if request_exception.errno == 404:
                 res.status = falcon.HTTP_404
-            else:
-                res.status = e[0]
-            res.body = e[1].encode('utf-8')
+                res.body = request_exception.strerror
+        except Exception as e:  # pylint: disable=W0703
+            res.status = list(e)[0]
+            res.body = list(e)[1].encode('utf-8')
 
     def _read_model_config(self):
         models = []

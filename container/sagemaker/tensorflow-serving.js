@@ -13,32 +13,7 @@ function invocations(r) {
     }
 }
 
-function mme_ping(r) {
-    // hack for MME
-    // MME starts without any model loaded and the default-tfs-model is set to "None"
-    var uri = make_tfs_uri(r, true)
-    var options = {
-        method: 'POST',
-        body: '{"instances": "invalid"}'
-    }
-
-    function callback (reply) {
-        if (reply.status == 200 || reply.responseBody.includes('"Servable not found for request: Latest(None)"')) {
-            r.return(200)
-        } else {
-            r.error('failed ping' + reply.responseBody)
-            r.return(502)
-        }
-    }
-
-    r.subrequest(uri, options, callback)
-}
-
 function ping(r) {
-    if ('1.11' == r.variables_tfs_version) {
-        return ping_tfs_1_11(r)
-    }
-
     var uri = make_tfs_uri(r, false)
 
     function callback (reply) {
@@ -53,7 +28,7 @@ function ping(r) {
     r.subrequest(uri, callback)
 }
 
-function ping_tfs_1_11(r) {
+function ping_tfs_1_11_or_mme(r) {
     // hack for TF 1.11
     // send an arbitrary fixed request to the default model.
     // if response is 400, the model is ok (but input was bad), so return 200
@@ -66,7 +41,8 @@ function ping_tfs_1_11(r) {
     }
 
     function callback (reply) {
-        if (reply.status == 200 || reply.status == 400) {
+        if (reply.status == 200 || reply.status == 400 ||
+        reply.responseBody.includes('Servable not found for request: Latest(None)')) {
             r.return(200)
         } else {
             r.error('failed ping' + reply.responseBody)

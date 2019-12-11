@@ -16,6 +16,7 @@ import time
 from contextlib import contextmanager
 
 import grpc
+import requests
 from google.protobuf import text_format
 from tensorflow_serving.apis import model_management_pb2
 from tensorflow_serving.apis import model_service_pb2_grpc
@@ -23,6 +24,7 @@ from tensorflow_serving.config import model_server_config_pb2
 
 MODEL_CONFIG_FILE = '/sagemaker/model-config.cfg'
 DEFAULT_LOCK_FILE = '/sagemaker/lock-file.lock'
+GRPC_REQUEST_TIMEOUT_IN_SECONDS = 5
 
 
 @contextmanager
@@ -65,16 +67,15 @@ class GRPCProxyClient(object):
                 req.config.CopyFrom(model_server_config)
 
                 self.stub.HandleReloadConfigRequest(request=req,
-                                                    timeout=5,
+                                                    timeout=GRPC_REQUEST_TIMEOUT_IN_SECONDS,
                                                     wait_for_ready=True)
                 self._add_model_to_config_file(model_name, base_path, model_platform)
             except grpc.RpcError as e:
                 if e.code() is grpc.StatusCode.INVALID_ARGUMENT:
-                    raise Exception(409, e.details())
+                    raise requests.exceptions.RequestException(409, e.details())
                 elif e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
-                    raise Exception(408, e.details())
-                else:
-                    raise Exception(e.code(), e.details())
+                    raise requests.exceptions.RequestException(408, e.details())
+                raise requests.exceptions.RequestException(e.code(), e.details())
 
         return 'Successfully loaded model {}'.format(model_name)
 
@@ -95,17 +96,19 @@ class GRPCProxyClient(object):
                         req = model_management_pb2.ReloadConfigRequest()
                         req.config.CopyFrom(model_server_config)
                         self.stub.HandleReloadConfigRequest(request=req,
-                                                            timeout=5,
+                                                            timeout=GRPC_REQUEST_TIMEOUT_IN_SECONDS,
                                                             wait_for_ready=True)
                         self._delete_model_from_config_file(model_server_config)
 
                 # no such model exists
-                raise Exception(404, '{} not loaded yet.'.format(model_name))
+                raise requests.exceptions.RequestException(
+                    404,
+                    '{} not loaded yet.'.format(model_name)
+                )
             except grpc.RpcError as e:
                 if e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
-                    raise Exception(408, e.details())
-                else:
-                    raise Exception(e.code(), e.details())
+                    raise requests.exceptions.RequestException(408, e.details())
+                raise e
 
         return 'Model {} unloaded.'.format(model_name)
 
