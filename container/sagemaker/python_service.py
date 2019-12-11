@@ -25,6 +25,8 @@ import falcon
 import requests
 from proxy_client import GRPCProxyClient
 
+from multi_model_utils import MultiModelException
+
 INFERENCE_SCRIPT_PATH = '/opt/ml/model/code/inference.py'
 MODEL_CONFIG_FILE_PATH = '/sagemaker/model-config.cfg'
 TFS_GRPC_PORT = os.environ.get('TFS_GRPC_PORT')
@@ -186,13 +188,13 @@ class ModelManagerResource(object):
 
                 res.body = msg
                 res.status = falcon.HTTP_200
-            except requests.exceptions.RequestException as request_exception:
-                if request_exception.errno == 409:
+            except MultiModelException as multi_model_exception:
+                if multi_model_exception.code == 409:
                     res.status = falcon.HTTP_409
-                    res.body = request_exception.strerror
-                elif request_exception.errno == 408:
+                    res.body = multi_model_exception.msg
+                elif multi_model_exception.code == 408:
                     res.status = falcon.HTTP_408
-                    res.body = request_exception.strerror
+                    res.body = multi_model_exception.msg
             except Exception as e:  # pylint: disable=W0703
                 res.status = list(e)[0]
                 res.body += b'\n' + bytes(str(self._get_model_status(model_name)), 'utf-8')
@@ -214,10 +216,13 @@ class ModelManagerResource(object):
 
             res.body = msg
             res.status = falcon.HTTP_200
-        except requests.exceptions.RequestException as request_exception:
-            if request_exception.errno == 404:
-                res.status = falcon.HTTP_404
-                res.body = request_exception.strerror
+        except FileNotFoundError:
+            res.status = falcon.HTTP_404
+            res.body = '{} not loaded yet.'.format(model_name)
+        except MultiModelException as multi_model_exception:
+            if multi_model_exception.code == 408:
+                res.status = falcon.HTTP_408
+                res.body = multi_model_exception.code
         except Exception as e:  # pylint: disable=W0703
             res.status = list(e)[0]
             res.body = list(e)[1].encode('utf-8')

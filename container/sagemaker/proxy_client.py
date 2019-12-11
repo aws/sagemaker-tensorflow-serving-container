@@ -11,33 +11,15 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-import fcntl
-import time
-from contextlib import contextmanager
-
 import grpc
-import requests
 from google.protobuf import text_format
 from tensorflow_serving.apis import model_management_pb2
 from tensorflow_serving.apis import model_service_pb2_grpc
 from tensorflow_serving.config import model_server_config_pb2
 
-MODEL_CONFIG_FILE = '/sagemaker/model-config.cfg'
-DEFAULT_LOCK_FILE = '/sagemaker/lock-file.lock'
+from multi_model_utils import lock, DEFAULT_LOCK_FILE, MODEL_CONFIG_FILE, MultiModelException
+
 GRPC_REQUEST_TIMEOUT_IN_SECONDS = 5
-
-
-@contextmanager
-def lock(path=DEFAULT_LOCK_FILE):
-    f = open(path, 'w')
-    fd = f.fileno()
-    fcntl.lockf(fd, fcntl.LOCK_EX)
-
-    try:
-        yield
-    finally:
-        time.sleep(1)
-        fcntl.lockf(fd, fcntl.LOCK_UN)
 
 
 class GRPCProxyClient(object):
@@ -72,10 +54,10 @@ class GRPCProxyClient(object):
                 self._add_model_to_config_file(model_name, base_path, model_platform)
             except grpc.RpcError as e:
                 if e.code() is grpc.StatusCode.INVALID_ARGUMENT:
-                    raise requests.exceptions.RequestException(409, e.details())
+                    raise MultiModelException(409, e.details())
                 elif e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
-                    raise requests.exceptions.RequestException(408, e.details())
-                raise requests.exceptions.RequestException(e.code(), e.details())
+                    raise MultiModelException(408, e.details())
+                raise MultiModelException(e.code(), e.details())
 
         return 'Successfully loaded model {}'.format(model_name)
 
@@ -101,13 +83,10 @@ class GRPCProxyClient(object):
                         self._delete_model_from_config_file(model_server_config)
 
                 # no such model exists
-                raise requests.exceptions.RequestException(
-                    404,
-                    '{} not loaded yet.'.format(model_name)
-                )
+                raise FileNotFoundError
             except grpc.RpcError as e:
                 if e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
-                    raise requests.exceptions.RequestException(408, e.details())
+                    raise MultiModelException(408, e.details())
                 raise e
 
         return 'Model {} unloaded.'.format(model_name)

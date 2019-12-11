@@ -28,10 +28,11 @@ function ping(r) {
     r.subrequest(uri, callback)
 }
 
-function ping_tfs_1_11_or_mme(r) {
-    // hack for TF 1.11
-    // send an arbitrary fixed request to the default model.
+function ping_without_model(r) {
+    // hack for TF 1.11 and MME
+    // for TF 1.11, send an arbitrary fixed request to the default model.
     // if response is 400, the model is ok (but input was bad), so return 200
+    // for MME, the default model name is None and does not exist
     // also return 200 in unlikely case our request was really valid
 
     var uri = make_tfs_uri(r, true)
