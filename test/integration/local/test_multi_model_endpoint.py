@@ -215,3 +215,24 @@ def test_load_one_model_two_times():
     code_load2, res2 = make_load_model_request(json.dumps(model_data))
     assert code_load2 == 409
     assert res2 == 'Illegal to list model {} multiple times in config list'.format(model_name)
+
+
+def test_load_non_existing_model():
+    model_name = 'non-existing'
+    base_path = '/opt/ml/models/non-existing'
+    model_data = {
+        'model_name': model_name,
+        'url': base_path
+    }
+    code, res = make_load_model_request(json.dumps(model_data))
+    assert code == 404
+    assert res == 'Could not find base path {} for servable {}'.format(base_path, model_name)
+
+
+def test_bad_model_reqeust():
+    bad_model_data = {
+        'model_name': 'model_name',
+        'uri': '/opt/ml/models/non-existing'
+    }
+    code, _ = make_load_model_request(json.dumps(bad_model_data))
+    assert code == 500
