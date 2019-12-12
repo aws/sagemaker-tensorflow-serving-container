@@ -57,7 +57,7 @@ class GRPCProxyClient(object):
                     raise MultiModelException(409, e.details())
                 elif e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
                     raise MultiModelException(408, e.details())
-                raise MultiModelException(e.code(), e.details())
+                raise MultiModelException(500, e.details())
 
         return 'Successfully loaded model {}'.format(model_name)
 
@@ -87,7 +87,7 @@ class GRPCProxyClient(object):
             except grpc.RpcError as e:
                 if e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
                     raise MultiModelException(408, e.details())
-                raise e
+                raise MultiModelException(500, e.detals())
 
         return 'Model {} unloaded.'.format(model_name)
 

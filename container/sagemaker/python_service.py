@@ -195,9 +195,8 @@ class ModelManagerResource(object):
                 elif multi_model_exception.code == 408:
                     res.status = falcon.HTTP_408
                     res.body = multi_model_exception.msg
-            except Exception as e:  # pylint: disable=W0703
-                res.status = list(e)[0]
-                res.body += b'\n' + bytes(str(self._get_model_status(model_name)), 'utf-8')
+                else:
+                    raise MultiModelException(falcon.HTTP_500, multi_model_exception.msg)
         else:
             res.status = falcon.HTTP_404
             res.body = 'Could not find base path {} for servable {}'.format(base_path, model_name)
@@ -222,10 +221,9 @@ class ModelManagerResource(object):
         except MultiModelException as multi_model_exception:
             if multi_model_exception.code == 408:
                 res.status = falcon.HTTP_408
-                res.body = multi_model_exception.code
-        except Exception as e:  # pylint: disable=W0703
-            res.status = list(e)[0]
-            res.body = list(e)[1].encode('utf-8')
+                res.body = multi_model_exception.msg
+            else:
+                raise MultiModelException(falcon.HTTP_500, multi_model_exception.msg)
 
     def _read_model_config(self):
         models = []
