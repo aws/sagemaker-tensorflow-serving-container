@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.6.10 (2019-12-13)
+
+### Bug fixes and other changes
+
+ * increase attempts to allow for large gpu images
+ * ping check and model status check
+
 ## v1.6.9 (2019-11-25)
 
 ### Bug fixes and other changes
