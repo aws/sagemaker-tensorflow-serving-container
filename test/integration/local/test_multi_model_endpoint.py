@@ -58,8 +58,9 @@ def container(request, docker_base_name, tag, runtime_config):
         while attempts < 5:
             time.sleep(3)
             try:
-                requests.get('http://localhost:8080/ping')
-                break
+                res_code = requests.get('http://localhost:8080/ping').status_code
+                if res_code == 200:
+                    break
             except:
                 attempts += 1
                 pass
