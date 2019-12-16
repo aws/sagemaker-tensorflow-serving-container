@@ -55,7 +55,7 @@ def container(request, docker_base_name, tag, runtime_config):
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
         attempts = 0
-        while attempts < 5:
+        while attempts < 40:
             time.sleep(3)
             try:
                 res_code = requests.get('http://localhost:8080/ping').status_code
