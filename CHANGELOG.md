@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.11 (2019-12-17)
+
+### Bug fixes and other changes
+
+ * check container is ready in tests
+
 ## v1.6.10 (2019-12-13)
 
 ### Bug fixes and other changes
