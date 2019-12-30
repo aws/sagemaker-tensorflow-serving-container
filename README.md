@@ -6,6 +6,20 @@ SageMaker TensorFlow Serving Container is an a open source project that builds
 docker images for running TensorFlow Serving on 
 [Amazon SageMaker](https://aws.amazon.com/documentation/sagemaker/).
 
+Supported versions of TensorFlow: ``1.4.1``, ``1.5.0``, ``1.6.0``, ``1.7.0``, ``1.8.0``, ``1.9.0``, ``1.10.0``, ``1.11.0``, ``1.12.0``, ``1.13.1``, ``1.14.0``, ``1.15.0``, ``2.0.0``.
+
+Supported versions of TensorFlow for Elastic Inference: ``1.11.0``, ``1.12.0``, ``1.13.1``, ``1.14.0``.
+
+ECR repositories for SageMaker built TensorFlow Serving Container:
+
+- `'tensorflow-inference'` in `763104351884` AWS account for any new version starting with ``1.13.0``;
+- `'sagemaker-tensorflow-serving'` in `520713654638` AWS account for ``1.4.1``, ``1.5.0``, ``1.6.0``, ``1.7.0``, ``1.8.0``, ``1.9.0``, ``1.10.0``, ``1.11.0``, ``1.12.0`` versions.
+
+ECR repositories for SageMaker built TensorFlow Serving Container for Elastic Inference:
+
+- `'tensorflow-inference-eia'` in `763104351884` AWS account for any new version starting with ``1.14.0``;
+- `'sagemaker-tensorflow-serving-eia'` in `520713654638` AWS account for ``1.11.0``, ``1.12.0``, ``1.13.1`` versions.
+
 This documentation covers building and testing these docker images.
 
 For information about using TensorFlow Serving on SageMaker, see:
@@ -387,16 +401,24 @@ where "12345" is your TensorFlow serving model version which contains your Saved
 After uploading your `model.tar.gz` to an S3 URI, such as `s3://your-bucket/your-models/model.tar.gz`, create a [SageMaker Model](https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateModel.html) which will be used to generate inferences. Set `PrimaryContainer.ModelDataUrl` to the S3 URI where you uploaded the `model.tar.gz`, and set `PrimaryContainer.Image` to an image following this format:
 
 ```
-520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving:{TENSORFLOW_SERVING_VERSION}-{cpu|gpu}
+520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving:{SAGEMAKER_TENSORFLOW_SERVING_VERSION}-{cpu|gpu}
+```
+
+```
+763104351884.dkr.ecr.{REGION}.amazonaws.com/tensorflow-inference:{TENSORFLOW_INFERENCE_VERSION}-{cpu|gpu}
 ```
 
 For those using Elastic Inference set the image following this format instead:
 
 ```
-520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving-eia:{TENSORFLOW_SERVING_VERSION}-cpu
+520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving-eia:{SAGEMAKER_TENSORFLOW_SERVING_EIA_VERSION}-cpu
 ```
 
-Where `REGION` is your AWS region, such as "us-east-1" or "eu-west-1"; `TENSORFLOW_SERVING_VERSION` is one of the supported versions: "1.11" or "1.12"; and "gpu" for use on GPU-based instance types like ml.p3.2xlarge, or "cpu" for use on CPU-based instances like `ml.c5.xlarge`.
+```
+763104351884.dkr.ecr.{REGION}.amazonaws.com/tensorflow-inference-eia:{TENSORFLOW_INFERENCE_EIA_VERSION}-cpu
+```
+
+Where `REGION` is your AWS region, such as "us-east-1" or "eu-west-1"; `SAGEMAKER_TENSORFLOW_SERVING_VERSION`, `SAGEMAKER_TENSORFLOW_SERVING_EIA_VERSION`, `TENSORFLOW_INFERENCE_VERSION`, `TENSORFLOW_INFERENCE_EIA_VERSION` are one of the supported versions mentioned above; and "gpu" for use on GPU-based instance types like ml.p3.2xlarge, or "cpu" for use on CPU-based instances like `ml.c5.xlarge`.
  
 The code examples below show how to create a SageMaker Model from a `model.tar.gz` containing a TensorFlow Serving model using the AWS CLI (though you can use any language supported by the [AWS SDK](https://aws.amazon.com/tools/)) and the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk).
 
