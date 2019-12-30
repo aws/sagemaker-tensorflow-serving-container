@@ -12,13 +12,20 @@ Supported versions of TensorFlow for Elastic Inference: ``1.11.0``, ``1.12.0``, 
 
 ECR repositories for SageMaker built TensorFlow Serving Container:
 
-- `'tensorflow-inference'` in `763104351884` AWS account for any new version starting with ``1.13.0``;
-- `'sagemaker-tensorflow-serving'` in `520713654638` AWS account for ``1.4.1``, ``1.5.0``, ``1.6.0``, ``1.7.0``, ``1.8.0``, ``1.9.0``, ``1.10.0``, ``1.11.0``, ``1.12.0`` versions.
+- `'tensorflow-inference'` for any new version starting with ``1.13.0`` in the following AWS accounts:
+  - `"871362719292"` in `"ap-east-1"`;
+  - `"217643126080"` in `"me-south-1"`;
+  - `"886529160074"` in `"us-iso-east-1"`;
+  - `"763104351884"` in other SageMaker public regions.
+- `'sagemaker-tensorflow-serving'` for ``1.4.1``, ``1.5.0``, ``1.6.0``, ``1.7.0``, ``1.8.0``, ``1.9.0``, ``1.10.0``, ``1.11.0``, ``1.12.0`` versions in the following AWS accounts:
+  - `"057415533634"` in `"ap-east-1"`;
+  - `"724002660598"` in `"me-south-1"`;
+  - `"520713654638"` in other SageMaker public regions.
 
 ECR repositories for SageMaker built TensorFlow Serving Container for Elastic Inference:
 
-- `'tensorflow-inference-eia'` in `763104351884` AWS account for any new version starting with ``1.14.0``;
-- `'sagemaker-tensorflow-serving-eia'` in `520713654638` AWS account for ``1.11.0``, ``1.12.0``, ``1.13.1`` versions.
+- `'tensorflow-inference-eia'` for any new version starting with ``1.14.0`` in the same AWS accounts as TensorFlow Serving Container for newer TensorFlow versions listed above;
+- `'sagemaker-tensorflow-serving-eia'` for ``1.11.0``, ``1.12.0``, ``1.13.1`` versions in the same AWS accounts as TensorFlow Serving Container for older TensorFlow versions listed above.
 
 This documentation covers building and testing these docker images.
 
