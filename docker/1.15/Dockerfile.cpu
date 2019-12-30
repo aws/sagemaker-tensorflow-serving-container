@@ -73,8 +73,7 @@ COPY sagemaker /sagemaker
 WORKDIR /
 
 # put tensorflow library (with only error_codes) to python dist-packages
-RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/dist-packages/ \
- && cp /sagemaker/deep_learning_container.py /usr/local/bin/deep_learning_container.py
+RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/dist-packages/
 
 # Some TF tools expect a "python" binary
 RUN ln -s $(which ${PYTHON}) /usr/local/bin/python \
@@ -100,6 +99,7 @@ RUN echo '#!/bin/bash \n\n' > /usr/bin/tf_serving_entrypoint.sh \
  && chmod +x /usr/bin/tf_serving_entrypoint.sh
 
 COPY dockerd-entrypoint.py /usr/local/bin/dockerd-entrypoint.py
+COPY deep_learning_container.py /usr/local/bin/deep_learning_container.py
 
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.py \
  && chmod +x /usr/local/bin/deep_learning_container.py
