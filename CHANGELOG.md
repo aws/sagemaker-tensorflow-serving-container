@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.12 (2020-01-02)
+
+### Bug fixes and other changes
+
+ * update: Release TF 1.15 and TF 2.0 dockerfiles
+
 ## v1.6.11 (2019-12-17)
 
 ### Bug fixes and other changes
