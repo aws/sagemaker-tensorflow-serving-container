@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.12.post0 (2020-01-03)
+
+### Documentation changes
+
+ * update Readme with correct TF versions.
+
 ## v1.6.12 (2020-01-02)
 
 ### Bug fixes and other changes
