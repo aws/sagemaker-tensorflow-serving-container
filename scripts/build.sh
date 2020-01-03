@@ -22,6 +22,7 @@ docker build \
     --build-arg TFS_SHORT_VERSION=$short_version \
     -f docker/$short_version/Dockerfile.$arch \
     -t $repository:$full_version-$device \
-    -t $repository:$short_version-$device container
+    -t $repository:$short_version-$device \
+    container
 
 remove_ei_executable
