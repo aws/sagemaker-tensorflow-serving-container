@@ -16,6 +16,7 @@ docker pull $aws_account.dkr.ecr.$aws_region.amazonaws.com/$repository:$full_ver
 docker logout https://$aws_account.dkr.ecr.$aws_region.amazonaws.com &>/dev/null
 
 echo "building image... "
+cp -r docker/build_artifacts/* docker/$short_version/
 docker build \
     --cache-from $aws_account.dkr.ecr.$aws_region.amazonaws.com/$repository:$full_version-$device \
     --build-arg TFS_VERSION=$full_version \
@@ -23,6 +24,6 @@ docker build \
     -f docker/$short_version/Dockerfile.$arch \
     -t $repository:$full_version-$device \
     -t $repository:$short_version-$device \
-    container
+    docker/$short_version/
 
 remove_ei_executable

@@ -7,7 +7,7 @@ phases:
 
       # fix permissions dropped by CodePipeline
       - chmod +x ./scripts/*.sh
-      - chmod +x ./container/sagemaker/serve
+      - chmod +x ./docker/build_artifacts/container/sagemaker/serve
   build:
     commands:
       # prepare the release (update versions, changelog etc.)
@@ -31,7 +31,8 @@ phases:
       # run SageMaker tests
       - |
         if is-release-build; then
-          tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 1.13.0
+          tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 1.15.0
+          tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 2.0.0
         fi
 
       # write deployment details to file
@@ -42,23 +43,23 @@ phases:
           echo '[{
           "repository": "sagemaker-tensorflow-serving",
           "tags": [{
-            "source": "1.13.0-cpu",
-            "dest": ["1.13.0-cpu", "1.13-cpu", "1.13.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
+            "source": "1.15.0-cpu",
+            "dest": ["1.15.0-cpu", "1.15-cpu", "1.15.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
           },{
-            "source": "1.13.0-gpu",
-            "dest": ["1.13.0-gpu", "1.13-gpu", "1.13.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
+            "source": "1.15.0-gpu",
+            "dest": ["1.15.0-gpu", "1.15-gpu", "1.15.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py::test_tfs_model --versions 1.13.0 --region {region} --registry {aws-id}"
+            "tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py::test_tfs_model --versions 1.15.0 --region {region} --registry {aws-id}"
           ]
         }, {
           "repository": "sagemaker-tensorflow-serving-eia",
           "tags": [{
-            "source": "1.13-cpu",
-            "dest": ["1.13.0-cpu", "1.13-cpu", "1.13.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
+            "source": "1.14-cpu",
+            "dest": ["1.14.0-cpu", "1.14-cpu", "1.14.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "tox -e py36 -- test/integration/sagemaker/test_ei.py -n 8 --region {region} --registry {aws-id}"
+            "tox -e py36 -- test/integration/sagemaker/test_ei.py -n 8 --versions 1.14 --region {region} --registry {aws-id}"
           ]
         }]' > deployments.json
         fi
