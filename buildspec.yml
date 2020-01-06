@@ -7,7 +7,7 @@ phases:
 
       # fix permissions dropped by CodePipeline
       - chmod +x ./scripts/*.sh
-      - chmod +x ./docker/build_artifacts/container/sagemaker/serve
+      - chmod +x ./docker/build_artifacts/sagemaker/serve
   build:
     commands:
       # prepare the release (update versions, changelog etc.)

@@ -42,14 +42,14 @@ function get_ei_executable() {
 
     tar -C "$tmpdir" -xf "$tmpdir/$tar_file"
 
-    find "$tmpdir" -name amazonei_tensorflow_model_server -exec mv {} docker/build_artifacts/container/ \;
+    find "$tmpdir" -name amazonei_tensorflow_model_server -exec mv {} docker/build_artifacts/ \;
     rm -rf "$tmpdir"
 }
 
 function remove_ei_executable() {
     [[ $arch != 'eia' ]] && return
 
-    rm docker/build_artifacts/container/amazonei_tensorflow_model_server
+    rm docker/build_artifacts/amazonei_tensorflow_model_server
 }
 
 function get_device_type() {
