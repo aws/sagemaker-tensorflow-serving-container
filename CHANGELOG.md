@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.13 (2020-01-08)
+
+### Bug fixes and other changes
+
+ * update copyright year in license header
+
 ## v1.6.12.post0 (2020-01-03)
 
 ### Documentation changes
