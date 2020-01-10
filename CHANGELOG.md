@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.6.14 (2020-01-10)
+
+### Bug fixes and other changes
+
+ * Add __init__.py to fix unit test
+ * update: Update buildspec for TF 1.15 and 2.0
+
 ## v1.6.13 (2020-01-08)
 
 ### Bug fixes and other changes
