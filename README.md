@@ -361,33 +361,33 @@ You can also bring in external dependencies to help with your data processing. T
 Your untarred model directory structure may look like this if you are using `requirements.txt`:
 
         model1
-            |__[model_version_number]
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--variables
+                |--saved_model.pb
         model2
-            |__[model_version_number]
-                |__assets
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--assets
+                |--variables
+                |--saved_model.pb
         code
-            |__inference.py
-            |__requirements.txt
+            |--inference.py
+            |--requirements.txt
 
 Your untarred model directory structure may look like this if you have downloaded modules under `code/lib`:
 
         model1
-            |__[model_version_number]
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--variables
+                |--saved_model.pb
         model2
-            |__[model_version_number]
-                |__assets
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--assets
+                |--variables
+                |--saved_model.pb
         code
-            |__lib
-                |__external_module
-            |__inference.py
+            |--lib
+                |--external_module
+            |--inference.py
 
 ## Deploying a TensorFlow Serving Model
 
