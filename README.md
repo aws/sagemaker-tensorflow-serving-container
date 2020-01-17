@@ -2,8 +2,8 @@
 
 # SageMaker TensorFlow Serving Container
 
-SageMaker TensorFlow Serving Container is an a open source project that builds 
-docker images for running TensorFlow Serving on 
+SageMaker TensorFlow Serving Container is an a open source project that builds
+docker images for running TensorFlow Serving on
 [Amazon SageMaker](https://aws.amazon.com/documentation/sagemaker/).
 
 Supported versions of TensorFlow: ``1.4.1``, ``1.5.0``, ``1.6.0``, ``1.7.0``, ``1.8.0``, ``1.9.0``, ``1.10.0``, ``1.11.0``, ``1.12.0``, ``1.13.1``, ``1.14.0``, ``1.15.0``, ``2.0.0``.
@@ -136,7 +136,7 @@ tox
 To run local tests against a single container or with other options, you can use the following command:
 
 ```bash
-python -m pytest test/integration/local 
+python -m pytest test/integration/local
     [--docker-name-base <docker_name_base>]
     [--framework-version <framework_version>]
     [--processor-type <processor_type>]
@@ -160,6 +160,8 @@ For example:
 
 
 ## Pre/Post-Processing
+
+**NOTE: There is currently no support for pre-/post-processing with multi-model containers.**
 
 SageMaker TensorFlow Serving Container supports the following Content-Types for requests:
 
@@ -359,33 +361,33 @@ You can also bring in external dependencies to help with your data processing. T
 Your untarred model directory structure may look like this if you are using `requirements.txt`:
 
         model1
-            |__[model_version_number]
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--variables
+                |--saved_model.pb
         model2
-            |__[model_version_number]
-                |__assets
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--assets
+                |--variables
+                |--saved_model.pb
         code
-            |__inference.py
-            |__requirements.txt
+            |--inference.py
+            |--requirements.txt
 
 Your untarred model directory structure may look like this if you have downloaded modules under `code/lib`:
 
         model1
-            |__[model_version_number]
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--variables
+                |--saved_model.pb
         model2
-            |__[model_version_number]
-                |__assets
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--assets
+                |--variables
+                |--saved_model.pb
         code
-            |__lib
-                |__external_module
-            |__inference.py
+            |--lib
+                |--external_module
+            |--inference.py
 
 ## Deploying a TensorFlow Serving Model
 
@@ -426,7 +428,7 @@ For those using Elastic Inference set the image following this format instead:
 ```
 
 Where `REGION` is your AWS region, such as "us-east-1" or "eu-west-1"; `SAGEMAKER_TENSORFLOW_SERVING_VERSION`, `SAGEMAKER_TENSORFLOW_SERVING_EIA_VERSION`, `TENSORFLOW_INFERENCE_VERSION`, `TENSORFLOW_INFERENCE_EIA_VERSION` are one of the supported versions mentioned above; and "gpu" for use on GPU-based instance types like ml.p3.2xlarge, or "cpu" for use on CPU-based instances like `ml.c5.xlarge`.
- 
+
 The code examples below show how to create a SageMaker Model from a `model.tar.gz` containing a TensorFlow Serving model using the AWS CLI (though you can use any language supported by the [AWS SDK](https://aws.amazon.com/tools/)) and the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk).
 
 #### AWS CLI
@@ -472,7 +474,7 @@ s3_path = 's3://{}/{}'.format(bucket, prefix)
 model_data = sagemaker_session.upload_data('model.tar.gz',
                                            bucket,
                                            os.path.join(prefix, 'model'))
-                                           
+
 # The "Model" object doesn't create a SageMaker Model until a Transform Job or Endpoint is created.
 tensorflow_serving_model = Model(model_data=model_data,
                                  role=role,
@@ -587,7 +589,7 @@ and configure batching:
 # Defaults to false.
 SAGEMAKER_TFS_ENABLE_BATCHING="true"
 
-# Configures how many records 
+# Configures how many records
 # Corresponds to "max_batch_size" in TensorFlow Serving.
 # Defaults to 8.
 SAGEMAKER_TFS_MAX_BATCH_SIZE="32"
@@ -617,4 +619,3 @@ for details on our code of conduct, and the process for submitting pull requests
 ## License
 
 This library is licensed under the Apache 2.0 License.
-
