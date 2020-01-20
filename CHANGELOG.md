@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.14.post0 (2020-01-20)
+
+### Documentation changes
+
+ * document that pre-/post-processing is not supported with multi-model
+
 ## v1.6.14 (2020-01-10)
 
 ### Bug fixes and other changes
