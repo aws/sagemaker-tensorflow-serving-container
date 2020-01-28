@@ -132,8 +132,7 @@ def test_delete_model():
     assert y == {'predictions': [3.5, 4.0, 5.5]}
 
     code_unload, res2 = make_unload_model_request(model_name)
-    assert code_unload == 404
-    assert res2 == '{} not loaded yet.'.format(model_name)
+    assert code_unload == 200
 
     code_invoke, y2 = make_invocation_request(json.dumps(x), model_name)
     assert code_invoke == 404
