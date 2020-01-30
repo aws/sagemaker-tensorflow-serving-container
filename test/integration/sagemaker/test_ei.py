@@ -18,7 +18,8 @@ import pytest
 import util
 
 EI_SUPPORTED_REGIONS = ['us-east-1', 'us-east-2', 'us-west-2',
-                        'eu-west-1', 'ap-northeast-1', 'ap-northeast-2']
+                        'eu-west-1', 'eu-west-2',
+                        'ap-northeast-1', 'ap-northeast-2',]
 
 
 @pytest.fixture(params=os.environ['TEST_EI_VERSIONS'].split(','))
