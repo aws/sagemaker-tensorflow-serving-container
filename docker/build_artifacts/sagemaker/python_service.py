@@ -199,7 +199,8 @@ class ModelManagerResource(object):
                     raise MultiModelException(falcon.HTTP_500, multi_model_exception.msg)
         else:
             res.status = falcon.HTTP_404
-            res.body = 'Could not find base path {} for servable {}'.format(base_path, model_name)
+            res.body = 'Could not find valid base path {} for servable {}'.format(base_path,
+                                                                                  model_name)
 
     def on_delete(self, req, res, model_name):  # pylint: disable=W0613
         try:
@@ -257,8 +258,17 @@ class ModelManagerResource(object):
             for dirname in dirs:
                 if dirname.isdigit():
                     versions.append(dirname)
-        if versions:
-            return True
+        return self.validate_model_versions(versions)
+
+    def validate_model_versions(self, versions):
+        if not versions:
+            return False
+        for v in versions:
+            if v.isdigit():
+                # TensorFlow model server will succeed with any versions found
+                # even if there are directories that's not a valid model version,
+                # the loading will succeed.
+                return True
         return False
 
     def _get_model_status(self, model_name):

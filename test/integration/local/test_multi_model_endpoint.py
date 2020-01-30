@@ -30,10 +30,10 @@ DELETE_MODEL_URL = 'http://localhost:8080/models/{}'
 @pytest.fixture(scope='session', autouse=True)
 def volume():
     try:
-        model_dir = os.path.abspath('test/resources/models')
+        model_dir = os.path.abspath('test/resources/mme')
         subprocess.check_call(
-            'docker volume create --name dynamic_endpoint_model_volume --opt type=none '
-            '--opt device={} --opt o=bind'.format(model_dir).split())
+           'docker volume create --name dynamic_endpoint_model_volume --opt type=none '
+           '--opt device={} --opt o=bind'.format(model_dir).split())
         yield model_dir
     finally:
         subprocess.check_call('docker volume rm dynamic_endpoint_model_volume'.split())
@@ -132,8 +132,7 @@ def test_delete_model():
     assert y == {'predictions': [3.5, 4.0, 5.5]}
 
     code_unload, res2 = make_unload_model_request(model_name)
-    assert code_unload == 404
-    assert res2 == '{} not loaded yet.'.format(model_name)
+    assert code_unload == 200
 
     code_invoke, y2 = make_invocation_request(json.dumps(x), model_name)
     assert code_invoke == 404
@@ -227,7 +226,7 @@ def test_load_non_existing_model():
     }
     code, res = make_load_model_request(json.dumps(model_data))
     assert code == 404
-    assert res == 'Could not find base path {} for servable {}'.format(base_path, model_name)
+    assert res == 'Could not find valid base path {} for servable {}'.format(base_path, model_name)
 
 
 def test_bad_model_reqeust():
@@ -237,3 +236,15 @@ def test_bad_model_reqeust():
     }
     code, _ = make_load_model_request(json.dumps(bad_model_data))
     assert code == 500
+
+
+def test_invalid_model_version():
+    model_name = 'invalid_version'
+    base_path = '/opt/ml/models/invalid_version'
+    invalid_model_version_data = {
+        'model_name': model_name,
+        'url': base_path
+    }
+    code, res = make_load_model_request(json.dumps(invalid_model_version_data))
+    assert code == 404
+    assert res == 'Could not find valid base path {} for servable {}'.format(base_path, model_name)

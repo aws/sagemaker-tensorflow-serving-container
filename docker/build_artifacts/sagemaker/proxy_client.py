@@ -80,7 +80,7 @@ class GRPCProxyClient(object):
                         self.stub.HandleReloadConfigRequest(request=req,
                                                             timeout=GRPC_REQUEST_TIMEOUT_IN_SECONDS,
                                                             wait_for_ready=True)
-                        self._delete_model_from_config_file(model_server_config)
+                        return self._delete_model_from_config_file(model_server_config)
 
                 # no such model exists
                 raise FileNotFoundError
