@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.6.15 (2020-02-04)
+
+### Bug Fixes and Other Changes
+
+ * return on_delete method when model successfully deleted
+ * validate tensorflow model version number in model path
+
 ## v1.6.14.post0 (2020-01-20)
 
 ### Documentation changes
