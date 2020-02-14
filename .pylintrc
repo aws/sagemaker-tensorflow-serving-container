@@ -1,7 +1,8 @@
 [MASTER]
 
 ignore=
-    tensorflow_serving
+    tensorflow_serving,
+    tensorflow-2.1
 
 [MESSAGES CONTROL]
 
