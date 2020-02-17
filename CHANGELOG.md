@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.6.16 (2020-02-17)
+
+### Bug Fixes and Other Changes
+
+ * update r2.0.1 dockerfiles
+ * add 2.1 dockerfiles and tensorflow artifacts
+ * update for 1.15.2
+
 ## v1.6.15 (2020-02-04)
 
 ### Bug Fixes and Other Changes
