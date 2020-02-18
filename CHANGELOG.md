@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.17 (2020-02-18)
+
+### Bug Fixes and Other Changes
+
+ * update: Remove multi-model label from CPU containers
+
 ## v1.6.16 (2020-02-17)
 
 ### Bug Fixes and Other Changes
