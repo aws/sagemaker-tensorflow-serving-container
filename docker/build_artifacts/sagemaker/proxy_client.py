@@ -20,6 +20,7 @@ from tensorflow_serving.config import model_server_config_pb2
 from multi_model_utils import lock, DEFAULT_LOCK_FILE, MODEL_CONFIG_FILE, MultiModelException
 
 GRPC_REQUEST_TIMEOUT_IN_SECONDS = 5
+RESOURCE_EXHAUSTED_ERROR = "Resource exhausted"
 
 
 class GRPCProxyClient(object):
@@ -57,6 +58,8 @@ class GRPCProxyClient(object):
                     raise MultiModelException(409, e.details())
                 elif e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
                     raise MultiModelException(408, e.details())
+                elif RESOURCE_EXHAUSTED_ERROR in str(e.details()):
+                    raise MultiModelException(507, e.details())
                 raise MultiModelException(500, e.details())
 
         return 'Successfully loaded model {}'.format(model_name)
