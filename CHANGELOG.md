@@ -1,5 +1,76 @@
 # Changelog
 
+## v1.6.17 (2020-02-18)
+
+### Bug Fixes and Other Changes
+
+ * update: Remove multi-model label from CPU containers
+
+## v1.6.16 (2020-02-17)
+
+### Bug Fixes and Other Changes
+
+ * update r2.0.1 dockerfiles
+ * add 2.1 dockerfiles and tensorflow artifacts
+ * update for 1.15.2
+
+## v1.6.15 (2020-02-04)
+
+### Bug Fixes and Other Changes
+
+ * return on_delete method when model successfully deleted
+ * validate tensorflow model version number in model path
+
+## v1.6.14.post0 (2020-01-20)
+
+### Documentation changes
+
+ * document that pre-/post-processing is not supported with multi-model
+
+## v1.6.14 (2020-01-10)
+
+### Bug fixes and other changes
+
+ * Add __init__.py to fix unit test
+ * update: Update buildspec for TF 1.15 and 2.0
+
+## v1.6.13 (2020-01-08)
+
+### Bug fixes and other changes
+
+ * update copyright year in license header
+
+## v1.6.12.post0 (2020-01-03)
+
+### Documentation changes
+
+ * update Readme with correct TF versions.
+
+## v1.6.12 (2020-01-02)
+
+### Bug fixes and other changes
+
+ * update: Release TF 1.15 and TF 2.0 dockerfiles
+
+## v1.6.11 (2019-12-17)
+
+### Bug fixes and other changes
+
+ * check container is ready in tests
+
+## v1.6.10 (2019-12-13)
+
+### Bug fixes and other changes
+
+ * increase attempts to allow for large gpu images
+ * ping check and model status check
+
+## v1.6.9 (2019-11-25)
+
+### Bug fixes and other changes
+
+ * Update EI Dockerfile 1.14 with New Health check, and new binaries
+
 ## v1.6.8 (2019-10-25)
 
 ### Bug fixes and other changes

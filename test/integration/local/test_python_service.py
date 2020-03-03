@@ -1,4 +1,4 @@
-# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2019-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -62,11 +62,12 @@ def container(volume, docker_base_name, tag, runtime_config):
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
         attempts = 0
-        while attempts < 5:
+        while attempts < 40:
             time.sleep(3)
             try:
-                requests.get('http://localhost:8080/ping')
-                break
+                res_code = requests.get('http://localhost:8080/ping').status_code
+                if res_code == 200:
+                    break
             except:
                 attempts += 1
                 pass

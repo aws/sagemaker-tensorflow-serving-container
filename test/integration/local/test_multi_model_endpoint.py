@@ -1,4 +1,4 @@
-# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2019-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -30,10 +30,10 @@ DELETE_MODEL_URL = 'http://localhost:8080/models/{}'
 @pytest.fixture(scope='session', autouse=True)
 def volume():
     try:
-        model_dir = os.path.abspath('test/resources/models')
+        model_dir = os.path.abspath('test/resources/mme')
         subprocess.check_call(
-            'docker volume create --name dynamic_endpoint_model_volume --opt type=none '
-            '--opt device={} --opt o=bind'.format(model_dir).split())
+           'docker volume create --name dynamic_endpoint_model_volume --opt type=none '
+           '--opt device={} --opt o=bind'.format(model_dir).split())
         yield model_dir
     finally:
         subprocess.check_call('docker volume rm dynamic_endpoint_model_volume'.split())
@@ -55,11 +55,12 @@ def container(request, docker_base_name, tag, runtime_config):
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
         attempts = 0
-        while attempts < 5:
+        while attempts < 40:
             time.sleep(3)
             try:
-                requests.get('http://localhost:8080/ping')
-                break
+                res_code = requests.get('http://localhost:8080/ping').status_code
+                if res_code == 200:
+                    break
             except:
                 attempts += 1
                 pass
@@ -131,8 +132,7 @@ def test_delete_model():
     assert y == {'predictions': [3.5, 4.0, 5.5]}
 
     code_unload, res2 = make_unload_model_request(model_name)
-    assert code_unload == 404
-    assert res2 == '{} not loaded yet.'.format(model_name)
+    assert code_unload == 200
 
     code_invoke, y2 = make_invocation_request(json.dumps(x), model_name)
     assert code_invoke == 404
@@ -215,3 +215,36 @@ def test_load_one_model_two_times():
     code_load2, res2 = make_load_model_request(json.dumps(model_data))
     assert code_load2 == 409
     assert res2 == 'Illegal to list model {} multiple times in config list'.format(model_name)
+
+
+def test_load_non_existing_model():
+    model_name = 'non-existing'
+    base_path = '/opt/ml/models/non-existing'
+    model_data = {
+        'model_name': model_name,
+        'url': base_path
+    }
+    code, res = make_load_model_request(json.dumps(model_data))
+    assert code == 404
+    assert res == 'Could not find valid base path {} for servable {}'.format(base_path, model_name)
+
+
+def test_bad_model_reqeust():
+    bad_model_data = {
+        'model_name': 'model_name',
+        'uri': '/opt/ml/models/non-existing'
+    }
+    code, _ = make_load_model_request(json.dumps(bad_model_data))
+    assert code == 500
+
+
+def test_invalid_model_version():
+    model_name = 'invalid_version'
+    base_path = '/opt/ml/models/invalid_version'
+    invalid_model_version_data = {
+        'model_name': model_name,
+        'url': base_path
+    }
+    code, res = make_load_model_request(json.dumps(invalid_model_version_data))
+    assert code == 404
+    assert res == 'Could not find valid base path {} for servable {}'.format(base_path, model_name)

@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -24,6 +24,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 JS_PING = 'js_content ping'
+JS_PING_WITHOUT_MODEL = 'js_content ping_without_model'
 JS_INVOCATIONS = 'js_content invocations'
 GUNICORN_PING = 'proxy_pass http://gunicorn_upstream/ping'
 GUNICORN_INVOCATIONS = 'proxy_pass http://gunicorn_upstream/invocations'
@@ -226,13 +227,19 @@ class ServiceManager(object):
     def _create_nginx_config(self):
         template = self._read_nginx_template()
         pattern = re.compile(r'%(\w+)%')
+        ping_request = JS_PING
+        if self._enable_python_service:
+            ping_request = GUNICORN_PING
+        if self._tfs_enable_dynamic_endpoint or self._tfs_version:
+            ping_request = JS_PING_WITHOUT_MODEL
+
         template_values = {
             'TFS_VERSION': self._tfs_version,
             'TFS_REST_PORT': self._tfs_rest_port,
             'TFS_DEFAULT_MODEL_NAME': self._tfs_default_model_name,
             'NGINX_HTTP_PORT': self._nginx_http_port,
             'NGINX_LOG_LEVEL': self._nginx_loglevel,
-            'FORWARD_PING_REQUESTS': GUNICORN_PING if self._enable_python_service else JS_PING,
+            'FORWARD_PING_REQUESTS': ping_request,
             'FORWARD_INVOCATION_REQUESTS': GUNICORN_INVOCATIONS if self._enable_python_service
             else JS_INVOCATIONS,
         }
@@ -254,7 +261,11 @@ class ServiceManager(object):
     def _start_tfs(self):
         self._log_version('tensorflow_model_server --version', 'tensorflow version info:')
         tfs_config_path = '/sagemaker/model-config.cfg'
-        cmd = "tensorflow_model_server --port={} --rest_api_port={} --model_config_file={} {}"\
+        cmd = "tensorflow_model_server " \
+              "--port={} " \
+              "--rest_api_port={} " \
+              "--model_config_file={} " \
+              "--max_num_load_retries=0 {}"\
             .format(self._tfs_grpc_port, self._tfs_rest_port, tfs_config_path,
                     self._get_tfs_batching_args())
         log.info('tensorflow serving command: {}'.format(cmd))
@@ -314,7 +325,7 @@ class ServiceManager(object):
     @contextmanager
     def _timeout(self, seconds):
         def _raise_timeout_error(signum, frame):
-            raise TimeoutError('timed our after {} seconds'.format(seconds))
+            raise TimeoutError('time out after {} seconds'.format(seconds))
 
         try:
             signal.signal(signal.SIGALRM, _raise_timeout_error)

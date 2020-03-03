@@ -2,9 +2,30 @@
 
 # SageMaker TensorFlow Serving Container
 
-SageMaker TensorFlow Serving Container is an a open source project that builds 
-docker images for running TensorFlow Serving on 
+SageMaker TensorFlow Serving Container is an a open source project that builds
+docker images for running TensorFlow Serving on
 [Amazon SageMaker](https://aws.amazon.com/documentation/sagemaker/).
+
+Supported versions of TensorFlow: ``1.4.1``, ``1.5.0``, ``1.6.0``, ``1.7.0``, ``1.8.0``, ``1.9.0``, ``1.10.0``, ``1.11.0``, ``1.12.0``, ``1.13.1``, ``1.14.0``, ``1.15.0``, ``2.0.0``.
+
+Supported versions of TensorFlow for Elastic Inference: ``1.11.0``, ``1.12.0``, ``1.13.1``, ``1.14.0``.
+
+ECR repositories for SageMaker built TensorFlow Serving Container:
+
+- `'tensorflow-inference'` for any new version starting with ``1.13.0`` in the following AWS accounts:
+  - `"871362719292"` in `"ap-east-1"`;
+  - `"217643126080"` in `"me-south-1"`;
+  - `"886529160074"` in `"us-iso-east-1"`;
+  - `"763104351884"` in other SageMaker public regions.
+- `'sagemaker-tensorflow-serving'` for ``1.4.1``, ``1.5.0``, ``1.6.0``, ``1.7.0``, ``1.8.0``, ``1.9.0``, ``1.10.0``, ``1.11.0``, ``1.12.0`` versions in the following AWS accounts:
+  - `"057415533634"` in `"ap-east-1"`;
+  - `"724002660598"` in `"me-south-1"`;
+  - `"520713654638"` in other SageMaker public regions.
+
+ECR repositories for SageMaker built TensorFlow Serving Container for Elastic Inference:
+
+- `'tensorflow-inference-eia'` for any new version starting with ``1.14.0`` in the same AWS accounts as TensorFlow Serving Container for newer TensorFlow versions listed above;
+- `'sagemaker-tensorflow-serving-eia'` for ``1.11.0``, ``1.12.0``, ``1.13.1`` versions in the same AWS accounts as TensorFlow Serving Container for older TensorFlow versions listed above.
 
 This documentation covers building and testing these docker images.
 
@@ -115,7 +136,7 @@ tox
 To run local tests against a single container or with other options, you can use the following command:
 
 ```bash
-python -m pytest test/integration/local 
+python -m pytest test/integration/local
     [--docker-name-base <docker_name_base>]
     [--framework-version <framework_version>]
     [--processor-type <processor_type>]
@@ -139,6 +160,8 @@ For example:
 
 
 ## Pre/Post-Processing
+
+**NOTE: There is currently no support for pre-/post-processing with multi-model containers.**
 
 SageMaker TensorFlow Serving Container supports the following Content-Types for requests:
 
@@ -338,33 +361,33 @@ You can also bring in external dependencies to help with your data processing. T
 Your untarred model directory structure may look like this if you are using `requirements.txt`:
 
         model1
-            |__[model_version_number]
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--variables
+                |--saved_model.pb
         model2
-            |__[model_version_number]
-                |__assets
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--assets
+                |--variables
+                |--saved_model.pb
         code
-            |__inference.py
-            |__requirements.txt
+            |--inference.py
+            |--requirements.txt
 
 Your untarred model directory structure may look like this if you have downloaded modules under `code/lib`:
 
         model1
-            |__[model_version_number]
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--variables
+                |--saved_model.pb
         model2
-            |__[model_version_number]
-                |__assets
-                |__variables
-                |__saved_model.pb
+            |--[model_version_number]
+                |--assets
+                |--variables
+                |--saved_model.pb
         code
-            |__lib
-                |__external_module
-            |__inference.py
+            |--lib
+                |--external_module
+            |--inference.py
 
 ## Deploying a TensorFlow Serving Model
 
@@ -387,17 +410,25 @@ where "12345" is your TensorFlow serving model version which contains your Saved
 After uploading your `model.tar.gz` to an S3 URI, such as `s3://your-bucket/your-models/model.tar.gz`, create a [SageMaker Model](https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateModel.html) which will be used to generate inferences. Set `PrimaryContainer.ModelDataUrl` to the S3 URI where you uploaded the `model.tar.gz`, and set `PrimaryContainer.Image` to an image following this format:
 
 ```
-520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving:{TENSORFLOW_SERVING_VERSION}-{cpu|gpu}
+520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving:{SAGEMAKER_TENSORFLOW_SERVING_VERSION}-{cpu|gpu}
+```
+
+```
+763104351884.dkr.ecr.{REGION}.amazonaws.com/tensorflow-inference:{TENSORFLOW_INFERENCE_VERSION}-{cpu|gpu}
 ```
 
 For those using Elastic Inference set the image following this format instead:
 
 ```
-520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving-eia:{TENSORFLOW_SERVING_VERSION}-cpu
+520713654638.dkr.ecr.{REGION}.amazonaws.com/sagemaker-tensorflow-serving-eia:{SAGEMAKER_TENSORFLOW_SERVING_EIA_VERSION}-cpu
 ```
 
-Where `REGION` is your AWS region, such as "us-east-1" or "eu-west-1"; `TENSORFLOW_SERVING_VERSION` is one of the supported versions: "1.11" or "1.12"; and "gpu" for use on GPU-based instance types like ml.p3.2xlarge, or "cpu" for use on CPU-based instances like `ml.c5.xlarge`.
- 
+```
+763104351884.dkr.ecr.{REGION}.amazonaws.com/tensorflow-inference-eia:{TENSORFLOW_INFERENCE_EIA_VERSION}-cpu
+```
+
+Where `REGION` is your AWS region, such as "us-east-1" or "eu-west-1"; `SAGEMAKER_TENSORFLOW_SERVING_VERSION`, `SAGEMAKER_TENSORFLOW_SERVING_EIA_VERSION`, `TENSORFLOW_INFERENCE_VERSION`, `TENSORFLOW_INFERENCE_EIA_VERSION` are one of the supported versions mentioned above; and "gpu" for use on GPU-based instance types like ml.p3.2xlarge, or "cpu" for use on CPU-based instances like `ml.c5.xlarge`.
+
 The code examples below show how to create a SageMaker Model from a `model.tar.gz` containing a TensorFlow Serving model using the AWS CLI (though you can use any language supported by the [AWS SDK](https://aws.amazon.com/tools/)) and the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk).
 
 #### AWS CLI
@@ -443,7 +474,7 @@ s3_path = 's3://{}/{}'.format(bucket, prefix)
 model_data = sagemaker_session.upload_data('model.tar.gz',
                                            bucket,
                                            os.path.join(prefix, 'model'))
-                                           
+
 # The "Model" object doesn't create a SageMaker Model until a Transform Job or Endpoint is created.
 tensorflow_serving_model = Model(model_data=model_data,
                                  role=role,
@@ -558,7 +589,7 @@ and configure batching:
 # Defaults to false.
 SAGEMAKER_TFS_ENABLE_BATCHING="true"
 
-# Configures how many records 
+# Configures how many records
 # Corresponds to "max_batch_size" in TensorFlow Serving.
 # Defaults to 8.
 SAGEMAKER_TFS_MAX_BATCH_SIZE="32"
@@ -588,4 +619,3 @@ for details on our code of conduct, and the process for submitting pull requests
 ## License
 
 This library is licensed under the Apache 2.0 License.
-

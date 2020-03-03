@@ -1,4 +1,4 @@
-# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2019-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -11,31 +11,15 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-import fcntl
-import time
-from contextlib import contextmanager
-
 import grpc
 from google.protobuf import text_format
 from tensorflow_serving.apis import model_management_pb2
 from tensorflow_serving.apis import model_service_pb2_grpc
 from tensorflow_serving.config import model_server_config_pb2
 
-MODEL_CONFIG_FILE = '/sagemaker/model-config.cfg'
-DEFAULT_LOCK_FILE = '/sagemaker/lock-file.lock'
+from multi_model_utils import lock, DEFAULT_LOCK_FILE, MODEL_CONFIG_FILE, MultiModelException
 
-
-@contextmanager
-def lock(path=DEFAULT_LOCK_FILE):
-    f = open(path, 'w')
-    fd = f.fileno()
-    fcntl.lockf(fd, fcntl.LOCK_EX)
-
-    try:
-        yield
-    finally:
-        time.sleep(1)
-        fcntl.lockf(fd, fcntl.LOCK_UN)
+GRPC_REQUEST_TIMEOUT_IN_SECONDS = 5
 
 
 class GRPCProxyClient(object):
@@ -64,13 +48,16 @@ class GRPCProxyClient(object):
                 req = model_management_pb2.ReloadConfigRequest()
                 req.config.CopyFrom(model_server_config)
 
-                self.stub.HandleReloadConfigRequest(req)
+                self.stub.HandleReloadConfigRequest(request=req,
+                                                    timeout=GRPC_REQUEST_TIMEOUT_IN_SECONDS,
+                                                    wait_for_ready=True)
                 self._add_model_to_config_file(model_name, base_path, model_platform)
             except grpc.RpcError as e:
                 if e.code() is grpc.StatusCode.INVALID_ARGUMENT:
-                    raise Exception(409, e.details())
-                else:
-                    raise Exception(e.code(), e.details())
+                    raise MultiModelException(409, e.details())
+                elif e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
+                    raise MultiModelException(408, e.details())
+                raise MultiModelException(500, e.details())
 
         return 'Successfully loaded model {}'.format(model_name)
 
@@ -90,13 +77,17 @@ class GRPCProxyClient(object):
                         model_server_config.model_config_list.CopyFrom(config_list)
                         req = model_management_pb2.ReloadConfigRequest()
                         req.config.CopyFrom(model_server_config)
-                        self.stub.HandleReloadConfigRequest(req)
-                        self._delete_model_from_config_file(model_server_config)
+                        self.stub.HandleReloadConfigRequest(request=req,
+                                                            timeout=GRPC_REQUEST_TIMEOUT_IN_SECONDS,
+                                                            wait_for_ready=True)
+                        return self._delete_model_from_config_file(model_server_config)
 
                 # no such model exists
-                raise Exception(404, '{} not loaded yet.'.format(model_name))
+                raise FileNotFoundError
             except grpc.RpcError as e:
-                raise Exception(e.code(), e.details())
+                if e.code() is grpc.StatusCode.DEADLINE_EXCEEDED:
+                    raise MultiModelException(408, e.details())
+                raise MultiModelException(500, e.details())
 
         return 'Model {} unloaded.'.format(model_name)
 
