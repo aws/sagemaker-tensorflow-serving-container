@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.18 (2020-03-26)
+
+### Bug Fixes and Other Changes
+
+ * Adding of deep_learning_container.py
+
 ## v1.6.17 (2020-02-18)
 
 ### Bug Fixes and Other Changes
