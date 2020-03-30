@@ -9,8 +9,8 @@ LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 ARG PYTHON=python3
 ARG PIP=pip3
 ARG HEALTH_CHECK_VERSION=1.6.2
-ARG S3_TF_EI_VERSION=1-2
-ARG S3_TF_VERSION=1-15-0
+ARG S3_TF_EI_VERSION=1-5
+ARG S3_TF_VERSION=1-15-2
 
 
 # See http://bugs.python.org/issue19846
