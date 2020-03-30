@@ -77,9 +77,6 @@ RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/dist-packages/
 RUN ln -s $(which ${PYTHON}) /usr/local/bin/python \
  && ln -s /usr/local/bin/pip3 /usr/bin/pip
 
-RUN curl ${TF_S3_URL}/MKL-Libraries/libiomp5.so -o /usr/local/lib/libiomp5.so \
- && curl ${TF_S3_URL}/MKL-Libraries/libmklml_intel.so -o /usr/local/lib/libmklml_intel.so
-
 # Get EI tools
 RUN wget https://amazonei-tools.s3.amazonaws.com/v${HEALTH_CHECK_VERSION}/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz -O /opt/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz \
  && tar -xvf /opt/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz -C /opt/ \
