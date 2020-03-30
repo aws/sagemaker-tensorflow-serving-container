@@ -89,12 +89,12 @@ RUN wget https://amazonei-tools.s3.amazonaws.com/v${HEALTH_CHECK_VERSION}/ei_too
 #RUN curl ${TF_MODEL_SERVER_SOURCE} -o /usr/bin/tensorflow_model_server \
 # && chmod 555 /usr/bin/tensorflow_model_server
 
-#RUN wget https://amazonei-tensorflow.s3.amazonaws.com/tensorflow-serving/v1.14/ubuntu/archive/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
-#            -O /tmp/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
-COPY tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz /tmp/tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz 
+#RUN wget https://amazonei-tensorflow.s3.amazonaws.com/tensorflow-serving/v1.14/ubuntu/archive/tensorflow-serving-${S3_TF_VERSION}-ei-${S3_TF_EI_VERSION}.tar.gz \
+#            -O /tmp/tensorflow-serving-${S3_TF_VERSION}-ei-${S3_TF_EI_VERSION}.tar.gz \
+COPY tensorflow-serving-${S3_TF_VERSION}-ei-${S3_TF_EI_VERSION}.tar.gz /tmp/tensorflow-serving-${S3_TF_VERSION}-ei-${S3_TF_EI_VERSION}.tar.gz 
 RUN cd /tmp \
- && tar zxf tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}.tar.gz \
- && mv tensorflow-serving-${S3_TF_VERSION}-ubuntu-ei-${S3_TF_EI_VERSION}/amazonei_tensorflow_model_server /usr/bin/tensorflow_model_server \
+ && tar zxf tensorflow-serving-${S3_TF_VERSION}-ei-${S3_TF_EI_VERSION}.tar.gz \
+ && mv tensorflow-serving-${S3_TF_VERSION}-ei-${S3_TF_EI_VERSION}/amazonei_tensorflow_model_server /usr/bin/tensorflow_model_server \
  && chmod +x /usr/bin/tensorflow_model_server \
  && rm -rf tensorflow-serving-${S3_TF_VERSION}*
 
