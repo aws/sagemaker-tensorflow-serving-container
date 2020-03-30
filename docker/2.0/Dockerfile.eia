@@ -8,11 +8,8 @@ LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 # Add arguments to achieve the version, python and url
 ARG PYTHON=python3
 ARG PIP=pip3
-ARG TFS_SHORT_VERSION=2.0.0
-ARG TF_S3_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com
-ARG TF_MODEL_SERVER_SOURCE=${TF_S3_URL}/${TFS_SHORT_VERSION}/Serving/CPU-WITH-MKL/tensorflow_model_server
 ARG HEALTH_CHECK_VERSION=1.6.2
-ARG S3_TF_EI_VERSION=1-2
+ARG S3_TF_EI_VERSION=1-5
 ARG S3_TF_VERSION=2-0-0
 
 
@@ -21,7 +18,7 @@ ENV LANG=C.UTF-8
 # Python won’t try to write .pyc or .pyo files on the import of source modules
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV SAGEMAKER_TFS_VERSION="${TFS_SHORT_VERSION}"
+ENV SAGEMAKER_TFS_VERSION="${S3_TF_VERSION}"
 ENV PATH="$PATH:/sagemaker"
 ENV LD_LIBRARY_PATH='/usr/local/lib:$LD_LIBRARY_PATH'
 ENV MODEL_BASE_PATH=/models
