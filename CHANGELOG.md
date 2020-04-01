@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.19 (2020-04-01)
+
+### Bug Fixes and Other Changes
+
+ * Allowing arguments for deep_learning_container.py for tf
+
 ## v1.6.18 (2020-03-26)
 
 ### Bug Fixes and Other Changes
