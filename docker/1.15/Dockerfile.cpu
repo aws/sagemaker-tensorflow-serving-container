@@ -53,7 +53,8 @@ RUN ${PIP} --no-cache-dir install --upgrade \
 
 # cython, falcon, gunicorn, grpc
 RUN ${PIP} install --no-cache-dir \
-    awscli==1.16.296 \
+    awscli==1.18.34 \
+    pyYAML==5.3.1 \
     cython==0.29.12 \
     falcon==2.0.0 \
     gunicorn==19.9.0 \
