@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.6.20 (2020-04-03)
+
+### Bug Fixes and Other Changes
+
+ * Updating Pyyaml and Awscli version for tf1.15
+ * upgrade Pillow version in test example
+
 ## v1.6.19 (2020-04-01)
 
 ### Bug Fixes and Other Changes
