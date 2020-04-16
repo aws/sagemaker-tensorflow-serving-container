@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.21 (2020-04-16)
+
+### Bug Fixes and Other Changes
+
+ * Replaced deprecated aws ecr get-login by get-login-password
+
 ## v1.6.20 (2020-04-03)
 
 ### Bug Fixes and Other Changes
