@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.22 (2020-04-20)
+
+### Bug Fixes and Other Changes
+
+ * TF EIA 1.15 and 2.0
+
 ## v1.6.21 (2020-04-16)
 
 ### Bug Fixes and Other Changes
