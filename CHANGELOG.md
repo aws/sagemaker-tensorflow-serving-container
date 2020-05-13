@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.22.post0 (2020-05-13)
+
+### Testing and Release Infrastructure
+
+ * Test against py37 in buildspec
+
 ## v1.6.22 (2020-04-20)
 
 ### Bug Fixes and Other Changes
