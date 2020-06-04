@@ -23,7 +23,6 @@ from time import sleep
 
 import falcon
 import requests
-from proxy_client import GRPCProxyClient
 
 from multi_model_utils import MultiModelException
 
@@ -44,7 +43,7 @@ Context = namedtuple('Context',
                      'custom_attributes, request_content_type, accept_header, content_length')
 
 
-class InvocationResource(object):
+class PythonServiceResource(object):
 
     def __init__(self):
         self._tfs_default_model_name = os.environ['TFS_DEFAULT_MODEL_NAME']
@@ -57,6 +56,46 @@ class InvocationResource(object):
                                             self._output_handler)
 
     def on_post(self, req, res):
+        data = json.loads(req.stream.read()
+                          .decode('utf-8'))
+
+        if 'model_name' in data:
+            self._load_model_post(res, data)
+        else:
+            self._invocation_post(req, res)
+
+    def _load_model_post(self, res, data):
+        model_name = data['model_name']
+        base_path = data['url']
+        if self.validate_model_dir(base_path):
+            try:
+                msg = self.grpc_client.add_model(model_name, base_path)
+
+                # make sure all versions of model is ready before returning the call
+                with self._timeout(seconds=60):
+                    while True:
+                        model_status = self._get_model_status(model_name)
+                        if self._check_all_versions_available(model_status):
+                            break
+                        sleep(1)
+
+                res.body = msg
+                res.status = falcon.HTTP_200
+            except MultiModelException as multi_model_exception:
+                if multi_model_exception.code == 409:
+                    res.status = falcon.HTTP_409
+                    res.body = multi_model_exception.msg
+                elif multi_model_exception.code == 408:
+                    res.status = falcon.HTTP_408
+                    res.body = multi_model_exception.msg
+                else:
+                    raise MultiModelException(falcon.HTTP_500, multi_model_exception.msg)
+        else:
+            res.status = falcon.HTTP_404
+            res.body = 'Could not find valid base path {} for servable {}'.format(base_path,
+                                                                                  model_name)
+
+    def _invocation_post(self, req, res):
         data, context = self._parse_request(req)
         try:
             res.status = falcon.HTTP_200
@@ -132,17 +171,6 @@ class InvocationResource(object):
         uri += ':' + tfs_method
         return uri
 
-
-class PingResource(object):
-    def on_get(self, req, res):  # pylint: disable=W0613
-        res.status = falcon.HTTP_200
-
-
-class ModelManagerResource(object):
-
-    def __init__(self):
-        self.grpc_client = GRPCProxyClient(TFS_GRPC_PORT)
-
     def on_get(self, req, res, model_name=None):  # pylint: disable=W0613
         try:
             models = self._read_model_config()
@@ -168,39 +196,6 @@ class ModelManagerResource(object):
             res.body = json.dumps({
                 'error': str(e)
             }).encode('utf-8')
-
-    def on_post(self, req, res):
-        data = json.loads(req.stream.read()
-                          .decode('utf-8'))
-        model_name = data['model_name']
-        base_path = data['url']
-        if self.validate_model_dir(base_path):
-            try:
-                msg = self.grpc_client.add_model(model_name, base_path)
-
-                # make sure all versions of model is ready before returning the call
-                with self._timeout(seconds=60):
-                    while True:
-                        model_status = self._get_model_status(model_name)
-                        if self._check_all_versions_available(model_status):
-                            break
-                        sleep(1)
-
-                res.body = msg
-                res.status = falcon.HTTP_200
-            except MultiModelException as multi_model_exception:
-                if multi_model_exception.code == 409:
-                    res.status = falcon.HTTP_409
-                    res.body = multi_model_exception.msg
-                elif multi_model_exception.code == 408:
-                    res.status = falcon.HTTP_408
-                    res.body = multi_model_exception.msg
-                else:
-                    raise MultiModelException(falcon.HTTP_500, multi_model_exception.msg)
-        else:
-            res.status = falcon.HTTP_404
-            res.body = 'Could not find valid base path {} for servable {}'.format(base_path,
-                                                                                  model_name)
 
     def on_delete(self, req, res, model_name):  # pylint: disable=W0613
         try:
@@ -314,22 +309,25 @@ class ModelManagerResource(object):
             signal.alarm(0)
 
 
+class PingResource(object):
+    def on_get(self, req, res):  # pylint: disable=W0613
+        res.status = falcon.HTTP_200
+
+
 class ServiceResources(object):
     def __init__(self):
         self._enable_python_service = os.path.exists(INFERENCE_SCRIPT_PATH)
         self._enable_model_manager = os.environ.get('SAGEMAKER_MULTI_MODEL')
+        self._python_service_resource = PythonServiceResource()
+        self._ping_resource = PingResource()
 
     def add_routes(self, application):
-        if self._enable_python_service:
-            ping_resource = PingResource()
-            invocation_resource = InvocationResource()
-            application.add_route('/ping', ping_resource)
-            application.add_route('/invocations', invocation_resource)
+        application.add_route('/ping', self._ping_resource)
+        application.add_route('/invocations', self._python_service_resource)
 
         if self._enable_model_manager:
-            model_manager_resource = ModelManagerResource()
-            application.add_route('/models', model_manager_resource)
-            application.add_route('/models/{model_name}', model_manager_resource)
+            application.add_route('/models', self._python_service_resource)
+            application.add_route('/models/{model_name}', self._python_service_resource)
 
 
 app = falcon.API()
