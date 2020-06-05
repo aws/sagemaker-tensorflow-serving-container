@@ -45,6 +45,7 @@ class ServiceManager(object):
         self._nginx_http_port = os.environ.get('SAGEMAKER_BIND_TO_PORT', '8080')
         self._nginx_loglevel = os.environ.get('SAGEMAKER_TFS_NGINX_LOGLEVEL', 'error')
         self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', 'None')
+        self._sagemaker_port_range = os.environ.get('SAGEMAKER_SAFE_PORT_RANGE', None)
 
         _enable_batching = os.environ.get('SAGEMAKER_TFS_ENABLE_BATCHING', 'false').lower()
         _enable_multi_model_endpoint = os.environ.get('SAGEMAKER_MULTI_MODEL',
@@ -60,14 +61,13 @@ class ServiceManager(object):
 
         self._use_gunicorn = self._enable_python_service or self._tfs_enable_multi_model_endpoint
 
-        if 'SAGEMAKER_SAFE_PORT_RANGE' in os.environ:
-            port_range = os.environ['SAGEMAKER_SAFE_PORT_RANGE']
-            parts = port_range.split('-')
+        if self._sagemaker_port_range is not None:
+            parts = self._sagemaker_port_range.split('-')
             low = int(parts[0])
             hi = int(parts[1])
             if low + 2 > hi:
                 raise ValueError('not enough ports available in SAGEMAKER_SAFE_PORT_RANGE ({})'
-                                 .format(port_range))
+                                 .format(self._sagemaker_port_range))
             self._tfs_grpc_port = str(low)
             self._tfs_rest_port = str(low + 1)
         else:
@@ -210,9 +210,10 @@ class ServiceManager(object):
 
         gunicorn_command = (
             'gunicorn -b unix:/tmp/gunicorn.sock -k gevent --chdir /sagemaker '
-            '{}{} -e TFS_GRPC_PORT={} -e SAGEMAKER_MULTI_MODEL={} '
+            '{}{} -e TFS_GRPC_PORT={} -e SAGEMAKER_MULTI_MODEL={} -e SAGEMAKER_SAFE_PORT_RANGE={}'
             'python_service:app').format(python_path_option, ','.join(python_path_content),
-                                         self._tfs_grpc_port, self._tfs_enable_multi_model_endpoint)
+                                         self._tfs_grpc_port, self._tfs_enable_multi_model_endpoint,
+                                         self._sagemaker_port_range)
 
         log.info('gunicorn command: {}'.format(gunicorn_command))
         self._gunicorn_command = gunicorn_command
