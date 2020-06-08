@@ -11,7 +11,11 @@ parse_std_args "$@"
 get_ei_executable
 
 echo "pulling previous image for layer cache... "
-$(aws ecr get-login --no-include-email --registry-id $aws_account) &>/dev/null || echo 'warning: ecr login failed'
+aws ecr get-login-password --region ${aws_region} \
+    | docker login \
+        --password-stdin \
+        --username AWS \
+        "${aws_account}.dkr.ecr.${aws_region}.amazonaws.com/${repository}" &>/dev/null || echo 'warning: ecr login failed'
 docker pull $aws_account.dkr.ecr.$aws_region.amazonaws.com/$repository:$full_version-$device &>/dev/null || echo 'warning: pull failed'
 docker logout https://$aws_account.dkr.ecr.$aws_region.amazonaws.com &>/dev/null
 

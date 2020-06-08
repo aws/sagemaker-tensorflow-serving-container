@@ -19,8 +19,8 @@ phases:
       - ./scripts/build-all.sh
 
       # run local tests
-      - tox -e py36 -- test/integration/local --framework-version 1.15
-      - tox -e py36 -- test/integration/local --framework-version 2.0
+      - tox -e py37 -- test/integration/local --framework-version 1.15
+      - tox -e py37 -- test/integration/local --framework-version 2.0
 
       # push docker images to ECR
       - |
@@ -31,8 +31,8 @@ phases:
       # run SageMaker tests
       - |
         if is-release-build; then
-          tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 1.15.0
-          tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 2.0.0
+          tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 1.15.0
+          tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 2.0.0
         fi
 
       # write deployment details to file
@@ -50,7 +50,7 @@ phases:
             "dest": ["1.15.0-gpu", "1.15-gpu", "1.15.0-gpu-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "tox -e py36 -- -n 8 test/integration/sagemaker/test_tfs.py::test_tfs_model --versions 1.15.0 --region {region} --registry {aws-id}"
+            "tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py::test_tfs_model --versions 1.15.0 --region {region} --registry {aws-id}"
           ]
         }, {
           "repository": "sagemaker-tensorflow-serving-eia",
@@ -59,7 +59,7 @@ phases:
             "dest": ["1.14.0-cpu", "1.14-cpu", "1.14.0-cpu-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "tox -e py36 -- test/integration/sagemaker/test_ei.py -n 8 --versions 1.14 --region {region} --registry {aws-id}"
+            "tox -e py37 -- test/integration/sagemaker/test_ei.py -n 8 --versions 1.14 --region {region} --registry {aws-id}"
           ]
         }]' > deployments.json
         fi
