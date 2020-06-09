@@ -29,6 +29,7 @@ INVOCATIONS_URL = 'http://localhost:8080/invocations'
 @pytest.fixture(scope='module', autouse=True, params=['1', '2', '3', '4', '5'])
 def volume(tmpdir_factory, request):
     try:
+        print(str(tmpdir_factory))
         model_dir = os.path.join(tmpdir_factory.mktemp('test'), 'model')
         code_dir = os.path.join(model_dir, 'code')
         test_example = 'test/resources/examples/test{}'.format(request.param)

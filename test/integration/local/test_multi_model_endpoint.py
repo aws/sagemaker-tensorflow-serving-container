@@ -112,7 +112,7 @@ def test_delete_unloaded_model():
     model_name = 'non-existing-model'
     code, res = make_unload_model_request(model_name)
     assert code == 404
-    assert res == '{} not loaded yet.'.format(model_name)
+    assert 'Model {} is not loaded yet'.format(model_name) in res
 
 
 def test_delete_model():
@@ -123,7 +123,7 @@ def test_delete_model():
     }
     code, res = make_load_model_request(json.dumps(model_data))
     assert code == 200
-    assert res == 'Successfully loaded model {}'.format(model_name)
+    assert 'Successfully loaded model {}'.format(model_name) in res
 
     x = {
         'instances': [1.0, 2.0, 5.0]
@@ -142,7 +142,7 @@ def test_delete_model():
 def test_list_models_empty():
     code, res = make_list_model_request()
     assert code == 200
-    assert res == {'models': []}
+    assert len(res) == 0
 
 
 def test_container_start_invocation_fail():
@@ -162,7 +162,7 @@ def test_load_two_models():
     }
     code1, res1 = make_load_model_request(json.dumps(model_data_1))
     assert code1 == 200
-    assert res1 == 'Successfully loaded model {}'.format(model_name_1)
+    assert 'Successfully loaded model {}'.format(model_name_1) in res1
 
     # load second model
     model_name_2 = 'half_plus_three'
@@ -172,7 +172,7 @@ def test_load_two_models():
     }
     code2, res2 = make_load_model_request(json.dumps(model_data_2))
     assert code2 == 200
-    assert res2 == 'Successfully loaded model {}'.format(model_name_2)
+    assert 'Successfully loaded model {}'.format(model_name_2) in res2
 
     # make invocation request to the first model
     x = {
@@ -210,11 +210,11 @@ def test_load_one_model_two_times():
     }
     code_load, res = make_load_model_request(json.dumps(model_data))
     assert code_load == 200
-    assert res == 'Successfully loaded model {}'.format(model_name)
+    assert 'Successfully loaded model {}'.format(model_name) in res
 
     code_load2, res2 = make_load_model_request(json.dumps(model_data))
     assert code_load2 == 409
-    assert res2 == 'Illegal to list model {} multiple times in config list'.format(model_name)
+    assert'Model {} is already loaded'.format(model_name) in res2
 
 
 def test_load_non_existing_model():

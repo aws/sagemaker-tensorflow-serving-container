@@ -195,7 +195,7 @@ class PythonServiceResource(object):
                     res.body = multi_model_exception.msg
                 else:
                     raise MultiModelException(falcon.HTTP_500, multi_model_exception.msg)
-            except FileExistsError as e:
+            except FileExistsError as file_exists_error:
                 res.status = falcon.HTTP_409
                 res.body = 'Model {} is already loaded.'.format(model_name)
             except OSError as os_error:
