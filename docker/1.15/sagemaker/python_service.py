@@ -56,7 +56,7 @@ def default_handler(data, context):
     :return: inference response from TFS model server
     """
     response = requests.post(context.rest_uri, data=data)
-    return response
+    return response.content, context.accept_header
 
 
 class PythonServiceResource(object):
@@ -68,10 +68,10 @@ class PythonServiceResource(object):
             self._model_tfs_pid = {}
             self._tfs_ports = self._parse_sagemaker_port_range(SAGEMAKER_TFS_PORT_RANGE)
         else:
-            self._tfs_default_model_name = os.environ['TFS_DEFAULT_MODEL_NAME']
             self._tfs_grpc_port = TFS_GRPC_PORT
             self._tfs_rest_port = TFS_REST_PORT
 
+        self._tfs_default_model_name = os.environ.get('TFS_DEFAULT_MODEL_NAME', "None")
         if PYTHON_PROCESSING_ENABLED:
             self._handler, self._input_handler, self._output_handler = self._import_handlers()
             self._handlers = self._make_handler(self._handler,
@@ -82,14 +82,14 @@ class PythonServiceResource(object):
 
         # TODO: error handling of TFS subprocess
 
-    def on_post(self, req, res):
+    def on_post(self, req, res, model_name=None):
         log.info(req.uri)
-        if 'models' in req.uri:
+        if model_name or "invocations" in req.uri:
+            self._handle_invocation_post(req, res, model_name)
+        else:
             data = json.loads(req.stream.read()
                               .decode('utf-8'))
             self._handle_load_model_post(res, data)
-        else:
-            self._handle_invocation_post(req, res)
 
     def _parse_sagemaker_port_range(self, port_range):
         lower, upper = port_range.split('-')
@@ -139,14 +139,18 @@ class PythonServiceResource(object):
         # model is already loaded
         if model_name in self._model_tfs_pid:
             res.status = falcon.HTTP_409
-            res.body = 'Model {} is already loaded.'.format(model_name)
+            res.body = json.dumps({
+                'error': 'Model {} is already loaded.'.format(model_name)
+            })
 
         log.info(self._model_tfs_rest_port)
 
         # check if there are available ports
         if not self._ports_available():
             res.status = falcon.HTTP_507
-            res.body = 'Memory exhausted: no available ports to load the model.'
+            res.body = json.dumps({
+                'Memory exhausted: no available ports to load the model.'
+            })
 
         self._model_tfs_rest_port[model_name] = self._tfs_ports['current_rest_port']
         self._model_tfs_grpc_port[model_name] = self._tfs_ports['current_grpc_port']
@@ -180,12 +184,15 @@ class PythonServiceResource(object):
                 # increment next available rest/grpc port
                 self._tfs_ports["current_rest_port"] += 1
                 self._tfs_ports["current_grpc_port"] += 1
-                res.body = 'Successfully loaded model {}, ' \
-                           'listening on rest port {} ' \
-                           'and grpc port {}.'.format(model_name,
-                                                      self._model_tfs_rest_port,
-                                                      self._model_tfs_grpc_port,)
                 res.status = falcon.HTTP_200
+                res.body = json.dumps({
+                    'success':
+                        'Successfully loaded model {}, '
+                        'listening on rest port {} '
+                        'and grpc port {}.'.format(model_name,
+                                                   self._model_tfs_rest_port,
+                                                   self._model_tfs_grpc_port,)
+                })
             except MultiModelException as multi_model_exception:
                 if multi_model_exception.code == 409:
                     res.status = falcon.HTTP_409
@@ -195,9 +202,11 @@ class PythonServiceResource(object):
                     res.body = multi_model_exception.msg
                 else:
                     raise MultiModelException(falcon.HTTP_500, multi_model_exception.msg)
-            except FileExistsError as file_exists_error:
+            except FileExistsError as e:
                 res.status = falcon.HTTP_409
-                res.body = 'Model {} is already loaded.'.format(model_name)
+                res.body = json.dumps({
+                    'error': 'Model {} is already loaded.'.format(model_name)
+                })
             except OSError as os_error:
                 if os_error.errono == 12:
                     raise MultiModelException(falcon.HTTP_507,
@@ -207,16 +216,34 @@ class PythonServiceResource(object):
                     raise MultiModelException(falcon.HTTP_500, os_error.strerror)
         else:
             res.status = falcon.HTTP_404
-            res.body = 'Could not find valid base path {} for servable {}'.format(base_path,
-                                                                                  model_name)
+            res.body = json.dumps({
+                'error':
+                    'Could not find valid base path {} for servable {}'.format(base_path,
+                                                                               model_name)
+            })
 
-    def _handle_invocation_post(self, req, res):
+    def _handle_invocation_post(self, req, res, model_name=None):
+        log.info("SAGEMAKER_MULTI_MODEL_ENABLED: {}".format(str(SAGEMAKER_MULTI_MODEL_ENABLED)))
         if SAGEMAKER_MULTI_MODEL_ENABLED:
-            # MME mode: parse model name first to get corresponding ports
-            model_name = self._parse_tfs_custom_attributes(req).get('tfs-model-name')
-            rest_port = self._tfs_rest_port.get(model_name)
-            grpc_port = self._tfs_grpc_port.get(model_name)
-            data, context = self._parse_request(req, rest_port, grpc_port)
+            if model_name:
+                if model_name not in self._model_tfs_rest_port:
+                    res.status = falcon.HTTP_404
+                    res.body = json.dumps({
+                        'error': "Model {} is not loaded yet.".format(model_name)
+                    })
+                    return
+                else:
+                    log.info("model name: {}".format(model_name))
+                    rest_port = self._model_tfs_rest_port[model_name]
+                    log.info("rest port: {}".format(str(self._model_tfs_rest_port[model_name])))
+                    grpc_port = self._model_tfs_grpc_port[model_name]
+                    log.info("grpc port: {}".format(str(self._model_tfs_grpc_port[model_name])))
+                    data, context = self._parse_request(req, rest_port, grpc_port, model_name)
+            else:
+                res.status = falcon.HTTP_400
+                res.body = json.dumps({
+                    'error': 'Invocation request does not contain model name.'
+                })
         else:
             data, context = self._parse_request(req, self._tfs_rest_port, self._tfs_grpc_port)
 
@@ -257,11 +284,14 @@ class PythonServiceResource(object):
 
         return handler
 
-    def _parse_request(self, req, rest_port, grpc_port):
+    def _parse_request(self, req, rest_port, grpc_port, model_name=None):
         tfs_attributes = self._parse_tfs_custom_attributes(req)
-        tfs_uri = self._tfs_uri(rest_port, tfs_attributes)
+        tfs_uri = self._tfs_uri(rest_port, tfs_attributes, model_name)
 
-        context = Context(tfs_attributes.get('tfs-model-name'),
+        if not model_name:
+            model_name = tfs_attributes.get('tfs-model-name')
+
+        context = Context(model_name,
                           tfs_attributes.get('tfs-model-version'),
                           tfs_attributes.get('tfs-method'),
                           tfs_uri,
@@ -283,8 +313,12 @@ class PythonServiceResource(object):
                 attributes[k] = v
         return attributes
 
-    def _tfs_uri(self, port, attributes):
-        tfs_model_name = attributes.get('tfs-model-name', self._tfs_default_model_name)
+    def _tfs_uri(self, port, attributes, model_name=None):
+
+        log.info("sagemaker tfs attributes: ")
+        log.info(str(attributes))
+
+        tfs_model_name = model_name if model_name else attributes.get('tfs-model-name', self._tfs_default_model_name)
         tfs_model_version = attributes.get('tfs-model-version')
         tfs_method = attributes.get('tfs-method', 'predict')
 
@@ -300,7 +334,7 @@ class PythonServiceResource(object):
             uri = 'http://localhost:{}/v1/models/{}'
             for model, port in self._model_tfs_rest_port.items():
                 try:
-                    info = requests.get(uri.format(port, model))
+                    info = json.loads(requests.get(uri.format(port, model)).content)
                     models_info[model] = info
                 except ValueError as e:
                     log.exception('exception handling request: {}'.format(e))
@@ -342,6 +376,14 @@ class PythonServiceResource(object):
             try:
                 self._model_tfs_pid[model_name].kill()
                 os.remove('/sagemaker/tfs-config/{}/model-config.cfg'.format(model_name))
+                os.rmdir('/sagemaker/tfs-config/{}'.format(model_name))
+                del self._model_tfs_rest_port[model_name]
+                del self._model_tfs_grpc_port[model_name]
+                del self._model_tfs_pid[model_name]
+                res.status = falcon.HTTP_200
+                res.body = json.dumps({
+                    'success': 'Successfully unloaded model {}.'.format(model_name)
+                })
             except OSError or FileNotFoundError as error:
                 res.status = falcon.HTTP_500
                 res.body = json.dumps({
@@ -406,6 +448,7 @@ class ServiceResources(object):
         if self._enable_model_manager:
             application.add_route('/models', self._python_service_resource)
             application.add_route('/models/{model_name}', self._python_service_resource)
+            application.add_route('/models/{model_name}/invoke', self._python_service_resource)
 
 
 app = falcon.API()

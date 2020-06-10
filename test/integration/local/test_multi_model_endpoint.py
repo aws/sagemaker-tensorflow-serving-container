@@ -107,6 +107,21 @@ def test_ping():
     assert res.status_code == 200
 
 
+def test_container_start_invocation_fail():
+    x = {
+        'instances': [1.0, 2.0, 5.0]
+    }
+    code, y = make_invocation_request(json.dumps(x), 'half_plus_three')
+    assert code == 404
+    assert "Model half_plus_three is not loaded yet." in str(y)
+
+
+def test_list_models_empty():
+    code, res = make_list_model_request()
+    assert code == 200
+    assert len(res) == 0
+
+
 def test_delete_unloaded_model():
     # unloads the given model/version, no-op if not loaded
     model_name = 'non-existing-model'
@@ -136,22 +151,7 @@ def test_delete_model():
 
     code_invoke, y2 = make_invocation_request(json.dumps(x), model_name)
     assert code_invoke == 404
-    assert y2['error'].startswith('Servable not found for request')
-
-
-def test_list_models_empty():
-    code, res = make_list_model_request()
-    assert code == 200
-    assert len(res) == 0
-
-
-def test_container_start_invocation_fail():
-    x = {
-        'instances': [1.0, 2.0, 5.0]
-    }
-    code, y = make_invocation_request(json.dumps(x), 'half_plus_three')
-    assert code == 404
-    assert y['error'].startswith('Servable not found for request')
+    assert 'Model {} is not loaded yet.'.format(model_name) in str(y2)
 
 
 def test_load_two_models():
@@ -188,18 +188,7 @@ def test_load_two_models():
     assert y2 == {'predictions': [3.5, 4.0, 5.5]}
 
     code_list, res3 = make_list_model_request()
-    res3 = res3['models']
-    models = [json.loads(model) for model in res3]
-    assert code_list == 200
-    assert models == [
-        {
-            "modelName": "half_plus_two",
-            "modelUrl": "/opt/ml/models/half_plus_two"
-        },
-        {
-            "modelName": "half_plus_three",
-            "modelUrl": "/opt/ml/models/half_plus_three"
-        }]
+    assert len(res3) == 2
 
 
 def test_load_one_model_two_times():
@@ -226,7 +215,7 @@ def test_load_non_existing_model():
     }
     code, res = make_load_model_request(json.dumps(model_data))
     assert code == 404
-    assert res == 'Could not find valid base path {} for servable {}'.format(base_path, model_name)
+    assert 'Could not find valid base path {} for servable {}'.format(base_path, model_name) in str(res)
 
 
 def test_bad_model_reqeust():
@@ -247,4 +236,4 @@ def test_invalid_model_version():
     }
     code, res = make_load_model_request(json.dumps(invalid_model_version_data))
     assert code == 404
-    assert res == 'Could not find valid base path {} for servable {}'.format(base_path, model_name)
+    assert 'Could not find valid base path {} for servable {}'.format(base_path, model_name) in str(res)

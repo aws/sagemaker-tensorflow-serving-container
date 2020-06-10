@@ -27,6 +27,7 @@ JS_PING = 'js_content ping'
 JS_INVOCATIONS = 'js_content invocations'
 GUNICORN_PING = 'proxy_pass http://gunicorn_upstream/ping'
 GUNICORN_INVOCATIONS = 'proxy_pass http://gunicorn_upstream/invocations'
+# MULTI_MODEL_INVOCATIONS = 'proxy_pass http://gunicorn_upstream/models/$1/$2'
 
 PYTHON_LIB_PATH = '/opt/ml/model/code/lib'
 REQUIREMENTS_PATH = '/opt/ml/model/code/requirements.txt'
@@ -229,8 +230,10 @@ class ServiceManager(object):
             'NGINX_HTTP_PORT': self._nginx_http_port,
             'NGINX_LOG_LEVEL': self._nginx_loglevel,
             'FORWARD_PING_REQUESTS': GUNICORN_PING if self._use_gunicorn else JS_PING,
-            'FORWARD_INVOCATION_REQUESTS': GUNICORN_INVOCATIONS if self._enable_python_service
+            'FORWARD_INVOCATION_REQUESTS': GUNICORN_INVOCATIONS if self._use_gunicorn
             else JS_INVOCATIONS,
+            # 'MULTI_MODEL_INVOCATIONS': MULTI_MODEL_INVOCATIONS if self._tfs_enable_multi_model_endpoint
+            # else JS_INVOCATIONS
         }
 
         config = pattern.sub(lambda x: template_values[x.group(1)], template)
