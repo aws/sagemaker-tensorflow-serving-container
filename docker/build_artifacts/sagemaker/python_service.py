@@ -147,7 +147,7 @@ class PythonServiceResource(object):
         if not self._ports_available():
             res.status = falcon.HTTP_507
             res.body = json.dumps({
-                'Memory exhausted: no available ports to load the model.'
+                'error': 'Memory exhausted: no available ports to load the model.'
             })
 
         self._model_tfs_rest_port[model_name] = self._tfs_ports['current_rest_port']
