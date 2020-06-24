@@ -23,10 +23,6 @@ RUN \
 
 COPY ./ /
 
-# put tensorflow library (with only error_codes) to python dist-packages
-WORKDIR /
-RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/dist-packages/
-
 ARG TFS_SHORT_VERSION
 ENV SAGEMAKER_TFS_VERSION "${TFS_SHORT_VERSION}"
 ENV PATH "$PATH:/sagemaker"
