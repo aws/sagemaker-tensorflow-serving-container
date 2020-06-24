@@ -20,10 +20,6 @@ RUN \
 
 COPY ./ /
 
-# put tensorflow library (with only error_codes) to python dist-packages
-WORKDIR /
-RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/dist-packages/
-
 RUN mv amazonei_tensorflow_model_server /usr/bin/tensorflow_model_server && \
     chmod +x /usr/bin/tensorflow_model_server
 
