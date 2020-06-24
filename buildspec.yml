@@ -20,7 +20,7 @@ phases:
 
       # run local tests
       - tox -e py37 -- test/integration/local --framework-version 1.15
-      - tox -e py37 -- test/integration/local --framework-version 2.0
+      - tox -e py37 -- test/integration/local --framework-version 2.1
 
       # push docker images to ECR
       - |
@@ -32,7 +32,7 @@ phases:
       - |
         if is-release-build; then
           tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 1.15.0
-          tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 2.0.0
+          tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 2.1.0
         fi
 
       # write deployment details to file

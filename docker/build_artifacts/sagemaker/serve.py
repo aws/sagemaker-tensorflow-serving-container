@@ -12,11 +12,11 @@
 # language governing permissions and limitations under the License.
 
 import logging
-import multiprocessing
 import os
 import re
 import signal
 import subprocess
+import tfs_utils
 
 from contextlib import contextmanager
 
@@ -46,6 +46,8 @@ class ServiceManager(object):
         self._nginx_loglevel = os.environ.get('SAGEMAKER_TFS_NGINX_LOGLEVEL', 'error')
         self._tfs_default_model_name = os.environ.get('SAGEMAKER_TFS_DEFAULT_MODEL_NAME', 'None')
         self._sagemaker_port_range = os.environ.get('SAGEMAKER_SAFE_PORT_RANGE', None)
+        self._tfs_config_path = '/sagemaker/model-config.cfg'
+        self._tfs_batching_config_path = '/sagemaker/batching-config.cfg'
 
         _enable_batching = os.environ.get('SAGEMAKER_TFS_ENABLE_BATCHING', 'false').lower()
         _enable_multi_model_endpoint = os.environ.get('SAGEMAKER_MULTI_MODEL',
@@ -80,7 +82,7 @@ class ServiceManager(object):
         os.environ['TFS_REST_PORT'] = self._tfs_rest_port
 
     def _create_tfs_config(self):
-        models = self._find_models()
+        models = tfs_utils.find_models()
         if not models:
             raise ValueError('no SavedModel bundles found!')
 
@@ -106,80 +108,6 @@ class ServiceManager(object):
 
         with open('/sagemaker/model-config.cfg', 'w') as f:
             f.write(config)
-
-    def _create_batching_config(self):
-
-        class _BatchingParameter:
-            def __init__(self, key, env_var, value, defaulted_message):
-                self.key = key
-                self.env_var = env_var
-                self.value = value
-                self.defaulted_message = defaulted_message
-
-        cpu_count = multiprocessing.cpu_count()
-        batching_parameters = [
-            _BatchingParameter('max_batch_size', 'SAGEMAKER_TFS_MAX_BATCH_SIZE', 8,
-                               "max_batch_size defaulted to {}. Set {} to override default. "
-                               "Tuning this parameter may yield better performance."),
-            _BatchingParameter('batch_timeout_micros', 'SAGEMAKER_TFS_BATCH_TIMEOUT_MICROS', 1000,
-                               "batch_timeout_micros defaulted to {}. Set {} to override "
-                               "default. Tuning this parameter may yield better performance."),
-            _BatchingParameter('num_batch_threads', 'SAGEMAKER_TFS_NUM_BATCH_THREADS',
-                               cpu_count, "num_batch_threads defaulted to {},"
-                               "the number of CPUs. Set {} to override default."),
-            _BatchingParameter('max_enqueued_batches', 'SAGEMAKER_TFS_MAX_ENQUEUED_BATCHES',
-                               # Batch limits number of concurrent requests, which limits number
-                               # of enqueued batches, so this can be set high for Batch
-                               100000000 if 'SAGEMAKER_BATCH' in os.environ else cpu_count,
-                               "max_enqueued_batches defaulted to {}. Set {} to override default. "
-                               "Tuning this parameter may be necessary to tune out-of-memory "
-                               "errors occur."),
-        ]
-
-        warning_message = ''
-        for batching_parameter in batching_parameters:
-            if batching_parameter.env_var in os.environ:
-                batching_parameter.value = os.environ[batching_parameter.env_var]
-            else:
-                warning_message += batching_parameter.defaulted_message.format(
-                    batching_parameter.value, batching_parameter.env_var)
-                warning_message += '\n'
-        if warning_message:
-            log.warning(warning_message)
-
-        config = ''
-        for batching_parameter in batching_parameters:
-            config += '%s { value: %s }\n' % (batching_parameter.key, batching_parameter.value)
-
-        log.info('batching config: \n%s\n', config)
-        with open('/sagemaker/batching-config.cfg', 'w') as f:
-            f.write(config)
-
-    def _get_tfs_batching_args(self):
-        if self._tfs_enable_batching:
-            return "--enable_batching=true " \
-                   "--batching_parameters_file=/sagemaker/batching-config.cfg"
-        else:
-            return ""
-
-    def _find_models(self):
-        base_path = '/opt/ml/model'
-        models = []
-        for f in self._find_saved_model_files(base_path):
-            parts = f.split('/')
-            if len(parts) >= 6 and re.match(r'^\d+$', parts[-2]):
-                model_path = '/'.join(parts[0:-2])
-                if model_path not in models:
-                    models.append(model_path)
-        return models
-
-    def _find_saved_model_files(self, path):
-        for e in os.scandir(path):
-            if e.is_dir():
-                yield from self._find_saved_model_files(os.path.join(path, e.name))
-            else:
-                if e.name == 'saved_model.pb':
-                    yield os.path.join(path, e.name)
 
     def _setup_gunicorn(self):
         python_path_content = []
@@ -249,14 +177,13 @@ class ServiceManager(object):
 
     def _start_tfs(self):
         self._log_version('tensorflow_model_server --version', 'tensorflow version info:')
-        tfs_config_path = '/sagemaker/model-config.cfg'
-        cmd = "tensorflow_model_server " \
-              "--port={} " \
-              "--rest_api_port={} " \
-              "--model_config_file={} " \
-              "--max_num_load_retries=0 {}"\
-            .format(self._tfs_grpc_port, self._tfs_rest_port, tfs_config_path,
-                    self._get_tfs_batching_args())
+        cmd = tfs_utils.tfs_command(
+            self._tfs_grpc_port,
+            self._tfs_rest_port,
+            self._tfs_config_path,
+            self._tfs_enable_batching,
+            self._tfs_batching_config_path,
+        )
         log.info('tensorflow serving command: {}'.format(cmd))
         p = subprocess.Popen(cmd.split())
         log.info('started tensorflow serving (pid: %d)', p.pid)
@@ -332,11 +259,15 @@ class ServiceManager(object):
 
         if self._tfs_enable_batching:
             log.info('batching is enabled')
-            self._create_batching_config()
+            tfs_utils.create_batching_config(self._tfs_batching_config_path)
 
         if self._tfs_enable_multi_model_endpoint:
             log.info('multi-model endpoint is enabled, TFS model servers will be started later')
         else:
+            tfs_utils.create_tfs_config(
+                self._tfs_default_model_name,
+                self._tfs_config_path
+            )
             self._create_tfs_config()
             self._start_tfs()
 

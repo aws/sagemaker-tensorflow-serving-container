@@ -11,7 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-import encodings
 import json
 import os
 import subprocess
@@ -21,10 +20,10 @@ import time
 import pytest
 import requests
 
+from multi_model_endpoint_test_utils import make_invocation_request, make_list_model_request, \
+    make_get_model_request, make_load_model_request, make_unload_model_request
+
 PING_URL = 'http://localhost:8080/ping'
-INVOCATION_URL = 'http://localhost:8080/models/{}/invoke'
-MODELS_URL = 'http://localhost:8080/models'
-DELETE_MODEL_URL = 'http://localhost:8080/models/{}'
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -70,38 +69,6 @@ def container(request, docker_base_name, tag, runtime_config):
         subprocess.check_call('docker rm -f sagemaker-tensorflow-serving-test'.split())
 
 
-def make_invocation_request(data, model_name, content_type='application/json'):
-    headers = {
-        'Content-Type': content_type,
-        'X-Amzn-SageMaker-Custom-Attributes': 'tfs-method=predict'
-    }
-    response = requests.post(INVOCATION_URL.format(model_name), data=data, headers=headers)
-    return response.status_code, json.loads(response.content.decode(encodings.utf_8.getregentry().name))
-
-
-def make_list_model_request():
-    response = requests.get(MODELS_URL)
-    return response.status_code, json.loads(response.content.decode(encodings.utf_8.getregentry().name))
-
-
-def make_get_model_request(model_name):
-    response = requests.get(MODELS_URL + '/{}'.format(model_name))
-    return response.status_code, json.loads(response.content.decode(encodings.utf_8.getregentry().name))
-
-
-def make_load_model_request(data, content_type='application/json'):
-    headers = {
-        'Content-Type': content_type
-    }
-    response = requests.post(MODELS_URL, data=data, headers=headers)
-    return response.status_code, response.content.decode(encodings.utf_8.getregentry().name)
-
-
-def make_unload_model_request(model_name):
-    response = requests.delete(DELETE_MODEL_URL.format(model_name))
-    return response.status_code, response.content.decode(encodings.utf_8.getregentry().name)
-
-
 def test_ping():
     res = requests.get(PING_URL)
     assert res.status_code == 200
@@ -112,12 +79,14 @@ def test_container_start_invocation_fail():
         'instances': [1.0, 2.0, 5.0]
     }
     code, y = make_invocation_request(json.dumps(x), 'half_plus_three')
+    y = json.loads(y)
     assert code == 404
     assert "Model half_plus_three is not loaded yet." in str(y)
 
 
 def test_list_models_empty():
     code, res = make_list_model_request()
+    res = json.loads(res)
     assert code == 200
     assert len(res) == 0
 
@@ -144,12 +113,14 @@ def test_delete_model():
         'instances': [1.0, 2.0, 5.0]
     }
     _, y = make_invocation_request(json.dumps(x), model_name)
+    y = json.loads(y)
     assert y == {'predictions': [3.5, 4.0, 5.5]}
 
     code_unload, res2 = make_unload_model_request(model_name)
     assert code_unload == 200
 
     code_invoke, y2 = make_invocation_request(json.dumps(x), model_name)
+    y2 = json.loads(y2)
     assert code_invoke == 404
     assert 'Model {} is not loaded yet.'.format(model_name) in str(y2)
 
@@ -179,15 +150,18 @@ def test_load_two_models():
         'instances': [1.0, 2.0, 5.0]
     }
     code_invoke1, y1 = make_invocation_request(json.dumps(x), model_name_1)
+    y1 = json.loads(y1)
     assert code_invoke1 == 200
     assert y1 == {'predictions': [2.5, 3.0, 4.5]}
 
     # make invocation request to the second model
     code_invoke2, y2 = make_invocation_request(json.dumps(x), 'half_plus_three')
+    y2 = json.loads(y2)
     assert code_invoke2 == 200
     assert y2 == {'predictions': [3.5, 4.0, 5.5]}
 
     code_list, res3 = make_list_model_request()
+    res3 = json.loads(res3)
     assert len(res3) == 2
 
 
