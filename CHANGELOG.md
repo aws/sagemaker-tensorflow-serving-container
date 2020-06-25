@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.23.post0 (2020-06-25)
+
+### Testing and Release Infrastructure
+
+ * add issue templates
+
 ## v1.6.23 (2020-06-11)
 
 ### Bug Fixes and Other Changes
