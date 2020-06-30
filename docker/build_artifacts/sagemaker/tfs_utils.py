@@ -71,9 +71,8 @@ def parse_tfs_custom_attributes(req):
     attributes = {}
     header = req.get_header(CUSTOM_ATTRIBUTES_HEADER)
     if header:
-        for attribute in re.findall(r'(tfs-[a-z\-]+=[^,]+)', header):
-            k, v = attribute.split('=')
-            attributes[k] = v
+        matches = re.findall(r"(tfs-[a-z\-]+=[^,]+)", header)
+        attributes = dict(attribute.split("=") for attribute in matches)
     return attributes
 
 
