@@ -54,8 +54,7 @@ def parse_request(req, rest_port, grpc_port, default_model_name, model_name=None
 def make_tfs_uri(port, attributes, default_model_name, model_name=None):
     log.info("sagemaker tfs attributes: \n{}".format(attributes))
 
-    tfs_model_name = model_name if model_name \
-        else attributes.get('tfs-model-name', default_model_name)
+    tfs_model_name = model_name or attributes.get("tfs-model-name", default_model_name)
     tfs_model_version = attributes.get('tfs-model-version')
     tfs_method = attributes.get('tfs-method', 'predict')
 
