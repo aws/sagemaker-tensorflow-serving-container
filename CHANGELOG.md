@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.6.23.post0 (2020-06-25)
+
+### Testing and Release Infrastructure
+
+ * add issue templates
+
+## v1.6.23 (2020-06-11)
+
+### Bug Fixes and Other Changes
+
+ * error code files for TFS2.2 (copied from pip install tf)
+
 ## v1.6.22.post0 (2020-05-13)
 
 ### Testing and Release Infrastructure

@@ -2,7 +2,8 @@
 
 ignore=
     tensorflow_serving,
-    tensorflow-2.1
+    tensorflow-2.1,
+    tensorflow-2.2
 
 [MESSAGES CONTROL]
 
