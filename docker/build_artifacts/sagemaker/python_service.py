@@ -188,8 +188,6 @@ class PythonServiceResource:
                 else:
                     raise MultiModelException(falcon.HTTP_500, os_error.strerror)
         else:
-            self._cleanup_config_file(tfs_config_file)
-            self._cleanup_config_file(batching_config_file)
             res.status = falcon.HTTP_404
             res.body = json.dumps({
                 'error':
