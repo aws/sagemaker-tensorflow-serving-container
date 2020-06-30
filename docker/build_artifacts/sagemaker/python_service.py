@@ -82,8 +82,7 @@ class PythonServiceResource(object):
         if model_name or "invocations" in req.uri:
             self._handle_invocation_post(req, res, model_name)
         else:
-            data = json.loads(req.stream.read()
-                              .decode('utf-8'))
+            data = json.loads(req.stream.read().decode('utf-8'))
             self._handle_load_model_post(res, data)
 
     def _parse_sagemaker_port_range(self, port_range):
@@ -205,10 +204,9 @@ class PythonServiceResource(object):
                         if all(version["state"] == "AVAILABLE" for version in versions):
                             break
                 except ConnectionError:
-                    pass
+                    log.exception("Failed to load models.")
 
     def _handle_invocation_post(self, req, res, model_name=None):
-        log.info("SAGEMAKER_MULTI_MODEL_ENABLED: {}".format(str(SAGEMAKER_MULTI_MODEL_ENABLED)))
         if SAGEMAKER_MULTI_MODEL_ENABLED:
             if model_name:
                 if model_name not in self._model_tfs_rest_port:
@@ -304,7 +302,7 @@ class PythonServiceResource(object):
                         'model': info
                     }).encode('utf-8')
                 except ValueError as e:
-                    log.exception('exception handling request: {}'.format(e))
+                    log.exception('exception handling GET models request.')
                     res.status = falcon.HTTP_500
                     res.body = json.dumps({
                         'error': str(e)
@@ -343,8 +341,6 @@ class PythonServiceResource(object):
         # model base path doesn't exits
         if not os.path.exists(model_path):
             return False
-        # model versions doesn't exist
-        log.info("model path exists")
         versions = []
         for _, dirs, _ in os.walk(model_path):
             for dirname in dirs:

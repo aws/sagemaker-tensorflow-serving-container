@@ -2,3 +2,5 @@ __pycache__
 .tox/
 log.txt
 .idea/
+.DS_Store
+
