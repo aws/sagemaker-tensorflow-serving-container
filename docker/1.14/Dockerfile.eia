@@ -80,10 +80,6 @@ RUN pip install --no-cache-dir \
 
 COPY sagemaker /sagemaker
 
-# put tensorflow library (with only error_codes) to python dist-packages
-WORKDIR /
-RUN mv /sagemaker/tensorflow/ /usr/local/lib/python3.*/site-packages/
-
 RUN wget https://amazonei-tools.s3.amazonaws.com/v${HEALTH_CHECK_VERSION}/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz -O /opt/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz \
  && tar -xvf /opt/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz -C /opt/ \
  && rm -rf /opt/ei_tools_${HEALTH_CHECK_VERSION}.tar.gz \
