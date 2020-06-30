@@ -54,7 +54,7 @@ def default_handler(data, context):
     return response.content, context.accept_header
 
 
-class PythonServiceResource(object):
+class PythonServiceResource:
 
     def __init__(self):
         if SAGEMAKER_MULTI_MODEL_ENABLED:
@@ -163,6 +163,8 @@ class PythonServiceResource(object):
                                                    self._model_tfs_grpc_port,)
                 })
             except MultiModelException as multi_model_exception:
+                self._cleanup_config_file(tfs_config_file)
+                self._cleanup_config_file(batching_config_file)
                 if multi_model_exception.code == 409:
                     res.status = falcon.HTTP_409
                     res.body = multi_model_exception.msg
@@ -177,6 +179,8 @@ class PythonServiceResource(object):
                     'error': 'Model {} is already loaded. {}'.format(model_name, str(e))
                 })
             except OSError as os_error:
+                self._cleanup_config_file(tfs_config_file)
+                self._cleanup_config_file(batching_config_file)
                 if os_error.errno == 12:
                     raise MultiModelException(falcon.HTTP_507,
                                               'Memory exhausted: '
@@ -184,12 +188,18 @@ class PythonServiceResource(object):
                 else:
                     raise MultiModelException(falcon.HTTP_500, os_error.strerror)
         else:
+            self._cleanup_config_file(tfs_config_file)
+            self._cleanup_config_file(batching_config_file)
             res.status = falcon.HTTP_404
             res.body = json.dumps({
                 'error':
                     'Could not find valid base path {} for servable {}'.format(base_path,
                                                                                model_name)
             })
+
+    def _cleanup_config_file(self, config_file):
+        if os.path.exists(config_file):
+            os.remove(config_file)
 
     def _wait_for_model(self, model_name):
         url = "http://localhost:{}/v1/models/{}".format(self._model_tfs_rest_port[model_name],
@@ -362,12 +372,12 @@ class PythonServiceResource(object):
         return False
 
 
-class PingResource(object):
+class PingResource:
     def on_get(self, req, res):  # pylint: disable=W0613
         res.status = falcon.HTTP_200
 
 
-class ServiceResources(object):
+class ServiceResources:
     def __init__(self):
         self._enable_python_processing = PYTHON_PROCESSING_ENABLED
         self._enable_model_manager = SAGEMAKER_MULTI_MODEL_ENABLED
