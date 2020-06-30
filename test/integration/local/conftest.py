@@ -13,43 +13,43 @@
 
 import pytest
 
-FRAMEWORK_LATEST_VERSION = '1.13'
-TFS_DOCKER_BASE_NAME = 'sagemaker-tensorflow-serving'
+FRAMEWORK_LATEST_VERSION = "1.13"
+TFS_DOCKER_BASE_NAME = "sagemaker-tensorflow-serving"
 
 
 def pytest_addoption(parser):
-    parser.addoption('--docker-base-name', default=TFS_DOCKER_BASE_NAME)
-    parser.addoption('--framework-version', default=FRAMEWORK_LATEST_VERSION, required=True)
-    parser.addoption('--processor', default='cpu', choices=['cpu', 'gpu'])
-    parser.addoption('--tag')
+    parser.addoption("--docker-base-name", default=TFS_DOCKER_BASE_NAME)
+    parser.addoption("--framework-version", default=FRAMEWORK_LATEST_VERSION, required=True)
+    parser.addoption("--processor", default="cpu", choices=["cpu", "gpu"])
+    parser.addoption("--tag")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def docker_base_name(request):
-    return request.config.getoption('--docker-base-name')
+    return request.config.getoption("--docker-base-name")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def framework_version(request):
-    return request.config.getoption('--framework-version')
+    return request.config.getoption("--framework-version")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def processor(request):
-    return request.config.getoption('--processor')
+    return request.config.getoption("--processor")
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def runtime_config(request, processor):
-    if processor == 'gpu':
-        return '--runtime=nvidia '
+    if processor == "gpu":
+        return "--runtime=nvidia "
     else:
-        return ''
+        return ""
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def tag(request, framework_version, processor):
-    image_tag = request.config.getoption('--tag')
+    image_tag = request.config.getoption("--tag")
     if not image_tag:
-        image_tag = '{}-{}'.format(framework_version, processor)
+        image_tag = "{}-{}".format(framework_version, processor)
     return image_tag

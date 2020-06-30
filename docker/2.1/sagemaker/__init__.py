@@ -10,13 +10,3 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-
-import os.path
-import subprocess
-import shlex
-import sys
-
-if not os.path.exists("/opt/ml/input/config"):
-    subprocess.call(["python", "/usr/local/bin/deep_learning_container.py", "&>/dev/null", "&"])
-
-subprocess.check_call(shlex.split(' '.join(sys.argv[1:])))

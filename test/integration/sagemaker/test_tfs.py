@@ -16,27 +16,27 @@ import pytest
 
 import util
 
-NON_P3_REGIONS = ['ap-southeast-1', 'ap-southeast-2', 'ap-south-1',
-                  'ca-central-1', 'eu-central-1', 'eu-west-2', 'us-west-1']
+NON_P3_REGIONS = ["ap-southeast-1", "ap-southeast-2", "ap-south-1",
+                  "ca-central-1", "eu-central-1", "eu-west-2", "us-west-1"]
 
 
-@pytest.fixture(params=os.environ['TEST_VERSIONS'].split(','))
+@pytest.fixture(params=os.environ["TEST_VERSIONS"].split(","))
 def version(request):
     return request.param
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def repo(request):
-    return request.config.getoption('--repo') or 'sagemaker-tensorflow-serving'
+    return request.config.getoption("--repo") or "sagemaker-tensorflow-serving"
 
 
 @pytest.fixture
 def tag(request, version, instance_type):
-    if request.config.getoption('--tag'):
-        return request.config.getoption('--tag')
+    if request.config.getoption("--tag"):
+        return request.config.getoption("--tag")
 
-    arch = 'gpu' if instance_type.startswith('ml.p') else 'cpu'
-    return f'{version}-{arch}'
+    arch = "gpu" if instance_type.startswith("ml.p") else "cpu"
+    return f"{version}-{arch}"
 
 
 @pytest.fixture
@@ -44,21 +44,21 @@ def image_uri(registry, region, repo, tag):
     return util.image_uri(registry, region, repo, tag)
 
 
-@pytest.fixture(params=os.environ['TEST_INSTANCE_TYPES'].split(','))
+@pytest.fixture(params=os.environ["TEST_INSTANCE_TYPES"].split(","))
 def instance_type(request, region):
     return request.param
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def accelerator_type():
     return None
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def tfs_model(region, boto_session):
     return util.find_or_put_model_data(region,
                                        boto_session,
-                                       'test/data/tfs-model.tar.gz')
+                                       "test/data/tfs-model.tar.gz")
 
 
 @pytest.fixture(scope='session')
