@@ -35,7 +35,7 @@ def lock(path=DEFAULT_LOCK_FILE):
 @contextmanager
 def timeout(seconds=60):
     def _raise_timeout_error(signum, frame):
-        raise Exception(408, 'Timed our after {} seconds'.format(seconds))
+        raise Exception(408, 'Timed out after {} seconds'.format(seconds))
 
     try:
         signal.signal(signal.SIGALRM, _raise_timeout_error)
