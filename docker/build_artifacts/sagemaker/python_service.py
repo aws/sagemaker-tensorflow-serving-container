@@ -202,12 +202,7 @@ class PythonServiceResource(object):
                     response = requests.get(url)
                     if response.status_code == 200:
                         versions = json.loads(response.content)['model_version_status']
-                        count = len(versions)
-                        for version in versions:
-                            state = version['state']
-                            if state == 'AVAILABLE':
-                                count -= 1
-                        if count == 0:
+                        if all(version["state"] == "AVAILABLE" for version in versions):
                             break
                 except ConnectionError:
                     pass
