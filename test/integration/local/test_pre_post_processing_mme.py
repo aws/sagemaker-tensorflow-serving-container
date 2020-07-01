@@ -100,7 +100,7 @@ def test_ping_service():
 
 def test_predict_json(model):
     headers = make_headers()
-    data = "{'instances': [1.0, 2.0, 5.0]}"
+    data = "{\"instances\": [1.0, 2.0, 5.0]}"
     response = requests.post(INVOCATION_URL.format(model), data=data, headers=headers).json()
     assert response == {"predictions": [3.5, 4.0, 5.5]}
 

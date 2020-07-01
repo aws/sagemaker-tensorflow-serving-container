@@ -130,7 +130,7 @@ def test_predict_jsons():
 
 
 def test_predict_jsons_2():
-    x = "{'x': [1.0, 2.0, 5.0]}\n{'x': [1.0, 2.0, 5.0]}"
+    x = "{\"x\": [1.0, 2.0, 5.0]}\n{\"x\": [1.0, 2.0, 5.0]}"
     y = make_request(x)
     assert y == {"predictions": [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]}
 
@@ -255,4 +255,4 @@ def test_predict_with_jsonlines():
     }
     response = requests.post(BASE_URL, data=json.dumps(x), headers=headers)
     assert response.headers["Content-Type"] == "application/jsonlines"
-    assert response.content.decode("utf-8") == "{    'predictions': [3.5, 4.0, 5.5    ]}"
+    assert response.content.decode("utf-8") == "{    \"predictions\": [3.5, 4.0, 5.5    ]}"

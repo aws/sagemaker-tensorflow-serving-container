@@ -88,7 +88,7 @@ def make_headers(content_type, method):
 
 def test_predict_json():
     headers = make_headers("application/json", "predict")
-    data = "{'instances': [1.0, 2.0, 5.0]}"
+    data = "{\"instances\": [1.0, 2.0, 5.0]}"
     response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
     assert response == {"predictions": [3.5, 4.0, 5.5]}
 

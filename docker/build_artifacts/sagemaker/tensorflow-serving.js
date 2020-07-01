@@ -1,15 +1,15 @@
-var tfs_base_uri = "/tfs/v1/models/"
-var custom_attributes_header = "X-Amzn-SageMaker-Custom-Attributes"
+var tfs_base_uri = '/tfs/v1/models/'
+var custom_attributes_header = 'X-Amzn-SageMaker-Custom-Attributes'
 
 function invocations(r) {
-    var ct = r.headersIn["Content-Type"]
+    var ct = r.headersIn['Content-Type']
 
-    if ("application/json" == ct || "application/jsonlines" == ct || "application/jsons" == ct) {
+    if ('application/json' == ct || 'application/jsonlines' == ct || 'application/jsons' == ct) {
         json_request(r)
-    } else if ("text/csv" == ct) {
+    } else if ('text/csv' == ct) {
         csv_request(r)
     } else {
-        return_error(r, 415, "Unsupported Media Type: " + (ct || "Unknown"))
+        return_error(r, 415, 'Unsupported Media Type: ' + (ct || 'Unknown'))
     }
 }
 
@@ -20,7 +20,7 @@ function ping(r) {
         if (reply.status == 200 && reply.responseBody.includes('"AVAILABLE"')) {
             r.return(200)
         } else {
-            r.error("failed ping" + reply.responseBody)
+            r.error('failed ping' + reply.responseBody)
             r.return(502)
         }
     }
@@ -37,16 +37,16 @@ function ping_without_model(r) {
 
     var uri = make_tfs_uri(r, true)
     var options = {
-        method: "POST",
-        body: "{'instances': 'invalid'}"
+        method: 'POST',
+        body: '{"instances": "invalid"}'
     }
 
     function callback (reply) {
         if (reply.status == 200 || reply.status == 400 ||
-        reply.responseBody.includes("Servable not found for request: Latest(None)")) {
+        reply.responseBody.includes('Servable not found for request: Latest(None)')) {
             r.return(200)
         } else {
-            r.error("failed ping" + reply.responseBody)
+            r.error('failed ping' + reply.responseBody)
             r.return(502)
         }
     }
@@ -56,7 +56,7 @@ function ping_without_model(r) {
 
 function return_error(r, code, message) {
     if (message) {
-        r.return(code, "{'error': " + message + "'}'")
+        r.return(code, '{"error": "' + message + '"}')
     } else {
         r.return(code)
     }
@@ -65,7 +65,7 @@ function return_error(r, code, message) {
 function tfs_json_request(r, json) {
     var uri = make_tfs_uri(r, true)
     var options = {
-        method: "POST",
+        method: 'POST',
         body: json
     }
 
@@ -77,9 +77,9 @@ function tfs_json_request(r, json) {
             body = body.replace("\\'instances\\'", "'instances'")
         }
 
-        if ("application/jsonlines" == accept || "application/jsons" == accept) {
-            body = body.replace(/\n/g, "")
-            r.headersOut["Content-Type"] = accept
+        if ('application/jsonlines' == accept || 'application/jsons' == accept) {
+            body = body.replace(/\n/g, '')
+            r.headersOut['Content-Type'] = accept
         }
         r.return(reply.status, body)
     }
@@ -91,13 +91,13 @@ function tfs_json_request(r, json) {
 function make_tfs_uri(r, with_method) {
     var attributes = parse_custom_attributes(r)
 
-    var uri = tfs_base_uri + attributes["tfs-model-name"]
-    if ("tfs-model-version" in attributes) {
-        uri += "/versions/" + attributes["tfs-model-version"]
+    var uri = tfs_base_uri + attributes['tfs-model-name']
+    if ('tfs-model-version' in attributes) {
+        uri += '/versions/' + attributes['tfs-model-version']
     }
 
     if (with_method) {
-        uri += ":" + (attributes["tfs-method"] || "predict")
+        uri += ':' + (attributes['tfs-method'] || 'predict')
     }
 
     return uri
@@ -111,7 +111,7 @@ function parse_custom_attributes(r) {
         var matches = header.match(kv_pattern)
         if (matches) {
             for (var i = 0; i < matches.length; i++) {
-                var kv = matches[i].split("=")
+                var kv = matches[i].split('=')
                 if (kv.length === 2) {
                     attributes[kv[0]] = kv[1]
                 }
@@ -120,14 +120,14 @@ function parse_custom_attributes(r) {
     }
 
     // for MME invocations, tfs-model-name is in the uri, or use default_tfs_model
-    if (!attributes["tfs-model-name"]) {
+    if (!attributes['tfs-model-name']) {
         var uri_pattern = /\/models\/[^,]+\/invoke/g
         var model_name = r.uri.match(uri_pattern)
         if (model_name[0]) {
-            model_name = r.uri.replace("/models/", "").replace("/invoke", "")
-            attributes["tfs-model-name"] = model_name
+            model_name = r.uri.replace('/models/', '').replace('/invoke', '')
+            attributes['tfs-model-name'] = model_name
         } else {
-            attributes["tfs-model-name"] = r.variables.default_tfs_model
+            attributes['tfs-model-name'] = r.variables.default_tfs_model
         }
     }
 
@@ -157,31 +157,31 @@ function is_json_lines(data) {
 
 function generic_json_request(r, data) {
     if (! /^\s*\[\s*\[/.test(data)) {
-        data = "[" + data + "]"
+        data = '[' + data + ']'
     }
 
-    var json = "{'instances':" + data + "}"
+    var json = '{"instances":' + data + '}'
     tfs_json_request(r, json)
 }
 
 function json_lines_request(r, data) {
     var lines = data.trim().split(/\r?\n/)
     var builder = []
-    builder.push("{'instances':")
+    builder.push('{"instances":')
     if (lines.length != 1) {
-        builder.push("[")
+        builder.push('[')
     }
 
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim()
         if (line) {
-            var instance = (i == 0) ? "" : ","
+            var instance = (i == 0) ? '' : ','
             instance += line
             builder.push(instance)
         }
     }
 
-    builder.push(lines.length == 1 ? "}" : "]}")
+    builder.push(lines.length == 1 ? '}' : ']}')
     tfs_json_request(r, builder.join(''))
 }
 
@@ -191,7 +191,7 @@ function csv_request(r) {
     var needs_quotes = data.search(/^\s*("|[\d.Ee+\-]+.*)/) != 0
     var lines = data.trim().split(/\r?\n/)
     var builder = []
-    builder.push("{'nstances':[")
+    builder.push('{"instances":[')
 
     for (var i = 0; i < lines.length; i++) {
         var line = lines[i].trim()
@@ -200,32 +200,32 @@ function csv_request(r) {
             // Only wrap line in brackets if there are multiple columns.
             // If there's only one column and it has a string with a comma,
             // the input will be wrapped in an extra set of brackets.
-            var has_multiple_columns = line.search(",") != -1
+            var has_multiple_columns = line.search(',') != -1
 
             if (has_multiple_columns) {
-                line_builder.push("[")
+                line_builder.push('[')
             }
 
             if (needs_quotes) {
-                line_builder.push("'")
-                line_builder.push(line.replace("'", "\\'").replace(",", "','"))
-                line_builder.push("'")
+                line_builder.push('"')
+                line_builder.push(line.replace('"', '\\"').replace(',', '","'))
+                line_builder.push('"')
             } else {
                 line_builder.push(line)
             }
 
             if (has_multiple_columns) {
-                line_builder.push("]")
+                line_builder.push(']')
             }
 
-            var json_line = line_builder.join("")
+            var json_line = line_builder.join('')
             builder.push(json_line)
 
             if (i != lines.length - 1)
-                builder.push(",")
+                builder.push(',')
         }
     }
 
-    builder.push("]}")
-    tfs_json_request(r, builder.join(""))
+    builder.push(']}')
+    tfs_json_request(r, builder.join(''))
 }
