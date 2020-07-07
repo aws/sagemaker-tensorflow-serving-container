@@ -209,7 +209,7 @@ class PythonServiceResource:
                 time.sleep(0.5)
                 try:
                     session = requests.Session()
-                    retries = Retry(total=120,
+                    retries = Retry(total=9,
                                     backoff_factor=0.1)
                     session.mount('http://', requests.adapters.HTTPAdapter(max_retries=retries))
                     response = session.get(url)
