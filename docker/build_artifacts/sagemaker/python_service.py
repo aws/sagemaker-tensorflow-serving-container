@@ -21,6 +21,8 @@ import time
 import falcon
 import requests
 
+from urllib3.util.retry import Retry
+
 from multi_model_utils import lock, timeout, MultiModelException
 import tfs_utils
 
@@ -206,7 +208,11 @@ class PythonServiceResource:
             while True:
                 time.sleep(0.5)
                 try:
-                    response = requests.get(url)
+                    session = requests.Session()
+                    retries = Retry(total=9,
+                                    backoff_factor=0.1)
+                    session.mount('http://', requests.adapters.HTTPAdapter(max_retries=retries))
+                    response = session.get(url)
                     if response.status_code == 200:
                         versions = json.loads(response.content)['model_version_status']
                         if all(version["state"] == "AVAILABLE" for version in versions):
