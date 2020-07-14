@@ -645,23 +645,22 @@ Only 90% of the ports will be utilized and each loaded model will be allocated w
 For example, if the ``SAGEMAKER_SAFE_PORT_RANGE`` is between 9000 to 9999, the maximum number of models that can be loaded to the endpoint at the same time would be 499 ((9999 - 9000) * 0.9 / 2).
 
 ### Using Multi-Model Endpoint with Pre/Post-Processing
-Multi-Model Endpoint can be used together with Pre/Post-Processing. However, please note that in Multi-Model mode, the path of ``inference.py`` is ``/opt/ml/models/code`` instead of ``/opt/ml/model/code``.
-Also, all loaded models will share the same ``inference.py`` to handle invocation requests. An example of the directory structure of Multi-Model Endpoint and Pre/Post-Processing would look like this:
+Multi-Model Endpoint can be used together with Pre/Post-Processing. Each model will need its own ``inference.py`` otherwise default handlers will be used. An example of the directory structure of Multi-Model Endpoint and Pre/Post-Processing would look like this:
 
-        model1
+        /opt/ml/models/model1/model
             |--[model_version_number]
                 |--variables
                 |--saved_model.pb
-        model2
+        /opt/ml/models/model2/model
             |--[model_version_number]
                 |--assets
                 |--variables
                 |--saved_model.pb
-        code
-            |--lib
-                |--external_module
-            |--inference.py
-            |--requirements.txt
+            code
+                |--lib
+                    |--external_module
+                |--inference.py
+                |--requirements.txt
 
 ## Contributing
 
