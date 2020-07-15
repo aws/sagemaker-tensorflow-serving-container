@@ -222,9 +222,7 @@ class PythonServiceResource:
 
         if os.path.exists(inference_script_path):
             handler, input_handler, output_handler = self._import_handlers(model_name)
-            model_handlers = self._make_handler(handler,
-                                                input_handler,
-                                                output_handler)
+            model_handlers = self._make_handler(handler, input_handler, output_handler)
             self.model_handlers[model_name] = model_handlers
         else:
             self.model_handlers[model_name] = default_handler
