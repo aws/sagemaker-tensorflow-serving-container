@@ -660,7 +660,6 @@ Multi-Model Endpoint can be used together with Pre/Post-Processing. Each model w
                 |--lib
                     |--external_module
                 |--inference.py
-                |--requirements.txt
 
 ## Contributing
 

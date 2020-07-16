@@ -111,8 +111,6 @@ def create_tfs_config(
         config += '  }\n'
     config += '}\n'
 
-    log.info('tensorflow serving model config: \n%s\n', config)
-
     with open(tfs_config_path, 'w') as f:
         f.write(config)
 
