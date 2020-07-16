@@ -29,11 +29,11 @@ phases:
         fi
 
       # run SageMaker tests
-      - tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 1.15.0
-      - tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 2.1.0
-
-      - tox -e py37 -- test/integration/sagemaker/test_ei.py -n 8 --versions 1.14 --region {region} --registry {aws-id}
-
+      - |
+        if is-release-build; then
+          tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 1.15.0
+          tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 2.1.0
+        fi
 
       # write deployment details to file
       # todo sort out eia versioning
