@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.6.24 (2020-07-17)
+
+### Bug Fixes and Other Changes
+
+ * update MME Pre/Post-Processing model and script paths
+ * increasing max_retry for model availability check
+ * multi-model-endpoint support
+
+### Documentation Changes
+
+ * update README for multi-model endpoint
+
 ## v1.6.23.post0 (2020-06-25)
 
 ### Testing and Release Infrastructure
