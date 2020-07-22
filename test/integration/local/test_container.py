@@ -43,14 +43,13 @@ def container(request, docker_base_name, tag, runtime_config):
         else:
             batching_config = ""
         command = (
-            "docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080"
-            " --mount type=volume,source=model_volume,target=/opt/ml/model,readonly"
-            " -e SAGEMAKER_TFS_DEFAULT_MODEL_NAME=half_plus_three"
-            " -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info"
-            " -e SAGEMAKER_BIND_TO_PORT=8080"
-            " -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999"
-            " {}"
-            " {}:{} serve"
+            'docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080'
+            ' --mount type=volume,source=model_volume,target=/opt/ml/model,readonly'
+            ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
+            ' -e SAGEMAKER_BIND_TO_PORT=8080'
+            ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
+            ' {}'
+            ' {}:{} serve'
         ).format(runtime_config, batching_config, docker_base_name, tag)
 
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)

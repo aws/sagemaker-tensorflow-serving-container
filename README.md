@@ -42,6 +42,7 @@ For notebook examples, see: [Amazon SageMaker Examples](https://github.com/awsla
 3. [Running the tests](#running-the-tests)
 4. [Pre/Post-Processing](#pre/post-processing)
 5. [Deploying a TensorFlow Serving Model](#deploying-a-tensorflow-serving-model)
+6. [Deploying to Multi-Model Endpoint](#deploying-to-multi-model-endpoint)
 
 ## Getting Started
 
@@ -610,6 +611,55 @@ SAGEMAKER_TFS_NUM_BATCH_THREADS="16"
 # or arbitrarily large for batch transform (because batch transform).
 SAGEMAKER_TFS_MAX_ENQUEUED_BATCHES="10000"
 ```
+
+## Deploying to Multi-Model Endpoint
+
+SageMaker TensorFlow Serving container (version 1.5.0 and 2.1.0, CPU) now supports Multi-Model Endpoint. With this feature, you can deploy different models (not just different versions of a model) to a single endpoint.
+To deploy a Multi-Model endpoint with TFS container, please start the container with environment variable ``SAGEMAKER_MULTI_MODEL=True``.
+
+### Multi-Model Interfaces
+We provide four different interfaces for user to interact with a Multi-Model Mode container:
+
++---------------------+---------------------------------+---------------------------------------------+
+| Functionality       | Request                         | Response/Actions                            |
++---------------------+---------------------------------+---------------------------------------------+
+| List A Single Model | GET /models/{model_name}        | Information about the specified model       |
++---------------------+---------------------------------+---------------------------------------------+
+| List All Models     | GET /models                     | List of Information about all loaded models |
++---------------------+---------------------------------+---------------------------------------------+
+|                     | POST /models                    | Load model with "model_name" from           |
+|                     | data = {                        | specified url                               |
+| Load A Model        |     "model_name": <model-name>, |                                             |
+|                     |     "url": <path to model data> |                                             |
+|                     | }                               |                                             |
++---------------------+---------------------------------+---------------------------------------------+
+| Make Invocations    | POST /models/{model_name}/invoke| Return inference result from                |
+|                     | data = <invocation payload>     | the specified model                         |
++---------------------+---------------------------------+---------------------------------------------+
+| Unload A Model      | DELETE /models/{model_name}     | Unload the specified model                  |
++---------------------+---------------------------------+---------------------------------------------+
+
+### Maximum Number of Models
+Also please note the environment variable ``SAGEMAKER_SAFE_PORT_RANGE`` will limit the number of models that can be loaded to the endpoint at the same time.
+Only 90% of the ports will be utilized and each loaded model will be allocated with 2 ports (one for REST API and the other for GRPC).
+For example, if the ``SAGEMAKER_SAFE_PORT_RANGE`` is between 9000 to 9999, the maximum number of models that can be loaded to the endpoint at the same time would be 499 ((9999 - 9000) * 0.9 / 2).
+
+### Using Multi-Model Endpoint with Pre/Post-Processing
+Multi-Model Endpoint can be used together with Pre/Post-Processing. Each model will need its own ``inference.py`` otherwise default handlers will be used. An example of the directory structure of Multi-Model Endpoint and Pre/Post-Processing would look like this:
+
+        /opt/ml/models/model1/model
+            |--[model_version_number]
+                |--variables
+                |--saved_model.pb
+        /opt/ml/models/model2/model
+            |--[model_version_number]
+                |--assets
+                |--variables
+                |--saved_model.pb
+            code
+                |--lib
+                    |--external_module
+                |--inference.py
 
 ## Contributing
 

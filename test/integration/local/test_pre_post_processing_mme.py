@@ -22,8 +22,7 @@ import pytest
 
 import requests
 
-from multi_model_endpoint_test_utils import make_invocation_request, make_list_model_request, \
-    make_get_model_request, make_load_model_request, make_unload_model_request, make_headers
+from multi_model_endpoint_test_utils import make_load_model_request, make_headers
 
 
 PING_URL = "http://localhost:8080/ping"
@@ -56,13 +55,13 @@ def volume(tmpdir_factory, request):
 def container(volume, docker_base_name, tag, runtime_config):
     try:
         command = (
-            "docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080"
-            " --mount type=volume,source={},target=/opt/ml/models,readonly"
-            " -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info"
-            " -e SAGEMAKER_BIND_TO_PORT=8080"
-            " -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999"
-            " -e SAGEMAKER_MULTI_MODEL=True"
-            " {}:{} serve"
+            'docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080'
+            ' --mount type=volume,source={},target=/opt/ml/models/half_plus_three/model,readonly'
+            ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
+            ' -e SAGEMAKER_BIND_TO_PORT=8080'
+            ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
+            ' -e SAGEMAKER_MULTI_MODEL=True'
+            ' {}:{} serve'
         ).format(runtime_config, volume, docker_base_name, tag)
 
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
@@ -86,18 +85,25 @@ def container(volume, docker_base_name, tag, runtime_config):
 @pytest.fixture
 def model():
     model_data = {
+<<<<<<< HEAD
         "model_name": MODEL_NAME,
         "url": "/opt/ml/models/half_plus_three"
+=======
+        'model_name': MODEL_NAME,
+        'url': '/opt/ml/models/half_plus_three/model/half_plus_three'
+>>>>>>> 2d2cfadc557d9b8716eefae2e6982eaab91d82ad
     }
     make_load_model_request(json.dumps(model_data))
     return MODEL_NAME
 
 
+@pytest.mark.skip_gpu
 def test_ping_service():
     response = requests.get(PING_URL)
     assert 200 == response.status_code
 
 
+@pytest.mark.skip_gpu
 def test_predict_json(model):
     headers = make_headers()
     data = "{\"instances\": [1.0, 2.0, 5.0]}"
@@ -105,6 +111,7 @@ def test_predict_json(model):
     assert response == {"predictions": [3.5, 4.0, 5.5]}
 
 
+@pytest.mark.skip_gpu
 def test_zero_content():
     headers = make_headers()
     x = ""
@@ -113,6 +120,7 @@ def test_zero_content():
     assert "document is empty" in response.text
 
 
+@pytest.mark.skip_gpu
 def test_large_input():
     data_file = "test/resources/inputs/test-large.csv"
 
@@ -124,6 +132,7 @@ def test_large_input():
         assert len(predictions) == 753936
 
 
+@pytest.mark.skip_gpu
 def test_csv_input():
     headers = make_headers(content_type="text/csv")
     data = "1.0,2.0,5.0"
@@ -131,6 +140,7 @@ def test_csv_input():
     assert response == {"predictions": [3.5, 4.0, 5.5]}
 
 
+@pytest.mark.skip_gpu
 def test_unsupported_content_type():
     headers = make_headers("unsupported-type", "predict")
     data = "aW1hZ2UgYnl0ZXM="
