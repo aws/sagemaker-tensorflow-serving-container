@@ -85,13 +85,8 @@ def container(volume, docker_base_name, tag, runtime_config):
 @pytest.fixture
 def model():
     model_data = {
-<<<<<<< HEAD
         "model_name": MODEL_NAME,
-        "url": "/opt/ml/models/half_plus_three"
-=======
-        'model_name': MODEL_NAME,
-        'url': '/opt/ml/models/half_plus_three/model/half_plus_three'
->>>>>>> 2d2cfadc557d9b8716eefae2e6982eaab91d82ad
+        "url": "/opt/ml/models/half_plus_three/model/half_plus_three"
     }
     make_load_model_request(json.dumps(model_data))
     return MODEL_NAME
