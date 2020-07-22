@@ -269,7 +269,7 @@ class ServiceManager(object):
         self._create_nginx_config()
 
         if self._tfs_enable_batching:
-            log.info('batching is enabled')
+            log.info("batching is enabled")
             tfs_utils.create_batching_config(self._tfs_batching_config_path)
 
         if self._use_gunicorn:

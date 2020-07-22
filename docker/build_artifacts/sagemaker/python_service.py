@@ -27,14 +27,14 @@ from urllib3.util.retry import Retry
 from multi_model_utils import lock, timeout, MultiModelException
 import tfs_utils
 
-SAGEMAKER_MULTI_MODEL_ENABLED = os.environ.get('SAGEMAKER_MULTI_MODEL', 'false').lower() == 'true'
-INFERENCE_SCRIPT_PATH = '/opt/ml/model/code/inference.py'
+SAGEMAKER_MULTI_MODEL_ENABLED = os.environ.get("SAGEMAKER_MULTI_MODEL", "false").lower() == "true"
+INFERENCE_SCRIPT_PATH = "/opt/ml/model/code/inference.py"
 
-SAGEMAKER_BATCHING_ENABLED = os.environ.get('SAGEMAKER_TFS_ENABLE_BATCHING', 'false').lower()
-MODEL_CONFIG_FILE_PATH = '/sagemaker/model-config.cfg'
-TFS_GRPC_PORT = os.environ.get('TFS_GRPC_PORT')
-TFS_REST_PORT = os.environ.get('TFS_REST_PORT')
-SAGEMAKER_TFS_PORT_RANGE = os.environ.get('SAGEMAKER_SAFE_PORT_RANGE')
+SAGEMAKER_BATCHING_ENABLED = os.environ.get("SAGEMAKER_TFS_ENABLE_BATCHING", "false").lower()
+MODEL_CONFIG_FILE_PATH = "/sagemaker/model-config.cfg"
+TFS_GRPC_PORT = os.environ.get("TFS_GRPC_PORT")
+TFS_REST_PORT = os.environ.get("TFS_REST_PORT")
+SAGEMAKER_TFS_PORT_RANGE = os.environ.get("SAGEMAKER_SAFE_PORT_RANGE")
 
 
 logging.basicConfig(level=logging.INFO)
@@ -78,8 +78,8 @@ class PythonServiceResource:
             else:
                 self._handlers = default_handler
 
-        self._tfs_enable_batching = SAGEMAKER_BATCHING_ENABLED == 'true'
-        self._tfs_default_model_name = os.environ.get('TFS_DEFAULT_MODEL_NAME', "None")
+        self._tfs_enable_batching = SAGEMAKER_BATCHING_ENABLED == "true"
+        self._tfs_default_model_name = os.environ.get("TFS_DEFAULT_MODEL_NAME", "None")
 
     def on_post(self, req, res, model_name=None):
         log.info(req.uri)
@@ -296,7 +296,7 @@ class PythonServiceResource:
         inference_script = INFERENCE_SCRIPT_PATH
         if model_name:
             inference_script = "/opt/ml/models/{}/model/code/inference.py".format(model_name)
-        spec = importlib.util.spec_from_file_location('inference', inference_script)
+        spec = importlib.util.spec_from_file_location("inference", inference_script)
         inference = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(inference)
 

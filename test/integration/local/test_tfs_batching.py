@@ -34,17 +34,17 @@ def volume():
 def test_run_tfs_with_batching_parameters(docker_base_name, tag, runtime_config):
     try:
         command = (
-            'docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080'
-            ' --mount type=volume,source=batching_model_volume,target=/opt/ml/model,readonly'
-            ' -e SAGEMAKER_TFS_ENABLE_BATCHING=true'
-            ' -e SAGEMAKER_TFS_MAX_BATCH_SIZE=16'
-            ' -e SAGEMAKER_TFS_BATCH_TIMEOUT_MICROS=500'
-            ' -e SAGEMAKER_TFS_NUM_BATCH_THREADS=100'
-            ' -e SAGEMAKER_TFS_MAX_ENQUEUED_BATCHES=1'
-            ' -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info'
-            ' -e SAGEMAKER_BIND_TO_PORT=8080'
-            ' -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999'
-            ' {}:{} serve'
+            "docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080"
+            " --mount type=volume,source=batching_model_volume,target=/opt/ml/model,readonly"
+            " -e SAGEMAKER_TFS_ENABLE_BATCHING=true"
+            " -e SAGEMAKER_TFS_MAX_BATCH_SIZE=16"
+            " -e SAGEMAKER_TFS_BATCH_TIMEOUT_MICROS=500"
+            " -e SAGEMAKER_TFS_NUM_BATCH_THREADS=100"
+            " -e SAGEMAKER_TFS_MAX_ENQUEUED_BATCHES=1"
+            " -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info"
+            " -e SAGEMAKER_BIND_TO_PORT=8080"
+            " -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999"
+            " {}:{} serve"
         ).format(runtime_config, docker_base_name, tag)
 
         proc = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
