@@ -620,24 +620,24 @@ To deploy a Multi-Model endpoint with TFS container, please start the container 
 ### Multi-Model Interfaces
 We provide four different interfaces for user to interact with a Multi-Model Mode container:
 
-+---------------------+---------------------------------+---------------------------------------------+
-| Functionality       | Request                         | Response/Actions                            |
-+---------------------+---------------------------------+---------------------------------------------+
-| List A Single Model | GET /models/{model_name}        | Information about the specified model       |
-+---------------------+---------------------------------+---------------------------------------------+
-| List All Models     | GET /models                     | List of Information about all loaded models |
-+---------------------+---------------------------------+---------------------------------------------+
-|                     | POST /models                    | Load model with "model_name" from           |
-|                     | data = {                        | specified url                               |
-| Load A Model        |     "model_name": <model-name>, |                                             |
-|                     |     "url": <path to model data> |                                             |
-|                     | }                               |                                             |
-+---------------------+---------------------------------+---------------------------------------------+
-| Make Invocations    | POST /models/{model_name}/invoke| Return inference result from                |
-|                     | data = <invocation payload>     | the specified model                         |
-+---------------------+---------------------------------+---------------------------------------------+
-| Unload A Model      | DELETE /models/{model_name}     | Unload the specified model                  |
-+---------------------+---------------------------------+---------------------------------------------+
+    +---------------------+---------------------------------+---------------------------------------------+
+    | Functionality       | Request                         | Response/Actions                            |
+    +---------------------+---------------------------------+---------------------------------------------+
+    | List A Single Model | GET /models/{model_name}        | Information about the specified model       |
+    +---------------------+---------------------------------+---------------------------------------------+
+    | List All Models     | GET /models                     | List of Information about all loaded models |
+    +---------------------+---------------------------------+---------------------------------------------+
+    |                     | POST /models                    | Load model with "model_name" from           |
+    |                     | data = {                        | specified url                               |
+    | Load A Model        |     "model_name": <model-name>, |                                             |
+    |                     |     "url": <path to model data> |                                             |
+    |                     | }                               |                                             |
+    +---------------------+---------------------------------+---------------------------------------------+
+    | Make Invocations    | POST /models/{model_name}/invoke| Return inference result from                |
+    |                     | data = <invocation payload>     | the specified model                         |
+    +---------------------+---------------------------------+---------------------------------------------+
+    | Unload A Model      | DELETE /models/{model_name}     | Unload the specified model                  |
+    +---------------------+---------------------------------+---------------------------------------------+
 
 ### Maximum Number of Models
 Also please note the environment variable ``SAGEMAKER_SAFE_PORT_RANGE`` will limit the number of models that can be loaded to the endpoint at the same time.
