@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.25 (2020-07-23)
+
+### Bug Fixes and Other Changes
+
+ * change single quotes to double quotes
+
 ## v1.6.24 (2020-07-17)
 
 ### Bug Fixes and Other Changes
