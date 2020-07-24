@@ -71,11 +71,14 @@ def container(request, docker_base_name, tag, runtime_config):
         subprocess.check_call("docker rm -f sagemaker-tensorflow-serving-test".split())
 
 
-def make_request(data, content_type="application/json", method="predict"):
+def make_request(data, content_type="application/json", method="predict", version=None):
+    custom_attributes = "tfs-model-name=half_plus_three,tfs-method={}".format(method)
+    if version:
+        custom_attributes += ",tfs-model-version={}".format(version)
+
     headers = {
         "Content-Type": content_type,
-        "X-Amzn-SageMaker-Custom-Attributes":
-            "tfs-model-name=half_plus_three,tfs-method=%s" % method
+        "X-Amzn-SageMaker-Custom-Attributes": custom_attributes,
     }
     response = requests.post(BASE_URL, data=data, headers=headers)
     return json.loads(response.content.decode("utf-8"))
@@ -99,6 +102,18 @@ def test_predict_twice():
     z = make_request(json.dumps(x))
     assert y == {"predictions": [3.5, 4.0, 5.5]}
     assert z == {"predictions": [3.5, 4.0, 5.5]}
+
+
+def test_predict_specific_versions():
+    x = {
+        "instances": [1.0, 2.0, 5.0]
+    }
+
+    y = make_request(json.dumps(x), version=123)
+    assert y == {"predictions": [3.5, 4.0, 5.5]}
+
+    y = make_request(json.dumps(x), version=124)
+    assert y == {"predictions": [3.5, 4.0, 5.5]}
 
 
 def test_predict_two_instances():

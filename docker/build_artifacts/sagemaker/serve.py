@@ -99,9 +99,17 @@ class ServiceManager(object):
         config = "model_config_list: {\n"
         for m in models:
             config += "  config: {\n"
-            config += "    name: '{}',\n".format(os.path.basename(m))
-            config += "    base_path: '{}',\n".format(m)
+            config += "    name: '{}'\n".format(os.path.basename(m))
+            config += "    base_path: '{}'\n".format(m)
             config += "    model_platform: 'tensorflow'\n"
+
+            config += "    model_version_policy: {\n"
+            config += "      specific: {\n"
+            for version in tfs_utils.find_model_versions(m):
+                config += "        versions: {}\n".format(version)
+            config += "      }\n"
+            config += "    }\n"
+
             config += "  }\n"
         config += "}\n"
 

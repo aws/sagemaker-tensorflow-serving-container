@@ -142,6 +142,10 @@ def find_models():
         return models
 
 
+def find_model_versions(model_path):
+    return [version.lstrip("0") for version in os.listdir(model_path)]
+
+
 def _find_saved_model_files(path):
     for e in os.scandir(path):
         if e.is_dir():
