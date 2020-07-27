@@ -77,42 +77,20 @@ def parse_tfs_custom_attributes(req):
 def create_tfs_config_individual_model(model_name, base_path):
     config = "model_config_list: {\n"
     config += "  config: {\n"
-    config += "    name: '{}',\n".format(model_name)
-    config += "    base_path: '{}',\n".format(base_path)
+    config += "    name: '{}'\n".format(model_name)
+    config += "    base_path: '{}'\n".format(base_path)
     config += "    model_platform: 'tensorflow'\n"
+
+    config += "    model_version_policy: {\n"
+    config += "      specific: {\n"
+    for version in find_model_versions(base_path):
+        config += "        versions: {}\n".format(version)
+    config += "      }\n"
+    config += "    }\n"
+
     config += "  }\n"
     config += "}\n"
     return config
-
-
-def create_tfs_config(
-        tfs_default_model_name,
-        tfs_config_path,
-):
-    models = find_models()
-    if not models:
-        raise ValueError("no SavedModel bundles found!")
-
-    if tfs_default_model_name == "None":
-        default_model = os.path.basename(models[0])
-        if default_model:
-            tfs_default_model_name = default_model
-            log.info("using default model name: {}".format(tfs_default_model_name))
-        else:
-            log.info("no default model detected")
-
-    # config (may) include duplicate 'config' keys, so we can't just dump a dict
-    config = "model_config_list: {\n"
-    for m in models:
-        config += "  config: {\n"
-        config += "    name: '{}',\n".format(os.path.basename(m))
-        config += "    base_path: '{}',\n".format(m)
-        config += "    model_platform: 'tensorflow'\n"
-        config += "  }\n"
-    config += "}\n"
-
-    with open(tfs_config_path, 'w') as f:
-        f.write(config)
 
 
 def tfs_command(tfs_grpc_port,

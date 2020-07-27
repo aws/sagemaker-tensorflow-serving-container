@@ -77,12 +77,15 @@ def container(volume, docker_base_name, tag, runtime_config):
         subprocess.check_call("docker rm -f sagemaker-tensorflow-serving-test".split())
 
 
-def make_headers(content_type, method):
-    headers = {
+def make_headers(content_type, method, version=None):
+    custom_attributes = "tfs-model-name=half_plus_three,tfs-method={}".format(method)
+    if version:
+        custom_attributes += ",tfs-model-version={}".format(version)
+
+    return {
         "Content-Type": content_type,
-        "X-Amzn-SageMaker-Custom-Attributes": "tfs-model-name=half_plus_three,tfs-method=%s" % method
+        "X-Amzn-SageMaker-Custom-Attributes": custom_attributes,
     }
-    return headers
 
 
 def test_predict_json():
@@ -116,6 +119,14 @@ def test_csv_input():
     data = "1.0,2.0,5.0"
     response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
     assert response == {"predictions": [3.5, 4.0, 5.5]}
+
+
+def test_predict_specific_versions():
+    for version in ("123", "124"):
+        headers = make_headers("application/json", "predict", version=version)
+        data = "{\"instances\": [1.0, 2.0, 5.0]}"
+        response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
+        assert response == {"predictions": [3.5, 4.0, 5.5]}
 
 
 def test_unsupported_content_type():

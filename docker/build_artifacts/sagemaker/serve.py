@@ -115,7 +115,7 @@ class ServiceManager(object):
 
         log.info("tensorflow serving model config: \n%s\n", config)
 
-        with open("/sagemaker/model-config.cfg", "w") as f:
+        with open(self._tfs_config_path, "w") as f:
             f.write(config)
 
     def _setup_gunicorn(self):
@@ -267,10 +267,6 @@ class ServiceManager(object):
         if self._tfs_enable_multi_model_endpoint:
             log.info("multi-model endpoint is enabled, TFS model servers will be started later")
         else:
-            tfs_utils.create_tfs_config(
-                self._tfs_default_model_name,
-                self._tfs_config_path
-            )
             self._create_tfs_config()
             self._start_tfs()
 

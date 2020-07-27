@@ -136,6 +136,17 @@ def test_csv_input():
 
 
 @pytest.mark.skip_gpu
+def test_specific_versions():
+    for version in ("123", "124"):
+        headers = make_headers(content_type="text/csv", version=version)
+        data = "1.0,2.0,5.0"
+        response = requests.post(
+            INVOCATION_URL.format(MODEL_NAME), data=data, headers=headers
+        ).json()
+        assert response == {"predictions": [3.5, 4.0, 5.5]}
+
+
+@pytest.mark.skip_gpu
 def test_unsupported_content_type():
     headers = make_headers("unsupported-type", "predict")
     data = "aW1hZ2UgYnl0ZXM="
