@@ -165,10 +165,11 @@ def test_load_two_models():
     assert y1 == {"predictions": [2.5, 3.0, 4.5]}
 
     # make invocation request to the second model
-    code_invoke2, y2 = make_invocation_request(json.dumps(x), "half_plus_three")
-    y2 = json.loads(y2)
-    assert code_invoke2 == 200
-    assert y2 == {"predictions": [3.5, 4.0, 5.5]}
+    for ver in ("123", "124"):
+        code_invoke2, y2 = make_invocation_request(json.dumps(x), "half_plus_three", version=ver)
+        y2 = json.loads(y2)
+        assert code_invoke2 == 200
+        assert y2 == {"predictions": [3.5, 4.0, 5.5]}
 
     code_list, res3 = make_list_model_request()
     res3 = json.loads(res3)
