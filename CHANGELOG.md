@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.7.0 (2020-07-29)
+
+### Features
+
+ * add model_version_policy to model config
+
 ## v1.6.25 (2020-07-23)
 
 ### Bug Fixes and Other Changes
