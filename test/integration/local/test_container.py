@@ -270,3 +270,17 @@ def test_predict_with_jsonlines():
     response = requests.post(BASE_URL, data=json.dumps(x), headers=headers)
     assert response.headers["Content-Type"] == "application/jsonlines"
     assert response.content.decode("utf-8") == "{    \"predictions\": [3.5, 4.0, 5.5    ]}"
+
+
+def test_predict_with_multiple_accept_types():
+    x = {
+        "instances": [1.0, 2.0, 5.0]
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+        "Accept":  "application/json, application/jsonlines"
+    }
+    response = requests.post(BASE_URL, data=json.dumps(x), headers=headers)
+    assert response.headers["Content-Type"] == "application/json"
+    assert response.content.decode("utf-8") == "{    \"predictions\": [3.5, 4.0, 5.5    ]}"
