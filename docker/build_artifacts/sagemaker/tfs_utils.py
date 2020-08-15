@@ -121,7 +121,7 @@ def find_models():
 
 
 def find_model_versions(model_path):
-    return [version.lstrip("0") for version in os.listdir(model_path)]
+    return [version.lstrip("0") for version in os.listdir(model_path) if version != 'code']
 
 
 def _find_saved_model_files(path):
