@@ -30,7 +30,8 @@ disable=
     invalid-all-object,
     arguments-differ,
     abstract-method,
-    signature-differs
+    signature-differs,
+    raise-missing-from
 
 [REPORTS]
 # Set the output format. Available formats are text, parseable, colorized, msvs

@@ -30,7 +30,7 @@ ECR repositories for SageMaker built TensorFlow Serving Container for Elastic In
 This documentation covers building and testing these docker images.
 
 For information about using TensorFlow Serving on SageMaker, see:
-[Deploying to TensorFlow Serving Endpoints](https://github.com/aws/sagemaker-python-sdk/blob/master/src/sagemaker/tensorflow/deploying_tensorflow_serving.rst)
+[Deploying to TensorFlow Serving Endpoints](https://sagemaker.readthedocs.io/en/stable/frameworks/tensorflow/deploying_tensorflow_serving.html)
 in the [SageMaker Python SDK](https://github.com/aws/sagemaker-python-sdk) documentation.
 
 For notebook examples, see: [Amazon SageMaker Examples](https://github.com/awslabs/amazon-sagemaker-examples).
