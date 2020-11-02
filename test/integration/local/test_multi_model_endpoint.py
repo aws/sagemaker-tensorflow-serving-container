@@ -109,10 +109,10 @@ def test_delete_unloaded_model():
 
 @pytest.mark.skip_gpu
 def test_delete_model():
-    model_name = "half_plus_three"
+    model_name = "half_plus_two"
     model_data = {
         "model_name": model_name,
-        "url": "/opt/ml/models/half_plus_three"
+        "url": "/opt/ml/models/half_plus_two"
     }
     code, res = make_load_model_request(json.dumps(model_data))
     assert code == 200
@@ -123,7 +123,7 @@ def test_delete_model():
     }
     _, y = make_invocation_request(json.dumps(x), model_name)
     y = json.loads(y)
-    assert y == {"predictions": [3.5, 4.0, 5.5]}
+    assert y == {"predictions": [2.5, 3.0, 4.5]}
 
     code_unload, res2 = make_unload_model_request(model_name)
     assert code_unload == 200

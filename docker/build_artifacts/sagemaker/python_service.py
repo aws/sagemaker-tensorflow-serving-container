@@ -28,7 +28,8 @@ from multi_model_utils import lock, timeout, MultiModelException
 import tfs_utils
 
 SAGEMAKER_MULTI_MODEL_ENABLED = os.environ.get("SAGEMAKER_MULTI_MODEL", "false").lower() == "true"
-INFERENCE_SCRIPT_PATH = "/opt/ml/model/code/inference.py"
+MODEL_DIR = "models" if SAGEMAKER_MULTI_MODEL_ENABLED else "model"
+INFERENCE_SCRIPT_PATH = "/opt/ml/{}/code/inference.py".format(MODEL_DIR)
 
 SAGEMAKER_BATCHING_ENABLED = os.environ.get("SAGEMAKER_TFS_ENABLE_BATCHING", "false").lower()
 MODEL_CONFIG_FILE_PATH = "/sagemaker/model-config.cfg"
@@ -51,6 +52,9 @@ def default_handler(data, context):
     :param context: context instance that contains tfs_rest_uri
     :return: inference response from TFS model server
     """
+    data = data.read().decode("utf-8")
+    if not isinstance(data, str):
+        data = json.loads(data)
     response = requests.post(context.rest_uri, data=data)
     return response.content, context.accept_header
 
@@ -63,26 +67,23 @@ class PythonServiceResource:
             self._model_tfs_grpc_port = {}
             self._model_tfs_pid = {}
             self._tfs_ports = self._parse_sagemaker_port_range(SAGEMAKER_TFS_PORT_RANGE)
-            # If Multi-Model mode is enabled, dependencies/handlers will be imported
-            # during the _handle_load_model_post()
-            self.model_handlers = {}
         else:
             self._tfs_grpc_port = TFS_GRPC_PORT
             self._tfs_rest_port = TFS_REST_PORT
 
-            if os.path.exists(INFERENCE_SCRIPT_PATH):
-                self._handler, self._input_handler, self._output_handler = self._import_handlers()
-                self._handlers = self._make_handler(self._handler,
-                                                    self._input_handler,
-                                                    self._output_handler)
-            else:
-                self._handlers = default_handler
+        if os.path.exists(INFERENCE_SCRIPT_PATH):
+            # Single-Model Mode & Multi-Model Mode both use one inference.py
+            self._handler, self._input_handler, self._output_handler = self._import_handlers()
+            self._handlers = self._make_handler(self._handler,
+                                                self._input_handler,
+                                                self._output_handler)
+        else:
+            self._handlers = default_handler
 
         self._tfs_enable_batching = SAGEMAKER_BATCHING_ENABLED == "true"
         self._tfs_default_model_name = os.environ.get("TFS_DEFAULT_MODEL_NAME", "None")
 
     def on_post(self, req, res, model_name=None):
-        log.info(req.uri)
         if model_name or "invocations" in req.uri:
             self._handle_invocation_post(req, res, model_name)
         else:
@@ -131,9 +132,6 @@ class PythonServiceResource:
         # validate model files are in the specified base_path
         if self.validate_model_dir(base_path):
             try:
-                # install custom dependencies, import handlers
-                self._import_custom_modules(model_name)
-
                 tfs_config = tfs_utils.create_tfs_config_individual_model(model_name, base_path)
                 tfs_config_file = "/sagemaker/tfs-config/{}/model-config.cfg".format(model_name)
                 log.info("tensorflow serving model config: \n%s\n", tfs_config)
@@ -202,31 +200,6 @@ class PythonServiceResource:
                                                                                model_name)
             })
 
-    def _import_custom_modules(self, model_name):
-        inference_script_path = "/opt/ml/models/{}/model/code/inference.py".format(model_name)
-        requirements_file_path = "/opt/ml/models/{}/model/code/requirements.txt".format(model_name)
-        python_lib_path = "/opt/ml/models/{}/model/code/lib".format(model_name)
-
-        if os.path.exists(requirements_file_path):
-            log.info("pip install dependencies from requirements.txt")
-            pip_install_cmd = "pip3 install -r {}".format(requirements_file_path)
-            try:
-                subprocess.check_call(pip_install_cmd.split())
-            except subprocess.CalledProcessError:
-                log.error('failed to install required packages, exiting.')
-                raise ChildProcessError('failed to install required packages.')
-
-        if os.path.exists(python_lib_path):
-            log.info("add Python code library path")
-            sys.path.append(python_lib_path)
-
-        if os.path.exists(inference_script_path):
-            handler, input_handler, output_handler = self._import_handlers(model_name)
-            model_handlers = self._make_handler(handler, input_handler, output_handler)
-            self.model_handlers[model_name] = model_handlers
-        else:
-            self.model_handlers[model_name] = default_handler
-
     def _cleanup_config_file(self, config_file):
         if os.path.exists(config_file):
             os.remove(config_file)
@@ -279,11 +252,8 @@ class PythonServiceResource:
 
         try:
             res.status = falcon.HTTP_200
-            if SAGEMAKER_MULTI_MODEL_ENABLED:
-                with lock():
-                    handlers = self.model_handlers[model_name]
-                    res.body, res.content_type = handlers(data, context)
-            else:
+
+            with lock():
                 res.body, res.content_type = self._handlers(data, context)
         except Exception as e:  # pylint: disable=broad-except
             log.exception("exception handling request: {}".format(e))
@@ -292,10 +262,8 @@ class PythonServiceResource:
                 "error": str(e)
             }).encode("utf-8")  # pylint: disable=E1101
 
-    def _import_handlers(self, model_name=None):
+    def _import_handlers(self):
         inference_script = INFERENCE_SCRIPT_PATH
-        if model_name:
-            inference_script = "/opt/ml/models/{}/model/code/inference.py".format(model_name)
         spec = importlib.util.spec_from_file_location("inference", inference_script)
         inference = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(inference)
@@ -401,7 +369,6 @@ class PythonServiceResource:
         return self.validate_model_versions(versions)
 
     def validate_model_versions(self, versions):
-        log.info(versions)
         if not versions:
             return False
         for v in versions:
