@@ -29,7 +29,8 @@ JS_INVOCATIONS = "js_content invocations"
 GUNICORN_PING = "proxy_pass http://gunicorn_upstream/ping"
 GUNICORN_INVOCATIONS = "proxy_pass http://gunicorn_upstream/invocations"
 
-MODEL_DIR = "models" if os.environ.get("SAGEMAKER_MULTI_MODEL", "False").lower() == "true" else "model"
+MODEL_DIR = "models" if os.environ.get("SAGEMAKER_MULTI_MODEL", "False").lower() == "true" \
+    else "model"
 CODE_DIR = "/opt/ml/{}/code".format(MODEL_DIR)
 PYTHON_LIB_PATH = os.path.join(CODE_DIR, "lib")
 REQUIREMENTS_PATH = os.path.join(CODE_DIR, "requirements.txt")
@@ -141,38 +142,20 @@ class ServiceManager(object):
 
         bucket = os.environ.get("SAGEMAKER_MULTI_MODEL_UNIVERSAL_BUCKET", None)
         prefix = os.environ.get("SAGEMAKER_MULTI_MODEL_UNIVERSAL_PREFIX", None)
-        log.info("UNIVERSAL SCRIPTS BUCKET: {}".format(str(bucket)))
-        log.info("UNIVERSAL SCRIPTS PREFIX: {}".format(str(prefix)))
-
-        log.info("CODE_DIR: {}".format(CODE_DIR))
-        log.info("CODE_DIR EXISTS: {}".format(os.path.exists(CODE_DIR)))
 
         if not os.path.exists(CODE_DIR) and bucket and prefix:
-            log.info("DOWNLOADING UNIVERSAL SCRIPTS ...")
-            client = boto3.client("s3")
-            resource = boto3.resource("s3")
-            # download files
-            paginator = client.get_paginator("list_objects")
-            for result in paginator.paginate(Bucket=bucket, Delimiter="/", Prefix=prefix):
-                for file in result.get("Contents", []):
-                    destination = os.path.join(code_dir, file.get("Key"))
-                    if not os.path.exists(os.path.dirname(destination)):
-                        os.makedirs(os.path.dirname(destination))
-                    resource.meta.client.download_file(bucket, file.get("Key"), destination)
+            self._download_scripts(bucket, prefix)
 
         if self._enable_python_service:
-            log.info("PYTHON SERVICE ENABLED")
             lib_path_exists = os.path.exists(PYTHON_LIB_PATH)
             requirements_exists = os.path.exists(REQUIREMENTS_PATH)
             python_path_content = ["/opt/ml/model/code"]
             python_path_option = "--pythonpath "
 
             if lib_path_exists:
-                log.info("INFERENCE FILE EXISTS.")
                 python_path_content.append(PYTHON_LIB_PATH)
 
             if requirements_exists:
-                log.info("REQUIREMENTS FILE EXISTS.")
                 if lib_path_exists:
                     log.warning("loading modules in '{}', ignoring requirements.txt"
                                 .format(PYTHON_LIB_PATH))
@@ -195,6 +178,19 @@ class ServiceManager(object):
 
         log.info("gunicorn command: {}".format(gunicorn_command))
         self._gunicorn_command = gunicorn_command
+
+    def _download_scripts(self, bucket, prefix):
+        log.info("downloading universal scripts ...")
+        client = boto3.client("s3")
+        resource = boto3.resource("s3")
+        # download files
+        paginator = client.get_paginator("list_objects")
+        for result in paginator.paginate(Bucket=bucket, Delimiter="/", Prefix=prefix):
+            for file in result.get("Contents", []):
+                destination = os.path.join(CODE_DIR, file.get("Key"))
+                if not os.path.exists(os.path.dirname(destination)):
+                    os.makedirs(os.path.dirname(destination))
+                resource.meta.client.download_file(bucket, file.get("Key"), destination)
 
     def _create_nginx_config(self):
         template = self._read_nginx_template()

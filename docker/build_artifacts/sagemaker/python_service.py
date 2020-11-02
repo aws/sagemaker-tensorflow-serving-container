@@ -17,7 +17,6 @@ import logging
 import os
 import subprocess
 import time
-import sys
 
 import falcon
 import requests
