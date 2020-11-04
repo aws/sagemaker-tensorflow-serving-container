@@ -28,9 +28,8 @@ JS_PING = "js_content ping"
 JS_INVOCATIONS = "js_content invocations"
 GUNICORN_PING = "proxy_pass http://gunicorn_upstream/ping"
 GUNICORN_INVOCATIONS = "proxy_pass http://gunicorn_upstream/invocations"
-
-MODEL_DIR = "models" if os.environ.get("SAGEMAKER_MULTI_MODEL", "False").lower() == "true" \
-    else "model"
+MULTI_MODEL = "s" if os.environ.get("SAGEMAKER_MULTI_MODEL", "False").lower() == "true" else ""
+MODEL_DIR = "model%s" % MULTI_MODEL
 CODE_DIR = "/opt/ml/{}/code".format(MODEL_DIR)
 PYTHON_LIB_PATH = os.path.join(CODE_DIR, "lib")
 REQUIREMENTS_PATH = os.path.join(CODE_DIR, "requirements.txt")
@@ -180,6 +179,12 @@ class ServiceManager(object):
         self._gunicorn_command = gunicorn_command
 
     def _download_scripts(self, bucket, prefix):
+        log.info("checking boto session region ...")
+        boto_session = boto3.session.Session()
+        boto_region = boto_session.region_name
+        if boto_region in ("us-iso-east-1", "us-gov-west-1"):
+            raise ValueError("Universal scripts is not supported in us-iso-east-1 or us-gov-west-1")
+
         log.info("downloading universal scripts ...")
         client = boto3.client("s3")
         resource = boto3.resource("s3")
