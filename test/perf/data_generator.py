@@ -11,6 +11,13 @@ _VALID_CONTENT_TYPES = [_CONTENT_TYPE_JSON, _CONTENT_TYPE_CSV, _CONTENT_TYPE_JSO
 _UNIT_FOR_PAYLOAD_SIZE = {'B': 1, 'KB': 1024, 'MB': 1048576}
 
 def generate_json(shape, payload_size):
+    """
+    Generate json payload
+
+    Args:
+        shape: (tuple): write your description
+        payload_size: (int): write your description
+    """
     one_record = _generate_json_recursively(shape)
     if payload_size:
         per_record_size = len(str(one_record))
@@ -24,6 +31,12 @@ def generate_json(shape, payload_size):
 
 
 def _generate_json_recursively(shape):
+    """
+    Generate a random shape.
+
+    Args:
+        shape: (tuple): write your description
+    """
     if len(shape) == 1:
         input = list(_random_input(shape[0]))
         return input
@@ -33,6 +46,13 @@ def _generate_json_recursively(shape):
 
 
 def generate_jsonlines(shape, payload_size):
+    """
+    Generate a list of jsonlines.
+
+    Args:
+        shape: (tuple): write your description
+        payload_size: (int): write your description
+    """
     one_row = _generate_json_recursively(shape)
     if payload_size:
         one_row_string = str(one_row)
@@ -43,10 +63,24 @@ def generate_jsonlines(shape, payload_size):
 
 
 def _get_num_records_for_json_payload(payload_size, one_record_size):
+    """
+    Returns the number of records in a record.
+
+    Args:
+        payload_size: (int): write your description
+        one_record_size: (int): write your description
+    """
     return max(int(round(float(payload_size) / one_record_size)), 1)
 
 
 def generate_csv(shape, payload_size):
+    """
+    Generate a random csv.
+
+    Args:
+        shape: (tuple): write your description
+        payload_size: (int): write your description
+    """
     # First, calculate overhead from commas.
     try:
         rows, columns = shape
@@ -64,15 +98,37 @@ def generate_csv(shape, payload_size):
 
 
 def _random_input(n):
+    """
+    Generate a random integers.
+
+    Args:
+        n: (int): write your description
+    """
     for i in range(0, n):
         yield random.randint(0, 9)
 
 
 def _map_payload_size_given_unit(payload_size, unit_of_payload):
+    """
+    Returns the unit size of unit unit.
+
+    Args:
+        payload_size: (int): write your description
+        unit_of_payload: (todo): write your description
+    """
     return payload_size * _UNIT_FOR_PAYLOAD_SIZE[unit_of_payload]
 
 
 def generate_data(content_type, shape, payload_size, unit_of_payload='B'):
+    """
+    Generate data for this unit type.
+
+    Args:
+        content_type: (str): write your description
+        shape: (tuple): write your description
+        payload_size: (int): write your description
+        unit_of_payload: (str): write your description
+    """
     assert unit_of_payload in _UNIT_FOR_PAYLOAD_SIZE.keys()
     payload_size = _map_payload_size_given_unit(payload_size, unit_of_payload)
     if content_type == _CONTENT_TYPE_JSONLINES:

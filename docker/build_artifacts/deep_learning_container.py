@@ -85,6 +85,13 @@ def query_bucket():
 
 
 def requests_helper(url, timeout):
+    """
+    Perform a http request.
+
+    Args:
+        url: (str): write your description
+        timeout: (float): write your description
+    """
     response = None
     try:
         response = requests.get(url, timeout=timeout)

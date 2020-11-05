@@ -35,6 +35,12 @@ INFERENCE_PATH = "/opt/ml/model/code/inference.py"
 
 class ServiceManager(object):
     def __init__(self):
+        """
+        Initialize the sagemaker daemon.
+
+        Args:
+            self: (todo): write your description
+        """
         self._state = "initializing"
         self._nginx = None
         self._tfs = None
@@ -82,6 +88,12 @@ class ServiceManager(object):
         os.environ["TFS_REST_PORT"] = self._tfs_rest_port
 
     def _create_tfs_config(self):
+        """
+        Create a list of tfs
+
+        Args:
+            self: (todo): write your description
+        """
         models = tfs_utils.find_models()
 
         if not models:
@@ -119,6 +131,12 @@ class ServiceManager(object):
             f.write(config)
 
     def _setup_gunicorn(self):
+        """
+        Setup the ansicorn command.
+
+        Args:
+            self: (todo): write your description
+        """
         python_path_content = []
         python_path_option = ""
 
@@ -156,6 +174,12 @@ class ServiceManager(object):
         self._gunicorn_command = gunicorn_command
 
     def _create_nginx_config(self):
+        """
+        Create nginx config file.
+
+        Args:
+            self: (todo): write your description
+        """
         template = self._read_nginx_template()
         pattern = re.compile(r"%(\w+)%")
 
@@ -177,6 +201,12 @@ class ServiceManager(object):
             f.write(config)
 
     def _read_nginx_template(self):
+        """
+        Reads the nginx template.
+
+        Args:
+            self: (todo): write your description
+        """
         with open("/sagemaker/nginx.conf.template", "r") as f:
             template = f.read()
             if not template:
@@ -185,6 +215,12 @@ class ServiceManager(object):
             return template
 
     def _start_tfs(self):
+        """
+        Starts tfs process.
+
+        Args:
+            self: (todo): write your description
+        """
         self._log_version("tensorflow_model_server --version", "tensorflow version info:")
         cmd = tfs_utils.tfs_command(
             self._tfs_grpc_port,
@@ -199,6 +235,12 @@ class ServiceManager(object):
         self._tfs = p
 
     def _start_gunicorn(self):
+        """
+        Start the jupyorn process.
+
+        Args:
+            self: (todo): write your description
+        """
         self._log_version("gunicorn --version", "gunicorn version info:")
         env = os.environ.copy()
         env["TFS_DEFAULT_MODEL_NAME"] = self._tfs_default_model_name
@@ -207,12 +249,26 @@ class ServiceManager(object):
         self._gunicorn = p
 
     def _start_nginx(self):
+        """
+        Start nspawn process.
+
+        Args:
+            self: (todo): write your description
+        """
         self._log_version("/usr/sbin/nginx -V", "nginx version info:")
         p = subprocess.Popen("/usr/sbin/nginx -c /sagemaker/nginx.conf".split())
         log.info("started nginx (pid: %d)", p.pid)
         self._nginx = p
 
     def _log_version(self, command, message):
+        """
+        Logs the version command.
+
+        Args:
+            self: (todo): write your description
+            command: (str): write your description
+            message: (str): write your description
+        """
         try:
             output = subprocess.check_output(
                 command.split(),
@@ -222,6 +278,12 @@ class ServiceManager(object):
             log.warning("failed to run command: %s", command)
 
     def _stop(self, *args):  # pylint: disable=W0613
+        """
+        Stop the daemon.
+
+        Args:
+            self: (todo): write your description
+        """
         self._state = "stopping"
         log.info("stopping services")
         try:
@@ -242,6 +304,12 @@ class ServiceManager(object):
         log.info("stopped")
 
     def _wait_for_gunicorn(self):
+        """
+        Waits until the multiprocessing pool.
+
+        Args:
+            self: (todo): write your description
+        """
         while True:
             if os.path.exists("/tmp/gunicorn.sock"):
                 log.info("gunicorn server is ready!")
@@ -249,7 +317,21 @@ class ServiceManager(object):
 
     @contextmanager
     def _timeout(self, seconds):
+        """
+        Context manager to a timeout.
+
+        Args:
+            self: (todo): write your description
+            seconds: (int): write your description
+        """
         def _raise_timeout_error(signum, frame):
+            """
+            Raises a timeout and raise an exception.
+
+            Args:
+                signum: (int): write your description
+                frame: (todo): write your description
+            """
             raise TimeoutError("time out after {} seconds".format(seconds))
 
         try:
@@ -260,6 +342,12 @@ class ServiceManager(object):
             signal.alarm(0)
 
     def start(self):
+        """
+        Start the worker process.
+
+        Args:
+            self: (todo): write your description
+        """
         log.info("starting services")
         self._state = "starting"
         signal.signal(signal.SIGTERM, self._stop)

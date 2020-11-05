@@ -24,15 +24,40 @@ BATCH_CSV = os.path.join("test", "data", "batch.csv")
 
 
 def image_uri(registry, region, repo, tag):
+    """
+    Return the url for the given repository.
+
+    Args:
+        registry: (str): write your description
+        region: (str): write your description
+        repo: (str): write your description
+        tag: (str): write your description
+    """
     return f"{registry}.dkr.ecr.{region}.amazonaws.com/{repo}:{tag}"
 
 
 def _execution_role(boto_session):
+    """
+    Return the boto role.
+
+    Args:
+        boto_session: (todo): write your description
+    """
     return boto_session.resource("iam").Role("SageMakerRole").arn
 
 
 @contextlib.contextmanager
 def sagemaker_model(boto_session, sagemaker_client, image_uri, model_name, model_data):
+    """
+    Create a sagemaker sagemaker sagemaker model.
+
+    Args:
+        boto_session: (todo): write your description
+        sagemaker_client: (todo): write your description
+        image_uri: (str): write your description
+        model_name: (str): write your description
+        model_data: (todo): write your description
+    """
     model = sagemaker_client.create_model(
         ModelName=model_name,
         ExecutionRoleArn=_execution_role(boto_session),
@@ -49,6 +74,14 @@ def sagemaker_model(boto_session, sagemaker_client, image_uri, model_name, model
 
 
 def _production_variants(model_name, instance_type, accelerator_type):
+    """
+    Generate variants for a model.
+
+    Args:
+        model_name: (str): write your description
+        instance_type: (str): write your description
+        accelerator_type: (str): write your description
+    """
     production_variants = [{
         "VariantName": "AllTraffic",
         "ModelName": model_name,
@@ -63,6 +96,13 @@ def _production_variants(model_name, instance_type, accelerator_type):
 
 
 def _test_bucket(region, boto_session):
+    """
+    Get s3 bucket.
+
+    Args:
+        region: (str): write your description
+        boto_session: (todo): write your description
+    """
     sts = boto_session.client(
         "sts",
         region_name=region,
@@ -73,6 +113,14 @@ def _test_bucket(region, boto_session):
 
 
 def find_or_put_model_data(region, boto_session, local_path):
+    """
+    Https : // amazon s3 bucket.
+
+    Args:
+        region: (str): write your description
+        boto_session: (todo): write your description
+        local_path: (str): write your description
+    """
     model_file = os.path.basename(local_path)
 
     bucket = _test_bucket(region, boto_session)
@@ -107,6 +155,15 @@ def find_or_put_model_data(region, boto_session, local_path):
 
 @contextlib.contextmanager
 def sagemaker_endpoint(sagemaker_client, model_name, instance_type, accelerator_type=None):
+    """
+    Create a sagemaker endpoint endpoint.
+
+    Args:
+        sagemaker_client: (todo): write your description
+        model_name: (str): write your description
+        instance_type: (str): write your description
+        accelerator_type: (str): write your description
+    """
     logger.info("creating endpoint %s", model_name)
 
     # Add jitter so we can run tests in parallel without running into service side limits.
@@ -136,6 +193,15 @@ def sagemaker_endpoint(sagemaker_client, model_name, instance_type, accelerator_
 
 
 def _create_transform_job_request(model_name, batch_output, batch_input, instance_type):
+    """
+    Create an amazon sagemaker model request.
+
+    Args:
+        model_name: (str): write your description
+        batch_output: (todo): write your description
+        batch_input: (todo): write your description
+        instance_type: (str): write your description
+    """
     return {
         "TransformJobName": model_name,
         "ModelName": model_name,
@@ -162,6 +228,15 @@ def _create_transform_job_request(model_name, batch_output, batch_input, instanc
 
 
 def _read_batch_output(region, boto_session, bucket, model_name):
+    """
+    Read a boto3 bucket output.
+
+    Args:
+        region: (str): write your description
+        boto_session: (todo): write your description
+        bucket: (str): write your description
+        model_name: (str): write your description
+    """
     s3 = boto_session.client("s3", region)
     output_file = f"/tmp/{model_name}.out"
     s3.download_file(bucket, f"output/{model_name}/batch.csv.out", output_file)
@@ -169,6 +244,17 @@ def _read_batch_output(region, boto_session, bucket, model_name):
 
 
 def _wait_for_transform_job(region, boto_session, sagemaker_client, model_name, poll, timeout):
+    """
+    Wait for an amazon sagemaker.
+
+    Args:
+        region: (str): write your description
+        boto_session: (todo): write your description
+        sagemaker_client: (todo): write your description
+        model_name: (str): write your description
+        poll: (str): write your description
+        timeout: (float): write your description
+    """
     status = sagemaker_client.describe_transform_job(TransformJobName=model_name)["TransformJobStatus"]
     job_runtime = 0
     while status == "InProgress":
@@ -194,6 +280,18 @@ def _wait_for_transform_job(region, boto_session, sagemaker_client, model_name, 
 def run_batch_transform_job(region, boto_session, model_data, image_uri,
                             sagemaker_client, model_name,
                             instance_type):
+    """
+    Run inference inference inference.
+
+    Args:
+        region: (str): write your description
+        boto_session: (todo): write your description
+        model_data: (todo): write your description
+        image_uri: (todo): write your description
+        sagemaker_client: (todo): write your description
+        model_name: (str): write your description
+        instance_type: (str): write your description
+    """
 
     with sagemaker_model(boto_session, sagemaker_client, image_uri, model_name, model_data):
         batch_input = find_or_put_model_data(region, boto_session, BATCH_CSV)
@@ -215,6 +313,14 @@ def run_batch_transform_job(region, boto_session, model_data, image_uri,
 
 
 def invoke_endpoint(sagemaker_runtime_client, endpoint_name, input_data):
+    """
+    Execute an amazon sagemaker endpoint.
+
+    Args:
+        sagemaker_runtime_client: (todo): write your description
+        endpoint_name: (str): write your description
+        input_data: (todo): write your description
+    """
     response = sagemaker_runtime_client.invoke_endpoint(EndpointName=endpoint_name,
                                                         ContentType="application/json",
                                                         Body=json.dumps(input_data))
@@ -226,6 +332,20 @@ def invoke_endpoint(sagemaker_runtime_client, endpoint_name, input_data):
 def create_and_invoke_endpoint(boto_session, sagemaker_client, sagemaker_runtime_client,
                                model_name, model_data, image_uri, instance_type, accelerator_type,
                                input_data):
+    """
+    Create a sagemaker endpoint.
+
+    Args:
+        boto_session: (todo): write your description
+        sagemaker_client: (todo): write your description
+        sagemaker_runtime_client: (todo): write your description
+        model_name: (str): write your description
+        model_data: (todo): write your description
+        image_uri: (str): write your description
+        instance_type: (str): write your description
+        accelerator_type: (todo): write your description
+        input_data: (todo): write your description
+    """
     with sagemaker_model(boto_session, sagemaker_client, image_uri, model_name, model_data):
         with sagemaker_endpoint(sagemaker_client, model_name, instance_type, accelerator_type):
             return invoke_endpoint(sagemaker_runtime_client, model_name, input_data)

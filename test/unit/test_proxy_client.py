@@ -7,6 +7,12 @@ from container.sagemaker import proxy_client
 
 @pytest.fixture(autouse=True)
 def create_sagemaker_folder(tmpdir):
+    """
+    Create sagemaker folder
+
+    Args:
+        tmpdir: (str): write your description
+    """
     tmpdir.join('sagemaker').ensure(dir=True)
 
     proxy_client.MODEL_CONFIG_FILE = str(tmpdir) + proxy_client.MODEL_CONFIG_FILE
@@ -14,6 +20,11 @@ def create_sagemaker_folder(tmpdir):
 
 
 def test_grpc_add_model_no_config_file():
+    """
+    Add grpc config file to the grpc config file.
+
+    Args:
+    """
     client = proxy_client.GRPCProxyClient(port='9090')
 
     with pytest.raises(FileNotFoundError) as e:
@@ -24,6 +35,13 @@ def test_grpc_add_model_no_config_file():
 @mock.patch('tensorflow_serving.apis.model_management_pb2.ReloadConfigRequest')
 @mock.patch('grpc.insecure_channel')
 def test_grpc_add_model_call(channel, ReloadConfigRequest):
+    """
+    Add a grpc model
+
+    Args:
+        channel: (todo): write your description
+        ReloadConfigRequest: (todo): write your description
+    """
     config = 'model_config_list: {\n}\n'
     with open(proxy_client.MODEL_CONFIG_FILE, 'w') as f:
         f.write(config)
@@ -67,6 +85,13 @@ def test_grpc_add_model_call(channel, ReloadConfigRequest):
 @mock.patch('tensorflow_serving.apis.model_management_pb2.ReloadConfigRequest')
 @mock.patch('grpc.insecure_channel')
 def test_grpc_delete_model_call(channel, ReloadConfigRequest):
+    """
+    Delete a grpc model
+
+    Args:
+        channel: (todo): write your description
+        ReloadConfigRequest: (todo): write your description
+    """
     config = 'model_config_list: {\n'
     config += '  config: {\n'
     config += '    name: "my-model",\n'

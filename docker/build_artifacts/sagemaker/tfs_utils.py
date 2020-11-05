@@ -31,6 +31,16 @@ Context = namedtuple("Context",
 
 
 def parse_request(req, rest_port, grpc_port, default_model_name, model_name=None):
+    """
+    Parse a request.
+
+    Args:
+        req: (todo): write your description
+        rest_port: (todo): write your description
+        grpc_port: (str): write your description
+        default_model_name: (str): write your description
+        model_name: (str): write your description
+    """
     tfs_attributes = parse_tfs_custom_attributes(req)
     tfs_uri = make_tfs_uri(rest_port, tfs_attributes, default_model_name, model_name)
 
@@ -52,6 +62,15 @@ def parse_request(req, rest_port, grpc_port, default_model_name, model_name=None
 
 
 def make_tfs_uri(port, attributes, default_model_name, model_name=None):
+    """
+    Make a uri for a given port
+
+    Args:
+        port: (int): write your description
+        attributes: (dict): write your description
+        default_model_name: (str): write your description
+        model_name: (str): write your description
+    """
     log.info("sagemaker tfs attributes: \n{}".format(attributes))
 
     tfs_model_name = model_name or attributes.get("tfs-model-name", default_model_name)
@@ -66,6 +85,12 @@ def make_tfs_uri(port, attributes, default_model_name, model_name=None):
 
 
 def parse_tfs_custom_attributes(req):
+    """
+    Parses custom attributes.
+
+    Args:
+        req: (todo): write your description
+    """
     attributes = {}
     header = req.get_header(CUSTOM_ATTRIBUTES_HEADER)
     if header:
@@ -75,6 +100,13 @@ def parse_tfs_custom_attributes(req):
 
 
 def create_tfs_config_individual_model(model_name, base_path):
+    """
+    Create a config model config_name and bcbio model.
+
+    Args:
+        model_name: (str): write your description
+        base_path: (str): write your description
+    """
     config = "model_config_list: {\n"
     config += "  config: {\n"
     config += "    name: '{}'\n".format(model_name)
@@ -98,6 +130,16 @@ def tfs_command(tfs_grpc_port,
                 tfs_config_path,
                 tfs_enable_batching,
                 tfs_batching_config_file):
+    """
+    Enable tfs on tfs on tfs.
+
+    Args:
+        tfs_grpc_port: (todo): write your description
+        tfs_rest_port: (todo): write your description
+        tfs_config_path: (str): write your description
+        tfs_enable_batching: (todo): write your description
+        tfs_batching_config_file: (str): write your description
+    """
     cmd = "tensorflow_model_server " \
           "--port={} " \
           "--rest_api_port={} " \
@@ -109,6 +151,11 @@ def tfs_command(tfs_grpc_port,
 
 
 def find_models():
+    """
+    Return a list of models in the model_path.
+
+    Args:
+    """
     base_path = "/opt/ml/model"
     models = []
     for f in _find_saved_model_files(base_path):
@@ -121,10 +168,22 @@ def find_models():
 
 
 def find_model_versions(model_path):
+    """
+    Return list of the versions.
+
+    Args:
+        model_path: (str): write your description
+    """
     return [version.lstrip("0") for version in os.listdir(model_path)]
 
 
 def _find_saved_model_files(path):
+    """
+    Yield all model files that directory.
+
+    Args:
+        path: (str): write your description
+    """
     for e in os.scandir(path):
         if e.is_dir():
             yield from _find_saved_model_files(os.path.join(path, e.name))
@@ -134,6 +193,13 @@ def _find_saved_model_files(path):
 
 
 def get_tfs_batching_args(enable_batching, tfs_batching_config):
+    """
+    Return the args for tfs.
+
+    Args:
+        enable_batching: (str): write your description
+        tfs_batching_config: (todo): write your description
+    """
     if enable_batching:
         return "--enable_batching=true " \
                "--batching_parameters_file={}".format(tfs_batching_config)
@@ -142,8 +208,24 @@ def get_tfs_batching_args(enable_batching, tfs_batching_config):
 
 
 def create_batching_config(batching_config_file):
+    """
+    Create a batching config file.
+
+    Args:
+        batching_config_file: (str): write your description
+    """
     class _BatchingParameter:
         def __init__(self, key, env_var, value, defaulted_message):
+            """
+            Initialize environment variable.
+
+            Args:
+                self: (todo): write your description
+                key: (str): write your description
+                env_var: (todo): write your description
+                value: (todo): write your description
+                defaulted_message: (str): write your description
+            """
             self.key = key
             self.env_var = env_var
             self.value = value
