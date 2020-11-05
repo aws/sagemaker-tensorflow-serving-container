@@ -21,6 +21,13 @@ DEFAULT_LOCK_FILE = "/sagemaker/lock-file.lock"
 
 @contextmanager
 def lock(path=DEFAULT_LOCK_FILE):
+    """
+    A context manager.
+
+    Args:
+        path: (str): write your description
+        DEFAULT_LOCK_FILE: (str): write your description
+    """
     f = open(path, "w")
     fd = f.fileno()
     fcntl.lockf(fd, fcntl.LOCK_EX)
@@ -34,7 +41,20 @@ def lock(path=DEFAULT_LOCK_FILE):
 
 @contextmanager
 def timeout(seconds=60):
+    """
+    A context manager.
+
+    Args:
+        seconds: (float): write your description
+    """
     def _raise_timeout_error(signum, frame):
+        """
+        Raise an exception if the timeout.
+
+        Args:
+            signum: (int): write your description
+            frame: (todo): write your description
+        """
         raise Exception(408, "Timed out after {} seconds".format(seconds))
 
     try:
@@ -47,6 +67,14 @@ def timeout(seconds=60):
 
 class MultiModelException(Exception):
     def __init__(self, code, msg):
+        """
+        Initialize code object
+
+        Args:
+            self: (todo): write your description
+            code: (int): write your description
+            msg: (str): write your description
+        """
         Exception.__init__(self, code, msg)
         self.code = code
         self.msg = msg

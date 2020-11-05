@@ -58,6 +58,12 @@ def default_handler(data, context):
 class PythonServiceResource:
 
     def __init__(self):
+        """
+        Initializes the handler.
+
+        Args:
+            self: (todo): write your description
+        """
         if SAGEMAKER_MULTI_MODEL_ENABLED:
             self._model_tfs_rest_port = {}
             self._model_tfs_grpc_port = {}
@@ -82,6 +88,15 @@ class PythonServiceResource:
         self._tfs_default_model_name = os.environ.get("TFS_DEFAULT_MODEL_NAME", "None")
 
     def on_post(self, req, res, model_name=None):
+        """
+        Handles post requests.
+
+        Args:
+            self: (todo): write your description
+            req: (todo): write your description
+            res: (todo): write your description
+            model_name: (str): write your description
+        """
         log.info(req.uri)
         if model_name or "invocations" in req.uri:
             self._handle_invocation_post(req, res, model_name)
@@ -90,6 +105,13 @@ class PythonServiceResource:
             self._handle_load_model_post(res, data)
 
     def _parse_sagemaker_port_range(self, port_range):
+        """
+        Parse a port range.
+
+        Args:
+            self: (todo): write your description
+            port_range: (str): write your description
+        """
         lower, upper = port_range.split('-')
         lower = int(lower)
         upper = lower + int((int(upper) - lower) * 0.9)  # only utilizing 90% of the ports
@@ -102,12 +124,26 @@ class PythonServiceResource:
         return tfs_ports
 
     def _ports_available(self):
+        """
+        A list of the ports.
+
+        Args:
+            self: (todo): write your description
+        """
         with lock():
             rest_ports = self._tfs_ports["rest_port"]
             grpc_ports = self._tfs_ports["grpc_port"]
         return len(rest_ports) > 0 and len(grpc_ports) > 0
 
     def _handle_load_model_post(self, res, data):  # noqa: C901
+        """
+        Handle load config file
+
+        Args:
+            self: (todo): write your description
+            res: (todo): write your description
+            data: (todo): write your description
+        """
         model_name = data["model_name"]
         base_path = data["url"]
 
@@ -203,6 +239,13 @@ class PythonServiceResource:
             })
 
     def _import_custom_modules(self, model_name):
+        """
+        Import custom custom custom custom custom custom custom modules.
+
+        Args:
+            self: (todo): write your description
+            model_name: (str): write your description
+        """
         inference_script_path = "/opt/ml/models/{}/model/code/inference.py".format(model_name)
         requirements_file_path = "/opt/ml/models/{}/model/code/requirements.txt".format(model_name)
         python_lib_path = "/opt/ml/models/{}/model/code/lib".format(model_name)
@@ -228,10 +271,24 @@ class PythonServiceResource:
             self.model_handlers[model_name] = default_handler
 
     def _cleanup_config_file(self, config_file):
+        """
+        Remove the configuration file.
+
+        Args:
+            self: (todo): write your description
+            config_file: (str): write your description
+        """
         if os.path.exists(config_file):
             os.remove(config_file)
 
     def _wait_for_model(self, model_name):
+        """
+        Waits for a model to complete.
+
+        Args:
+            self: (todo): write your description
+            model_name: (str): write your description
+        """
         url = "http://localhost:{}/v1/models/{}".format(self._model_tfs_rest_port[model_name],
                                                         model_name)
         with timeout():
@@ -251,6 +308,15 @@ class PythonServiceResource:
                     log.exception("Failed to load models.")
 
     def _handle_invocation_post(self, req, res, model_name=None):
+        """
+        Handles post requests.
+
+        Args:
+            self: (todo): write your description
+            req: (todo): write your description
+            res: (todo): write your description
+            model_name: (str): write your description
+        """
         if SAGEMAKER_MULTI_MODEL_ENABLED:
             if model_name:
                 if model_name not in self._model_tfs_rest_port:
@@ -293,6 +359,13 @@ class PythonServiceResource:
             }).encode("utf-8")  # pylint: disable=E1101
 
     def _import_handlers(self, model_name=None):
+        """
+        Import handlers from model_name.
+
+        Args:
+            self: (todo): write your description
+            model_name: (str): write your description
+        """
         inference_script = INFERENCE_SCRIPT_PATH
         if model_name:
             inference_script = "/opt/ml/models/{}/model/code/inference.py".format(model_name)
@@ -312,10 +385,26 @@ class PythonServiceResource:
         return _custom_handler, _custom_input_handler, _custom_output_handler
 
     def _make_handler(self, custom_handler, custom_input_handler, custom_output_handler):
+        """
+        Creates a handler for a custom handler.
+
+        Args:
+            self: (todo): write your description
+            custom_handler: (todo): write your description
+            custom_input_handler: (todo): write your description
+            custom_output_handler: (todo): write your description
+        """
         if custom_handler:
             return custom_handler
 
         def handler(data, context):
+            """
+            Handler for custom handler
+
+            Args:
+                data: (todo): write your description
+                context: (dict): write your description
+            """
             processed_input = custom_input_handler(data, context)
             response = requests.post(context.rest_uri, data=processed_input)
             return custom_output_handler(response, context)
@@ -323,6 +412,15 @@ class PythonServiceResource:
         return handler
 
     def on_get(self, req, res, model_name=None):  # pylint: disable=W0613
+        """
+        Make a get request.
+
+        Args:
+            self: (todo): write your description
+            req: (str): write your description
+            res: (list): write your description
+            model_name: (str): write your description
+        """
         if model_name is None:
             models_info = {}
             uri = "http://localhost:{}/v1/models/{}"
@@ -361,6 +459,15 @@ class PythonServiceResource:
                     }).encode("utf-8")
 
     def on_delete(self, req, res, model_name):  # pylint: disable=W0613
+        """
+        Delete a single model on a model.
+
+        Args:
+            self: (todo): write your description
+            req: (str): write your description
+            res: (todo): write your description
+            model_name: (str): write your description
+        """
         if model_name not in self._model_tfs_pid:
             res.status = falcon.HTTP_404
             res.body = json.dumps({
@@ -390,6 +497,13 @@ class PythonServiceResource:
                 }).encode("utf-8")
 
     def validate_model_dir(self, model_path):
+        """
+        Validate model_path.
+
+        Args:
+            self: (todo): write your description
+            model_path: (str): write your description
+        """
         # model base path doesn't exits
         if not os.path.exists(model_path):
             return False
@@ -401,6 +515,13 @@ class PythonServiceResource:
         return self.validate_model_versions(versions)
 
     def validate_model_versions(self, versions):
+        """
+        Returns true if versions of the versions are valid.
+
+        Args:
+            self: (todo): write your description
+            versions: (str): write your description
+        """
         log.info(versions)
         if not versions:
             return False
@@ -415,16 +536,37 @@ class PythonServiceResource:
 
 class PingResource:
     def on_get(self, req, res):  # pylint: disable=W0613
+        """
+        Respond to get get request.
+
+        Args:
+            self: (todo): write your description
+            req: (str): write your description
+            res: (list): write your description
+        """
         res.status = falcon.HTTP_200
 
 
 class ServiceResources:
     def __init__(self):
+        """
+        Initialize the service.
+
+        Args:
+            self: (todo): write your description
+        """
         self._enable_model_manager = SAGEMAKER_MULTI_MODEL_ENABLED
         self._python_service_resource = PythonServiceResource()
         self._ping_resource = PingResource()
 
     def add_routes(self, application):
+        """
+        Add routes to the application.
+
+        Args:
+            self: (todo): write your description
+            application: (todo): write your description
+        """
         application.add_route("/ping", self._ping_resource)
         application.add_route("/invocations", self._python_service_resource)
 

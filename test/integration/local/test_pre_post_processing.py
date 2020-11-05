@@ -28,6 +28,13 @@ INVOCATIONS_URL = "http://localhost:8080/invocations"
 
 @pytest.fixture(scope="module", autouse=True, params=["1", "2", "3", "4", "5"])
 def volume(tmpdir_factory, request):
+    """
+    Context manager for a volume.
+
+    Args:
+        tmpdir_factory: (todo): write your description
+        request: (todo): write your description
+    """
     try:
         print(str(tmpdir_factory))
         model_dir = os.path.join(tmpdir_factory.mktemp("test"), "model")
@@ -49,6 +56,15 @@ def volume(tmpdir_factory, request):
 
 @pytest.fixture(scope="module", autouse=True)
 def container(volume, docker_base_name, tag, runtime_config):
+    """
+    Yields a container is running.
+
+    Args:
+        volume: (todo): write your description
+        docker_base_name: (str): write your description
+        tag: (todo): write your description
+        runtime_config: (todo): write your description
+    """
     try:
         command = (
             "docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080"
@@ -78,6 +94,14 @@ def container(volume, docker_base_name, tag, runtime_config):
 
 
 def make_headers(content_type, method, version=None):
+    """
+    Make a request header.
+
+    Args:
+        content_type: (str): write your description
+        method: (str): write your description
+        version: (str): write your description
+    """
     custom_attributes = "tfs-model-name=half_plus_three,tfs-method={}".format(method)
     if version:
         custom_attributes += ",tfs-model-version={}".format(version)
@@ -89,6 +113,11 @@ def make_headers(content_type, method, version=None):
 
 
 def test_predict_json():
+    """
+    Predict test test data
+
+    Args:
+    """
     headers = make_headers("application/json", "predict")
     data = "{\"instances\": [1.0, 2.0, 5.0]}"
     response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
@@ -96,6 +125,11 @@ def test_predict_json():
 
 
 def test_zero_content():
+    """
+    Test if the zero - zero zero.
+
+    Args:
+    """
     headers = make_headers("application/json", "predict")
     data = ""
     response = requests.post(INVOCATIONS_URL, data=data, headers=headers)
@@ -104,6 +138,11 @@ def test_zero_content():
 
 
 def test_large_input():
+    """
+    Returns a test test input.
+
+    Args:
+    """
     headers = make_headers("text/csv", "predict")
     data_file = "test/resources/inputs/test-large.csv"
 
@@ -115,6 +154,11 @@ def test_large_input():
 
 
 def test_csv_input():
+    """
+    Returns csv :
+
+    Args:
+    """
     headers = make_headers("text/csv", "predict")
     data = "1.0,2.0,5.0"
     response = requests.post(INVOCATIONS_URL, data=data, headers=headers).json()
@@ -122,6 +166,11 @@ def test_csv_input():
 
 
 def test_predict_specific_versions():
+    """
+    Predict versions.
+
+    Args:
+    """
     for version in ("123", "124"):
         headers = make_headers("application/json", "predict", version=version)
         data = "{\"instances\": [1.0, 2.0, 5.0]}"
@@ -130,6 +179,11 @@ def test_predict_specific_versions():
 
 
 def test_unsupported_content_type():
+    """
+    Test if the content type.
+
+    Args:
+    """
     headers = make_headers("unsupported-type", "predict")
     data = "aW1hZ2UgYnl0ZXM="
     response = requests.post(INVOCATIONS_URL, data=data, headers=headers)
@@ -138,5 +192,10 @@ def test_unsupported_content_type():
 
 
 def test_ping_service():
+    """
+    Check if a ping connection.
+
+    Args:
+    """
     response = requests.get(PING_URL)
     assert 200 == response.status_code

@@ -45,6 +45,13 @@ def handler(data, context):
 
 
 def _process_input(data, context):
+    """
+    Process the input.
+
+    Args:
+        data: (todo): write your description
+        context: (todo): write your description
+    """
     if context.request_content_type == 'application/json':
         # pass through json (assumes it's correctly formed)
         d = data.read().decode('utf-8')
@@ -61,6 +68,13 @@ def _process_input(data, context):
 
 
 def _process_output(data, context):
+    """
+    Convert the output.
+
+    Args:
+        data: (todo): write your description
+        context: (todo): write your description
+    """
     if data.status_code != 200:
         raise ValueError(data.content.decode('utf-8'))
 

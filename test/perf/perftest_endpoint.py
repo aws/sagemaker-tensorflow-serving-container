@@ -21,6 +21,12 @@ import boto3
 
 class PerfTester(object):
     def __init__(self):
+        """
+        Initialize the engine.
+
+        Args:
+            self: (todo): write your description
+        """
         self.engine = None
         self.count = None
         self.payload_kb = None
@@ -28,6 +34,16 @@ class PerfTester(object):
         self.end_time = None
 
     def test_worker(self, id, args, count, test_data, error_counts):
+        """
+        Evaluates the worker.
+
+        Args:
+            self: (todo): write your description
+            id: (str): write your description
+            count: (int): write your description
+            test_data: (todo): write your description
+            error_counts: (todo): write your description
+        """
         client = boto3.client('sagemaker-runtime')
 
         endpoint_name = test_data[0]
@@ -44,6 +60,14 @@ class PerfTester(object):
                 error_counts[id] += 1
 
     def test(self, args, count, test_data):
+        """
+        Test for all the worker.
+
+        Args:
+            self: (todo): write your description
+            count: (int): write your description
+            test_data: (todo): write your description
+        """
         self.count = args.count * args.workers
         self.payload_kb = len(test_data[1]) / 1024.0
 
@@ -67,6 +91,12 @@ class PerfTester(object):
         self.end_time = time.time()
 
     def report(self, args):
+        """
+        Print a report.
+
+        Args:
+            self: (todo): write your description
+        """
         elapsed = self.end_time - self.start_time
         report_format = '{},{},{:.3f},{:.3f},{:.3f},{:.3f},{},{},{:.3f}'
         report = report_format.format(args.model,
@@ -82,6 +112,12 @@ class PerfTester(object):
         print(report)
 
     def parse_args(self, args):
+        """
+        Parse command line arguments.
+
+        Args:
+            self: (todo): write your description
+        """
         parser = argparse.ArgumentParser('performance tester')
         parser.set_defaults(func=lambda x: parser.print_usage())
         parser.add_argument('--count', help='number of test iterations', default=1000, type=int)
@@ -92,6 +128,12 @@ class PerfTester(object):
         return parser.parse_args(args)
 
     def run(self, args):
+        """
+        Run the test
+
+        Args:
+            self: (todo): write your description
+        """
         args = self.parse_args(args)
         test_data = TEST_DATA[args.model]
         self.test(args, min(args.warmup, args.count), test_data)
@@ -100,11 +142,23 @@ class PerfTester(object):
 
 
 def _read_file(path):
+    """
+    Read a file
+
+    Args:
+        path: (str): write your description
+    """
     with open(path, 'rb') as f:
         return f.read()
 
 
 def _random_payload(size_in_kb):
+    """
+    Return a random bytes.
+
+    Args:
+        size_in_kb: (int): write your description
+    """
     return bytes(bytearray(size_in_kb * 1024))
 
 

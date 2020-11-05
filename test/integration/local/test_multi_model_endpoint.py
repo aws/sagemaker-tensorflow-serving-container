@@ -32,6 +32,11 @@ PING_URL = "http://localhost:8080/ping"
 
 @pytest.fixture(scope="session", autouse=True)
 def volume():
+    """
+    Generate a volume
+
+    Args:
+    """
     try:
         model_dir = os.path.abspath("test/resources/mme")
         subprocess.check_call(
@@ -44,6 +49,15 @@ def volume():
 
 @pytest.fixture(scope="module", autouse=True)
 def container(request, docker_base_name, tag, runtime_config):
+    """
+    A context manager.
+
+    Args:
+        request: (todo): write your description
+        docker_base_name: (str): write your description
+        tag: (todo): write your description
+        runtime_config: (todo): write your description
+    """
     try:
         command = (
             "docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080"
@@ -75,12 +89,22 @@ def container(request, docker_base_name, tag, runtime_config):
 
 @pytest.mark.skip_gpu
 def test_ping():
+    """
+    Check if a ping is alive.
+
+    Args:
+    """
     res = requests.get(PING_URL)
     assert res.status_code == 200
 
 
 @pytest.mark.skip_gpu
 def test_container_start_invocation_fail():
+    """
+    Test if a container is running
+
+    Args:
+    """
     x = {
         "instances": [1.0, 2.0, 5.0]
     }
@@ -92,6 +116,11 @@ def test_container_start_invocation_fail():
 
 @pytest.mark.skip_gpu
 def test_list_models_empty():
+    """
+    Return a list of models exist
+
+    Args:
+    """
     code, res = make_list_model_request()
     res = json.loads(res)
     assert code == 200
@@ -100,6 +129,11 @@ def test_list_models_empty():
 
 @pytest.mark.skip_gpu
 def test_delete_unloaded_model():
+    """
+    Delete test model.
+
+    Args:
+    """
     # unloads the given model/version, no-op if not loaded
     model_name = "non-existing-model"
     code, res = make_unload_model_request(model_name)
@@ -109,6 +143,11 @@ def test_delete_unloaded_model():
 
 @pytest.mark.skip_gpu
 def test_delete_model():
+    """
+    Delete a model
+
+    Args:
+    """
     model_name = "half_plus_three"
     model_data = {
         "model_name": model_name,
@@ -136,6 +175,11 @@ def test_delete_model():
 
 @pytest.mark.skip_gpu
 def test_load_two_models():
+    """
+    Generate all models
+
+    Args:
+    """
     model_name_1 = "half_plus_two"
     model_data_1 = {
         "model_name": model_name_1,
@@ -178,6 +222,11 @@ def test_load_two_models():
 
 @pytest.mark.skip_gpu
 def test_load_one_model_two_times():
+    """
+    Loads a load_load
+
+    Args:
+    """
     model_name = "cifar"
     model_data = {
         "model_name": model_name,
@@ -194,6 +243,11 @@ def test_load_one_model_two_times():
 
 @pytest.mark.skip_gpu
 def test_load_non_existing_model():
+    """
+    Test for non - existing model.
+
+    Args:
+    """
     model_name = "non-existing"
     base_path = "/opt/ml/models/non-existing"
     model_data = {
@@ -207,6 +261,11 @@ def test_load_non_existing_model():
 
 @pytest.mark.skip_gpu
 def test_bad_model_reqeust():
+    """
+    Test for bad bad bad bad badge.
+
+    Args:
+    """
     bad_model_data = {
         "model_name": "model_name",
         "uri": "/opt/ml/models/non-existing"
@@ -217,6 +276,11 @@ def test_bad_model_reqeust():
 
 @pytest.mark.skip_gpu
 def test_invalid_model_version():
+    """
+    Test for invalid invalid version isvalidated.
+
+    Args:
+    """
     model_name = "invalid_version"
     base_path = "/opt/ml/models/invalid_version"
     invalid_model_version_data = {

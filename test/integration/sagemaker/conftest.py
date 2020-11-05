@@ -46,6 +46,12 @@ NO_P3_REGIONS = [
 
 
 def pytest_addoption(parser):
+    """
+    Add a command line option.
+
+    Args:
+        parser: (todo): write your description
+    """
     parser.addoption("--region", default="us-west-2")
     parser.addoption("--registry")
     parser.addoption("--repo")
@@ -56,6 +62,12 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    """
+    Configure pytest_config.
+
+    Args:
+        config: (todo): write your description
+    """
     os.environ["TEST_REGION"] = config.getoption("--region")
     os.environ["TEST_VERSIONS"] = config.getoption("--versions") or "1.11.1,1.12.0,1.13.0"
     os.environ["TEST_INSTANCE_TYPES"] = (config.getoption("--instance-types") or
@@ -72,11 +84,24 @@ def pytest_configure(config):
 
 @pytest.fixture(scope="session")
 def region(request):
+    """
+    Returns the region of a given request.
+
+    Args:
+        request: (todo): write your description
+    """
     return request.config.getoption("--region")
 
 
 @pytest.fixture(scope="session")
 def registry(request, region):
+    """
+    Get the registry registry for a given region.
+
+    Args:
+        request: (todo): write your description
+        region: (str): write your description
+    """
     if request.config.getoption("--registry"):
         return request.config.getoption("--registry")
 
@@ -90,20 +115,45 @@ def registry(request, region):
 
 @pytest.fixture(scope="session")
 def boto_session(region):
+    """
+    Return a boto3 session.
+
+    Args:
+        region: (str): write your description
+    """
     return boto3.Session(region_name=region)
 
 
 @pytest.fixture(scope="session")
 def sagemaker_client(boto_session):
+    """
+    Return a botoemaker session.
+
+    Args:
+        boto_session: (todo): write your description
+    """
     return boto_session.client("sagemaker")
 
 
 @pytest.fixture(scope="session")
 def sagemaker_runtime_client(boto_session):
+    """
+    Return a runtime session.
+
+    Args:
+        boto_session: (todo): write your description
+    """
     return boto_session.client("runtime.sagemaker")
 
 
 def unique_name_from_base(base, max_length=63):
+    """
+    Generate a unique name.
+
+    Args:
+        base: (str): write your description
+        max_length: (int): write your description
+    """
     unique = "%04x" % random.randrange(16 ** 4)  # 4-digit hex
     ts = str(int(time.time()))
     available_length = max_length - 2 - len(ts) - len(unique)
@@ -113,11 +163,23 @@ def unique_name_from_base(base, max_length=63):
 
 @pytest.fixture
 def model_name():
+    """
+    Return the unique name of a model.
+
+    Args:
+    """
     return unique_name_from_base("test-tfs")
 
 
 @pytest.fixture(autouse=True)
 def skip_gpu_instance_restricted_regions(region, instance_type):
+    """
+    Ensure all regions are running in a single region
+
+    Args:
+        region: (str): write your description
+        instance_type: (str): write your description
+    """
     if (region in NO_P2_REGIONS and instance_type.startswith("ml.p2")) or \
             (region in NO_P3_REGIONS and instance_type.startswith("ml.p3")):
         pytest.skip("Skipping GPU test in region {}".format(region))
@@ -125,6 +187,13 @@ def skip_gpu_instance_restricted_regions(region, instance_type):
 
 @pytest.fixture(autouse=True)
 def skip_by_device_type(request, instance_type):
+    """
+    Skip all devices that have already been displayed.
+
+    Args:
+        request: (todo): write your description
+        instance_type: (str): write your description
+    """
     is_gpu = instance_type[3] in ["g", "p"]
     if (request.node.get_closest_marker("skip_gpu") and is_gpu) or \
             (request.node.get_closest_marker("skip_cpu") and not is_gpu):

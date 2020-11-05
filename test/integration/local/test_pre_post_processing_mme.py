@@ -32,6 +32,13 @@ MODEL_NAME = "half_plus_three"
 
 @pytest.fixture(scope="module", autouse=True)
 def volume(tmpdir_factory, request):
+    """
+    Context manager for a volume.
+
+    Args:
+        tmpdir_factory: (todo): write your description
+        request: (todo): write your description
+    """
     try:
         print(str(tmpdir_factory))
         model_dir = os.path.join(tmpdir_factory.mktemp("test"), "model")
@@ -53,6 +60,15 @@ def volume(tmpdir_factory, request):
 
 @pytest.fixture(scope="module", autouse=True)
 def container(volume, docker_base_name, tag, runtime_config):
+    """
+    Yields containers.
+
+    Args:
+        volume: (todo): write your description
+        docker_base_name: (str): write your description
+        tag: (todo): write your description
+        runtime_config: (todo): write your description
+    """
     try:
         command = (
             "docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080"
@@ -84,6 +100,11 @@ def container(volume, docker_base_name, tag, runtime_config):
 
 @pytest.fixture
 def model():
+    """
+    Get model.
+
+    Args:
+    """
     model_data = {
         "model_name": MODEL_NAME,
         "url": "/opt/ml/models/half_plus_three/model/half_plus_three"
@@ -94,12 +115,23 @@ def model():
 
 @pytest.mark.skip_gpu
 def test_ping_service():
+    """
+    Check if a ping connection.
+
+    Args:
+    """
     response = requests.get(PING_URL)
     assert 200 == response.status_code
 
 
 @pytest.mark.skip_gpu
 def test_predict_json(model):
+    """
+    Predict the model.
+
+    Args:
+        model: (todo): write your description
+    """
     headers = make_headers()
     data = "{\"instances\": [1.0, 2.0, 5.0]}"
     response = requests.post(INVOCATION_URL.format(model), data=data, headers=headers).json()
@@ -108,6 +140,11 @@ def test_predict_json(model):
 
 @pytest.mark.skip_gpu
 def test_zero_content():
+    """
+    Return the http status of the response.
+
+    Args:
+    """
     headers = make_headers()
     x = ""
     response = requests.post(INVOCATION_URL.format(MODEL_NAME), data=x, headers=headers)
@@ -117,6 +154,11 @@ def test_zero_content():
 
 @pytest.mark.skip_gpu
 def test_large_input():
+    """
+    Test to test test test.
+
+    Args:
+    """
     data_file = "test/resources/inputs/test-large.csv"
 
     with open(data_file, "r") as file:
@@ -129,6 +171,11 @@ def test_large_input():
 
 @pytest.mark.skip_gpu
 def test_csv_input():
+    """
+    Test if csv input is a csv file
+
+    Args:
+    """
     headers = make_headers(content_type="text/csv")
     data = "1.0,2.0,5.0"
     response = requests.post(INVOCATION_URL.format(MODEL_NAME), data=data, headers=headers).json()
@@ -137,6 +184,11 @@ def test_csv_input():
 
 @pytest.mark.skip_gpu
 def test_specific_versions():
+    """
+    Test for all versions.
+
+    Args:
+    """
     for version in ("123", "124"):
         headers = make_headers(content_type="text/csv", version=version)
         data = "1.0,2.0,5.0"
@@ -148,6 +200,11 @@ def test_specific_versions():
 
 @pytest.mark.skip_gpu
 def test_unsupported_content_type():
+    """
+    Test if the content - type.
+
+    Args:
+    """
     headers = make_headers("unsupported-type", "predict")
     data = "aW1hZ2UgYnl0ZXM="
     response = requests.post(INVOCATION_URL.format(MODEL_NAME), data=data, headers=headers)

@@ -25,6 +25,11 @@ BASE_URL = "http://localhost:8080/invocations"
 
 @pytest.fixture(scope="session", autouse=True)
 def volume():
+    """
+    Generate a volume
+
+    Args:
+    """
     try:
         model_dir = os.path.abspath("test/resources/models")
         subprocess.check_call(
@@ -37,6 +42,15 @@ def volume():
 
 @pytest.fixture(scope="module", autouse=True, params=[True, False])
 def container(request, docker_base_name, tag, runtime_config):
+    """
+    A context manager.
+
+    Args:
+        request: (todo): write your description
+        docker_base_name: (str): write your description
+        tag: (todo): write your description
+        runtime_config: (todo): write your description
+    """
     try:
         if request.param:
             batching_config = " -e SAGEMAKER_TFS_ENABLE_BATCHING=true"
@@ -72,6 +86,15 @@ def container(request, docker_base_name, tag, runtime_config):
 
 
 def make_request(data, content_type="application/json", method="predict", version=None):
+    """
+    Make a request.
+
+    Args:
+        data: (dict): write your description
+        content_type: (str): write your description
+        method: (str): write your description
+        version: (str): write your description
+    """
     custom_attributes = "tfs-model-name=half_plus_three,tfs-method={}".format(method)
     if version:
         custom_attributes += ",tfs-model-version={}".format(version)
@@ -85,6 +108,11 @@ def make_request(data, content_type="application/json", method="predict", versio
 
 
 def test_predict():
+    """
+    Predict test test test test.
+
+    Args:
+    """
     x = {
         "instances": [1.0, 2.0, 5.0]
     }
@@ -94,6 +122,11 @@ def test_predict():
 
 
 def test_predict_twice():
+    """
+    Predict a request to the test.
+
+    Args:
+    """
     x = {
         "instances": [1.0, 2.0, 5.0]
     }
@@ -105,6 +138,11 @@ def test_predict_twice():
 
 
 def test_predict_specific_versions():
+    """
+    Predict versions.
+
+    Args:
+    """
     x = {
         "instances": [1.0, 2.0, 5.0]
     }
@@ -117,6 +155,11 @@ def test_predict_specific_versions():
 
 
 def test_predict_two_instances():
+    """
+    Predict instances for instances
+
+    Args:
+    """
     x = {
         "instances": [[1.0, 2.0, 5.0], [1.0, 2.0, 5.0]]
     }
@@ -126,78 +169,143 @@ def test_predict_two_instances():
 
 
 def test_predict_jsons_json_content_type():
+    """
+    Predict json json content type.
+
+    Args:
+    """
     x = "[1.0, 2.0, 5.0]\n[1.0, 2.0, 5.0]"
     y = make_request(x)
     assert y == {"predictions": [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]}
 
 
 def test_predict_jsonlines():
+    """
+    Predict test test test test test test data.
+
+    Args:
+    """
     x = "[1.0, 2.0, 5.0]\n[1.0, 2.0, 5.0]"
     y = make_request(x, "application/jsonlines")
     assert y == {"predictions": [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]}
 
 
 def test_predict_jsons():
+    """
+    Predict test test test test.
+
+    Args:
+    """
     x = "[1.0, 2.0, 5.0]\n[1.0, 2.0, 5.0]"
     y = make_request(x, "application/jsons")
     assert y == {"predictions": [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]}
 
 
 def test_predict_jsons_2():
+    """
+    Predict the test test test test test test.
+
+    Args:
+    """
     x = "{\"x\": [1.0, 2.0, 5.0]}\n{\"x\": [1.0, 2.0, 5.0]}"
     y = make_request(x)
     assert y == {"predictions": [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]}
 
 
 def test_predict_generic_json():
+    """
+    Predict the json response.
+
+    Args:
+    """
     x = [1.0, 2.0, 5.0]
     y = make_request(json.dumps(x))
     assert y == {"predictions": [[3.5, 4.0, 5.5]]}
 
 
 def test_predict_generic_json_two_instances():
+    """
+    Predict the prediction.
+
+    Args:
+    """
     x = [[1.0, 2.0, 5.0], [1.0, 2.0, 5.0]]
     y = make_request(json.dumps(x))
     assert y == {"predictions": [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]}
 
 
 def test_predict_csv():
+    """
+    Predict test test results.
+
+    Args:
+    """
     x = "1.0"
     y = make_request(x, "text/csv")
     assert y == {"predictions": [3.5]}
 
 
 def test_predict_csv_with_zero():
+    """
+    Predict test test results.
+
+    Args:
+    """
     x = "0.0"
     y = make_request(x, "text/csv")
     assert y == {"predictions": [3.0]}
 
 
 def test_predict_csv_one_instance_three_values_with_zero():
+    """
+    Predict the test labels.
+
+    Args:
+    """
     x = "0.0,2.0,5.0"
     y = make_request(x, "text/csv")
     assert y == {"predictions": [[3.0, 4.0, 5.5]]}
 
 
 def test_predict_csv_one_instance_three_values():
+    """
+    Predict the test labels.
+
+    Args:
+    """
     x = "1.0,2.0,5.0"
     y = make_request(x, "text/csv")
     assert y == {"predictions": [[3.5, 4.0, 5.5]]}
 
 
 def test_predict_csv_two_instances_three_values():
+    """
+    Predict instances of instances
+
+    Args:
+    """
     x = "1.0,2.0,5.0\n1.0,2.0,5.0"
     y = make_request(x, "text/csv")
     assert y == {"predictions": [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]}
 
 
 def test_predict_csv_three_instances():
+    """
+    Predict instances of instances.
+
+    Args:
+    """
     x = "1.0\n2.0\n5.0"
     y = make_request(x, "text/csv")
     assert y == {"predictions": [3.5, 4.0, 5.5]}
 
 
 def test_predict_csv_wide_categorical_input():
+    """
+    Predict test for test.
+
+    Args:
+    """
     x = ("0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,0.0\n"   # noqa
          "0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,1.0,0.0,6.0,0.0\n")  # noqa
 
@@ -211,6 +319,11 @@ def test_predict_csv_wide_categorical_input():
 
 
 def test_regress():
+    """
+    Regress test test test.
+
+    Args:
+    """
     x = {
         "signature_name": "tensorflow/serving/regress",
         "examples": [{"x": 1.0}, {"x": 2.0}]
@@ -221,6 +334,11 @@ def test_regress():
 
 
 def test_regress_one_instance():
+    """
+    Regress a test instance.
+
+    Args:
+    """
     # tensorflow serving docs indicate response should have 'result' key,
     # but it is actually 'results'
     # this test will catch if they change api to match docs (unlikely)
@@ -234,17 +352,32 @@ def test_regress_one_instance():
 
 
 def test_predict_bad_input():
+    """
+    The bad bad bad bad bad bad bad bad.
+
+    Args:
+    """
     y = make_request("whatever")
     assert "error" in y
 
 
 def test_predict_bad_input_instances():
+    """
+    Perform bad bad bad bad.
+
+    Args:
+    """
     x = json.dumps({"junk": "data"})
     y = make_request(x)
     assert y["error"].startswith("Failed to process element: 0 key: junk of \'instances\' list.")
 
 
 def test_predict_no_custom_attributes_header():
+    """
+    Predict custom custom attributes.
+
+    Args:
+    """
     x = {
         "instances": [1.0, 2.0, 5.0]
     }
@@ -259,6 +392,11 @@ def test_predict_no_custom_attributes_header():
 
 
 def test_predict_with_jsonlines():
+    """
+    Predict test test test test for test.
+
+    Args:
+    """
     x = {
         "instances": [1.0, 2.0, 5.0]
     }
@@ -273,6 +411,11 @@ def test_predict_with_jsonlines():
 
 
 def test_predict_with_multiple_accept_types():
+    """
+    Test if the test test test types.
+
+    Args:
+    """
     x = {
         "instances": [1.0, 2.0, 5.0]
     }
