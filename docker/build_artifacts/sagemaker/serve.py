@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+import boto3
 import logging
 import os
 import re
@@ -27,10 +28,12 @@ JS_PING = "js_content ping"
 JS_INVOCATIONS = "js_content invocations"
 GUNICORN_PING = "proxy_pass http://gunicorn_upstream/ping"
 GUNICORN_INVOCATIONS = "proxy_pass http://gunicorn_upstream/invocations"
-
-PYTHON_LIB_PATH = "/opt/ml/model/code/lib"
-REQUIREMENTS_PATH = "/opt/ml/model/code/requirements.txt"
-INFERENCE_PATH = "/opt/ml/model/code/inference.py"
+MULTI_MODEL = "s" if os.environ.get("SAGEMAKER_MULTI_MODEL", "False").lower() == "true" else ""
+MODEL_DIR = f"model{MULTI_MODEL}"
+CODE_DIR = "/opt/ml/{}/code".format(MODEL_DIR)
+PYTHON_LIB_PATH = os.path.join(CODE_DIR, "lib")
+REQUIREMENTS_PATH = os.path.join(CODE_DIR, "requirements.txt")
+INFERENCE_PATH = os.path.join(CODE_DIR, "inference.py")
 
 
 class ServiceManager(object):
@@ -40,7 +43,7 @@ class ServiceManager(object):
         self._tfs = None
         self._gunicorn = None
         self._gunicorn_command = None
-        self._enable_python_service = os.path.exists(INFERENCE_PATH)
+        self._enable_python_service = False
         self._tfs_version = os.environ.get("SAGEMAKER_TFS_VERSION", "1.13")
         self._nginx_http_port = os.environ.get("SAGEMAKER_BIND_TO_PORT", "8080")
         self._nginx_loglevel = os.environ.get("SAGEMAKER_TFS_NGINX_LOGLEVEL", "error")
@@ -52,6 +55,13 @@ class ServiceManager(object):
         _enable_batching = os.environ.get("SAGEMAKER_TFS_ENABLE_BATCHING", "false").lower()
         _enable_multi_model_endpoint = os.environ.get("SAGEMAKER_MULTI_MODEL",
                                                       "false").lower()
+
+        if _enable_multi_model_endpoint not in ["true", "false"]:
+            raise ValueError("SAGEMAKER_MULTI_MODEL must be 'true' or 'false'")
+        self._tfs_enable_multi_model_endpoint = _enable_multi_model_endpoint == "true"
+
+        self._need_python_service()
+        log.info("PYTHON SERVICE: {}".format(str(self._enable_python_service)))
 
         if _enable_batching not in ["true", "false"]:
             raise ValueError("SAGEMAKER_TFS_ENABLE_BATCHING must be 'true' or 'false'")
@@ -80,6 +90,13 @@ class ServiceManager(object):
         # set environment variable for python service
         os.environ["TFS_GRPC_PORT"] = self._tfs_grpc_port
         os.environ["TFS_REST_PORT"] = self._tfs_rest_port
+
+    def _need_python_service(self):
+        if os.path.exists(INFERENCE_PATH):
+            self._enable_python_service = True
+        if os.environ.get("SAGEMAKER_MULTI_MODEL_UNIVERSAL_BUCKET") \
+                and os.environ.get("SAGEMAKER_MULTI_MODEL_UNIVERSAL_PREFIX"):
+            self._enable_python_service = True
 
     def _create_tfs_config(self):
         models = tfs_utils.find_models()
@@ -122,6 +139,12 @@ class ServiceManager(object):
         python_path_content = []
         python_path_option = ""
 
+        bucket = os.environ.get("SAGEMAKER_MULTI_MODEL_UNIVERSAL_BUCKET", None)
+        prefix = os.environ.get("SAGEMAKER_MULTI_MODEL_UNIVERSAL_PREFIX", None)
+
+        if not os.path.exists(CODE_DIR) and bucket and prefix:
+            self._download_scripts(bucket, prefix)
+
         if self._enable_python_service:
             lib_path_exists = os.path.exists(PYTHON_LIB_PATH)
             requirements_exists = os.path.exists(REQUIREMENTS_PATH)
@@ -154,6 +177,25 @@ class ServiceManager(object):
 
         log.info("gunicorn command: {}".format(gunicorn_command))
         self._gunicorn_command = gunicorn_command
+
+    def _download_scripts(self, bucket, prefix):
+        log.info("checking boto session region ...")
+        boto_session = boto3.session.Session()
+        boto_region = boto_session.region_name
+        if boto_region in ("us-iso-east-1", "us-gov-west-1"):
+            raise ValueError("Universal scripts is not supported in us-iso-east-1 or us-gov-west-1")
+
+        log.info("downloading universal scripts ...")
+        client = boto3.client("s3")
+        resource = boto3.resource("s3")
+        # download files
+        paginator = client.get_paginator("list_objects")
+        for result in paginator.paginate(Bucket=bucket, Delimiter="/", Prefix=prefix):
+            for file in result.get("Contents", []):
+                destination = os.path.join(CODE_DIR, file.get("Key"))
+                if not os.path.exists(os.path.dirname(destination)):
+                    os.makedirs(os.path.dirname(destination))
+                resource.meta.client.download_file(bucket, file.get("Key"), destination)
 
     def _create_nginx_config(self):
         template = self._read_nginx_template()

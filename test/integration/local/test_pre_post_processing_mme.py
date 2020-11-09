@@ -30,39 +30,30 @@ INVOCATION_URL = "http://localhost:8080/models/{}/invoke"
 MODEL_NAME = "half_plus_three"
 
 
-@pytest.fixture(scope="module", autouse=True)
-def volume(tmpdir_factory, request):
+@pytest.fixture(scope="session", autouse=True)
+def volume():
     try:
-        print(str(tmpdir_factory))
-        model_dir = os.path.join(tmpdir_factory.mktemp("test"), "model")
-        code_dir = os.path.join(model_dir, "code")
-        test_example = "test/resources/examples/test1"
-
-        model_src_dir = "test/resources/models"
-        shutil.copytree(model_src_dir, model_dir)
-        shutil.copytree(test_example, code_dir)
-
-        volume_name = f"model_volume_1"
+        model_dir = os.path.abspath("test/resources/mme_universal_script")
         subprocess.check_call(
-            "docker volume create --name {} --opt type=none "
-            "--opt device={} --opt o=bind".format(volume_name, model_dir).split())
-        yield volume_name
+            "docker volume create --name model_volume_mme --opt type=none "
+            "--opt device={} --opt o=bind".format(model_dir).split())
+        yield model_dir
     finally:
-        subprocess.check_call(f"docker volume rm {volume_name}".split())
+        subprocess.check_call("docker volume rm model_volume_mme".split())
 
 
 @pytest.fixture(scope="module", autouse=True)
-def container(volume, docker_base_name, tag, runtime_config):
+def container(docker_base_name, tag, runtime_config):
     try:
         command = (
             "docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080"
-            " --mount type=volume,source={},target=/opt/ml/models/half_plus_three/model,readonly"
+            " --mount type=volume,source=model_volume_mme,target=/opt/ml/models,readonly"
             " -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info"
             " -e SAGEMAKER_BIND_TO_PORT=8080"
             " -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999"
             " -e SAGEMAKER_MULTI_MODEL=True"
             " {}:{} serve"
-        ).format(runtime_config, volume, docker_base_name, tag)
+        ).format(runtime_config, docker_base_name, tag)
 
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
