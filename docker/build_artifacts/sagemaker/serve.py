@@ -29,7 +29,7 @@ JS_INVOCATIONS = "js_content invocations"
 GUNICORN_PING = "proxy_pass http://gunicorn_upstream/ping"
 GUNICORN_INVOCATIONS = "proxy_pass http://gunicorn_upstream/invocations"
 MULTI_MODEL = "s" if os.environ.get("SAGEMAKER_MULTI_MODEL", "False").lower() == "true" else ""
-MODEL_DIR = "model%s" % MULTI_MODEL
+MODEL_DIR = f"model{MULTI_MODEL}"
 CODE_DIR = "/opt/ml/{}/code".format(MODEL_DIR)
 PYTHON_LIB_PATH = os.path.join(CODE_DIR, "lib")
 REQUIREMENTS_PATH = os.path.join(CODE_DIR, "requirements.txt")

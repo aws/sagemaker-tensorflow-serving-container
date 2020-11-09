@@ -28,7 +28,7 @@ import tfs_utils
 
 SAGEMAKER_MULTI_MODEL_ENABLED = os.environ.get("SAGEMAKER_MULTI_MODEL", "false").lower() == "true"
 MODEL_DIR = "models" if SAGEMAKER_MULTI_MODEL_ENABLED else "model"
-INFERENCE_SCRIPT_PATH = "/opt/ml/%s/code/inference.py" % MODEL_DIR
+INFERENCE_SCRIPT_PATH = f"/opt/ml/{MODEL_DIR}/code/inference.py"
 
 SAGEMAKER_BATCHING_ENABLED = os.environ.get("SAGEMAKER_TFS_ENABLE_BATCHING", "false").lower()
 MODEL_CONFIG_FILE_PATH = "/sagemaker/model-config.cfg"
