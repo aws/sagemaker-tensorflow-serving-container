@@ -73,7 +73,7 @@ set your default AWS credentials and region using `aws configure` before using t
 Amazon SageMaker uses Docker containers to run all training jobs and inference endpoints.
 
 The Docker images are built from the Dockerfiles in
-[docker/](https://github.com/aws/sagemaker-tensorflow-serving-container/tree/master/docker>).
+[docker/](https://github.com/aws/sagemaker-tensorflow-serving-container/tree/master/docker).
 
 The Dockerfiles are grouped based on the version of TensorFlow Serving they support. Each supported
 processor type (e.g. "cpu", "gpu", "ei") has a different Dockerfile in each group.
