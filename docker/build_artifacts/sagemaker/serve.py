@@ -171,7 +171,7 @@ class ServiceManager(object):
                         raise ChildProcessError("failed to install required packages.")
 
         gunicorn_command = (
-            "gunicorn -b unix:/tmp/gunicorn.sock -k gevent --chdir /sagemaker --workers {} --threads {}"
+            "gunicorn -b unix:/tmp/gunicorn.sock -k gevent --chdir /sagemaker --workers {} --threads {} "
             "{}{} -e TFS_GRPC_PORT={} -e SAGEMAKER_MULTI_MODEL={} -e SAGEMAKER_SAFE_PORT_RANGE={} "
             "python_service:app").format(self._gunicorn_workers, self._gunicorn_threads, python_path_option, ",".join(python_path_content),
                                          self._tfs_grpc_port, self._tfs_enable_multi_model_endpoint,
