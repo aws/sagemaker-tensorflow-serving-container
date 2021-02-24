@@ -97,13 +97,17 @@ def tfs_command(tfs_grpc_port,
                 tfs_rest_port,
                 tfs_config_path,
                 tfs_enable_batching,
-                tfs_batching_config_file):
+                tfs_batching_config_file,
+                tfs_intra_op_parallelism,
+                tfs_inter_op_parallelism):
     cmd = "tensorflow_model_server " \
           "--port={} " \
           "--rest_api_port={} " \
           "--model_config_file={} " \
-          "--max_num_load_retries=0 {}" \
-        .format(tfs_grpc_port, tfs_rest_port, tfs_config_path,
+          "--max_num_load_retries=0 "\
+          "--tensorflow_intra_op_parallelism={} " \
+          "--tensorflow_inter_op_parallelism={} {}" \
+        .format(tfs_grpc_port, tfs_rest_port, tfs_config_path, tfs_intra_op_parallelism, tfs_inter_op_parallelism,
                 get_tfs_batching_args(tfs_enable_batching, tfs_batching_config_file))
     return cmd
 

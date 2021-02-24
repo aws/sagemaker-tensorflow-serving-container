@@ -21,6 +21,7 @@ import sys
 
 import falcon
 import requests
+import random
 
 from urllib3.util.retry import Retry
 
@@ -35,13 +36,15 @@ MODEL_CONFIG_FILE_PATH = "/sagemaker/model-config.cfg"
 TFS_GRPC_PORT = os.environ.get("TFS_GRPC_PORT")
 TFS_REST_PORT = os.environ.get("TFS_REST_PORT")
 SAGEMAKER_TFS_PORT_RANGE = os.environ.get("SAGEMAKER_SAFE_PORT_RANGE")
+TFS_INSTANCE_COUNT = int(os.environ.get("SAGEMAKER_TFS_INSTANCE_COUNT", "1"))
 
+request_count = 0
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 CUSTOM_ATTRIBUTES_HEADER = "X-Amzn-SageMaker-Custom-Attributes"
-
+#global request_count = 0
 
 def default_handler(data, context):
     """A default inference request handler that directly send post request to TFS rest port with
@@ -274,8 +277,9 @@ class PythonServiceResource:
                     "error": "Invocation request does not contain model name."
                 })
         else:
-            data, context = tfs_utils.parse_request(req, self._tfs_rest_port, self._tfs_grpc_port,
-                                                    self._tfs_default_model_name)
+            # Randomly pick a port for routing incoming request. We could potentially use some round-robin technique too
+            grpc_port = str(int(self._tfs_grpc_port) + 2 * (random.randint(0, TFS_INSTANCE_COUNT -1)))
+            data, context = tfs_utils.parse_request(req, self._tfs_rest_port, grpc_port, self._tfs_default_model_name)
 
         try:
             res.status = falcon.HTTP_200

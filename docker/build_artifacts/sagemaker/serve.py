@@ -37,7 +37,7 @@ class ServiceManager(object):
     def __init__(self):
         self._state = "initializing"
         self._nginx = None
-        self._tfs = None
+        self._tfs = []
         self._gunicorn = None
         self._gunicorn_command = None
         self._enable_python_service = os.path.exists(INFERENCE_PATH)
@@ -52,6 +52,10 @@ class ServiceManager(object):
         _enable_batching = os.environ.get("SAGEMAKER_TFS_ENABLE_BATCHING", "false").lower()
         _enable_multi_model_endpoint = os.environ.get("SAGEMAKER_MULTI_MODEL",
                                                       "false").lower()
+        self._tfs_instance_count = int(os.environ.get("SAGEMAKER_TFS_INSTANCE_COUNT", 1))
+        self._tfs_inter_op_parallelism = os.environ.get("SAGEMAKER_TFS_INTER_OP_PARALLELISM", 0)
+        self._tfs_intra_op_parallelism = os.environ.get("SAGEMAKER_TFS_INTRA_OP_PARALLELISM", 0)
+        self._gunicorn_worker_class = os.environ.get("SAGEMAKER_GUNICORN_WORKER_CLASS", 'gevent')
 
         if _enable_batching not in ["true", "false"]:
             raise ValueError("SAGEMAKER_TFS_ENABLE_BATCHING must be 'true' or 'false'")
@@ -67,19 +71,22 @@ class ServiceManager(object):
             parts = self._sagemaker_port_range.split("-")
             low = int(parts[0])
             hi = int(parts[1])
-            if low + 2 > hi:
+            self._tfs_grpc_port = []
+            self._tfs_rest_port = []
+            if low + 2 * self._tfs_instance_count > hi:
                 raise ValueError("not enough ports available in SAGEMAKER_SAFE_PORT_RANGE ({})"
                                  .format(self._sagemaker_port_range))
-            self._tfs_grpc_port = str(low)
-            self._tfs_rest_port = str(low + 1)
+            for i in range(self._tfs_instance_count):
+                self._tfs_grpc_port.append(str(low + 2 * i))
+                self._tfs_rest_port.append(str(low + 2 * i + 1))
         else:
             # just use the standard default ports
-            self._tfs_grpc_port = "9000"
-            self._tfs_rest_port = "8501"
+            self._tfs_grpc_port = ["9000"]
+            self._tfs_rest_port = ["8501"]
 
         # set environment variable for python service
-        os.environ["TFS_GRPC_PORT"] = self._tfs_grpc_port
-        os.environ["TFS_REST_PORT"] = self._tfs_rest_port
+        os.environ["TFS_GRPC_PORT"] = self._tfs_grpc_port[0]
+        os.environ["TFS_REST_PORT"] = self._tfs_rest_port[0]
 
     def _create_tfs_config(self):
         models = tfs_utils.find_models()
@@ -146,10 +153,10 @@ class ServiceManager(object):
                         raise ChildProcessError("failed to install required packages.")
 
         gunicorn_command = (
-            "gunicorn -b unix:/tmp/gunicorn.sock -k gevent --chdir /sagemaker "
+            "gunicorn -b unix:/tmp/gunicorn.sock -k {} --chdir /sagemaker "
             "{}{} -e TFS_GRPC_PORT={} -e SAGEMAKER_MULTI_MODEL={} -e SAGEMAKER_SAFE_PORT_RANGE={} "
-            "python_service:app").format(python_path_option, ",".join(python_path_content),
-                                         self._tfs_grpc_port, self._tfs_enable_multi_model_endpoint,
+            "python_service:app").format(self._gunicorn_worker_class, python_path_option, ",".join(python_path_content),
+                                         self._tfs_grpc_port[0], self._tfs_enable_multi_model_endpoint,
                                          self._sagemaker_port_range)
 
         log.info("gunicorn command: {}".format(gunicorn_command))
@@ -161,7 +168,7 @@ class ServiceManager(object):
 
         template_values = {
             "TFS_VERSION": self._tfs_version,
-            "TFS_REST_PORT": self._tfs_rest_port,
+            "TFS_REST_PORT": self._tfs_rest_port[0],
             "TFS_DEFAULT_MODEL_NAME": self._tfs_default_model_name,
             "NGINX_HTTP_PORT": self._nginx_http_port,
             "NGINX_LOG_LEVEL": self._nginx_loglevel,
@@ -186,17 +193,20 @@ class ServiceManager(object):
 
     def _start_tfs(self):
         self._log_version("tensorflow_model_server --version", "tensorflow version info:")
-        cmd = tfs_utils.tfs_command(
-            self._tfs_grpc_port,
-            self._tfs_rest_port,
-            self._tfs_config_path,
-            self._tfs_enable_batching,
-            self._tfs_batching_config_path,
-        )
-        log.info("tensorflow serving command: {}".format(cmd))
-        p = subprocess.Popen(cmd.split())
-        log.info("started tensorflow serving (pid: %d)", p.pid)
-        self._tfs = p
+        for i in range(self._tfs_instance_count):
+            cmd = tfs_utils.tfs_command(
+                self._tfs_grpc_port[i],
+                self._tfs_rest_port[i],
+                self._tfs_config_path,
+                self._tfs_enable_batching,
+                self._tfs_batching_config_path,
+                self._tfs_intra_op_parallelism,
+                self._tfs_inter_op_parallelism,
+            )
+            log.info("tensorflow serving command: {}".format(cmd))
+            p = subprocess.Popen(cmd.split())
+            log.info("started tensorflow serving (pid: %d)", p.pid)
+            self._tfs.append(p)
 
     def _start_gunicorn(self):
         self._log_version("gunicorn --version", "gunicorn version info:")
@@ -234,7 +244,8 @@ class ServiceManager(object):
         except OSError:
             pass
         try:
-            os.kill(self._tfs.pid, signal.SIGTERM)
+            for tfs in self._tfs:
+                os.kill(tfs.pid, signal.SIGTERM)
         except OSError:
             pass
 
@@ -296,7 +307,7 @@ class ServiceManager(object):
                 log.warning("unexpected nginx exit (status: {}). restarting.".format(status))
                 self._start_nginx()
 
-            elif pid == self._tfs.pid:
+            elif pid == self._tfs[0].pid:
                 log.warning(
                     "unexpected tensorflow serving exit (status: {}). restarting.".format(status))
                 self._start_tfs()
