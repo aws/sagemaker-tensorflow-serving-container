@@ -92,6 +92,7 @@ RUN apt-get update \
 
 # cython, falcon, gunicorn, grpc
 RUN ${PIP} install -U --no-cache-dir \
+    boto3 \
     awscli==1.18.34 \
     pyYAML==5.3.1 \
     cython==0.29.12 \
