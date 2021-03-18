@@ -24,13 +24,13 @@ phases:
       # push docker images to ECR
       # - |
       #  if is-release-build; then
-          ./scripts/publish-all.sh
+      - ./scripts/publish-all.sh
       #  fi
 
       # run SageMaker tests
       #- |
       #  if is-release-build; then
-          tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 2.1.0
+      - tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 2.1.0
       #  fi
 
       # write deployment details to file
