@@ -22,16 +22,16 @@ phases:
       - tox -e py37 -- test/integration/local --framework-version 2.1
 
       # push docker images to ECR
-      - |
-        if is-release-build; then
+      # - |
+      #  if is-release-build; then
           ./scripts/publish-all.sh
-        fi
+      #  fi
 
       # run SageMaker tests
-      - |
-        if is-release-build; then
+      #- |
+      #  if is-release-build; then
           tox -e py37 -- -n 8 test/integration/sagemaker/test_tfs.py --versions 2.1.0
-        fi
+      #  fi
 
       # write deployment details to file
       # todo sort out eia versioning
