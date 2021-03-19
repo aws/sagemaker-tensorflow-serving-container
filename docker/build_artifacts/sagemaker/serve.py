@@ -18,6 +18,8 @@ import re
 import signal
 import subprocess
 import tfs_utils
+import requests
+import time
 
 from contextlib import contextmanager
 
@@ -60,6 +62,7 @@ class ServiceManager(object):
         # Use this to specify memory that is needed to initialize CUDA/cuDNN and other GPU libraries
         self._tfs_gpu_margin = float(os.environ.get("SAGEMAKER_TFS_FRACTIONAL_GPU_MEM_MARGIN", 0.2))
         self._tfs_instance_count = int(os.environ.get("SAGEMAKER_TFS_INSTANCE_COUNT", 1))
+        self._tfs_wait_time = int(os.environ.get("SAGEMAKER_TFS_WAIT_TIME", 600))
         self._tfs_inter_op_parallelism = os.environ.get("SAGEMAKER_TFS_INTER_OP_PARALLELISM", 0)
         self._tfs_intra_op_parallelism = os.environ.get("SAGEMAKER_TFS_INTRA_OP_PARALLELISM", 0)
         self._gunicorn_worker_class = os.environ.get("SAGEMAKER_GUNICORN_WORKER_CLASS", 'gevent')
@@ -324,6 +327,23 @@ class ServiceManager(object):
                 log.info("gunicorn server is ready!")
                 return
 
+    def _wait_for_tfs(self):
+        # Wait until tfs server is up and running
+        while True:
+            try:
+                tfs_ready_count = 0
+                for i in range(self._tfs_instance_count):
+                    log.info("Trying to connect with model server[{}]..".format(i))
+                    response = requests.get('http://localhost:%s/v1/models/%s/metadata' % (self._tfs_rest_port[i], self._tfs_default_model_name))
+                    logging.info(response)
+                    if response.status_code == 200:
+                        tfs_ready_count += 1
+                if tfs_ready_count == self._tfs_instance_count:
+                    break
+            except requests.exceptions.ConnectionError:
+                time.sleep(30)
+                pass
+
     @contextmanager
     def _timeout(self, seconds):
         def _raise_timeout_error(signum, frame):
@@ -406,6 +426,8 @@ class ServiceManager(object):
         else:
             self._create_tfs_config()
             self._start_tfs()
+            with self._timeout(seconds=self._tfs_wait_time):
+                self._wait_for_tfs()
 
         self._create_nginx_config()
 
