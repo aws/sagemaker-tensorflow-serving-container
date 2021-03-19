@@ -333,8 +333,10 @@ class ServiceManager(object):
             try:
                 tfs_ready_count = 0
                 for i in range(self._tfs_instance_count):
-                    log.info("Trying to connect with model server[{}]..".format(i))
-                    response = requests.get('http://localhost:%s/v1/models/%s/metadata' % (self._tfs_rest_port[i], self._tfs_default_model_name))
+                    tfs_url = "http://localhost:{}/v1/models/{}/metadata" \
+                        .format(self._tfs_rest_port[i], self._tfs_default_model_name)
+                    log.info("Trying to connect with model server \n {}".format(tfs_url))
+                    response = requests.get(tfs_url)
                     logging.info(response)
                     if response.status_code == 200:
                         tfs_ready_count += 1
@@ -342,7 +344,6 @@ class ServiceManager(object):
                     break
             except requests.exceptions.ConnectionError:
                 time.sleep(30)
-                pass
 
     @contextmanager
     def _timeout(self, seconds):
