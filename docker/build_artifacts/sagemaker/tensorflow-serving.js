@@ -84,7 +84,6 @@ function tfs_json_request(r, json) {
                 r.headersOut['Content-Type'] = content_types[0]
             }
         }
-        // var content_types = accept == "" ? "" : accept.trim().replace(" ", "").split(",")
 
         r.return(reply.status, body)
     }

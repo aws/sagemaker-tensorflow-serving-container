@@ -75,6 +75,15 @@ def python_model_with_lib(region, boto_session):
                                        "test/data/python-with-lib.tar.gz")
 
 
+def test_tfs_model(boto_session, sagemaker_client,
+                   sagemaker_runtime_client, model_name, tfs_model,
+                   image_uri, instance_type, accelerator_type):
+    input_data = {"instances": [1.0, 2.0, 5.0]}
+    util.create_and_invoke_endpoint(boto_session, sagemaker_client,
+                                    sagemaker_runtime_client, model_name, tfs_model,
+                                    image_uri, instance_type, accelerator_type, input_data)
+
+
 def test_batch_transform(region, boto_session, sagemaker_client,
                          model_name, tfs_model, image_uri,
                          instance_type):
@@ -89,4 +98,39 @@ def test_batch_transform(region, boto_session, sagemaker_client,
     for r in results:
         assert r == [3.5, 4.0, 5.5]
 
+def test_python_model_with_requirements(boto_session, sagemaker_client,
+                                        sagemaker_runtime_client, model_name,
+                                        python_model_with_requirements, image_uri, instance_type,
+                                        accelerator_type):
 
+    if "p3" in instance_type:
+        pytest.skip("skip for p3 instance")
+
+    # the python service needs to transform this to get a valid prediction
+    input_data = {"x": [1.0, 2.0, 5.0]}
+    output_data = util.create_and_invoke_endpoint(boto_session, sagemaker_client,
+                                                  sagemaker_runtime_client, model_name,
+                                                  python_model_with_requirements, image_uri,
+                                                  instance_type, accelerator_type, input_data)
+
+    # python service adds this to tfs response
+    assert output_data["python"] is True
+    assert output_data["pillow"] == "6.0.0"
+
+
+def test_python_model_with_lib(boto_session, sagemaker_client,
+                               sagemaker_runtime_client, model_name, python_model_with_lib,
+                               image_uri, instance_type, accelerator_type):
+
+    if "p3" in instance_type:
+        pytest.skip("skip for p3 instance")
+
+    # the python service needs to transform this to get a valid prediction
+    input_data = {"x": [1.0, 2.0, 5.0]}
+    output_data = util.create_and_invoke_endpoint(boto_session, sagemaker_client,
+                                                  sagemaker_runtime_client, model_name, python_model_with_lib,
+                                                  image_uri, instance_type, accelerator_type, input_data)
+
+    # python service adds this to tfs response
+    assert output_data["python"] is True
+    assert output_data["dummy_module"] == "0.1"
