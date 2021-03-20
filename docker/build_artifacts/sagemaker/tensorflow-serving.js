@@ -79,12 +79,13 @@ function tfs_json_request(r, json) {
         
         if (accept != undefined) {
             var content_types = accept.trim().replace(" ", "").split(",")
+            if (content_types.includes('application/jsonlines') || content_types.includes('application/jsons')) {
+                body = body.replace(/\n/g, '')
+                r.headersOut['Content-Type'] = content_types[0]
+            }
         }
         // var content_types = accept == "" ? "" : accept.trim().replace(" ", "").split(",")
-        if (content_types.includes('application/jsonlines') || content_types.includes('application/jsons')) {
-            body = body.replace(/\n/g, '')
-            r.headersOut['Content-Type'] = content_types[0]
-        }
+
         r.return(reply.status, body)
     }
 
