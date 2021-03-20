@@ -70,14 +70,13 @@ function tfs_json_request(r, json) {
     }
 
     var accept = r.headersIn.Accept
+    var content_types = accept.trim().replace(" ", "").split(",")
     function callback (reply) {
         var body = reply.responseBody
         if (reply.status == 400) {
             // "fix" broken json escaping in \'instances\' message
             body = body.replace("\\'instances\\'", "'instances'")
-        }
-        
-        var content_types = accept.trim() == undefined ? '' : accept.trim().replace(" ", "").split(",")
+        }        
         if (content_types.includes('application/jsonlines') || content_types.includes('application/jsons' == accept)) {
             body = body.replace(/\n/g, '')
             r.headersOut['Content-Type'] = content_types[0]
