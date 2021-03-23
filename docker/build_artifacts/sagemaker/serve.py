@@ -18,8 +18,6 @@ import re
 import signal
 import subprocess
 import tfs_utils
-import requests
-import time
 
 from contextlib import contextmanager
 
@@ -62,7 +60,7 @@ class ServiceManager(object):
         # Use this to specify memory that is needed to initialize CUDA/cuDNN and other GPU libraries
         self._tfs_gpu_margin = float(os.environ.get("SAGEMAKER_TFS_FRACTIONAL_GPU_MEM_MARGIN", 0.2))
         self._tfs_instance_count = int(os.environ.get("SAGEMAKER_TFS_INSTANCE_COUNT", 1))
-        self._tfs_wait_time = int(os.environ.get("SAGEMAKER_TFS_WAIT_TIME", 600))
+        self._tfs_wait_time_seconds = int(os.environ.get("SAGEMAKER_TFS_WAIT_TIME_SECONDS", 300))
         self._tfs_inter_op_parallelism = os.environ.get("SAGEMAKER_TFS_INTER_OP_PARALLELISM", 0)
         self._tfs_intra_op_parallelism = os.environ.get("SAGEMAKER_TFS_INTRA_OP_PARALLELISM", 0)
         self._gunicorn_worker_class = os.environ.get("SAGEMAKER_GUNICORN_WORKER_CLASS", 'gevent')
@@ -193,12 +191,14 @@ class ServiceManager(object):
             "--workers {} --threads {} "
             "{}{} -e TFS_GRPC_PORT_RANGE={} -e TFS_REST_PORT_RANGE={} "
             "-e SAGEMAKER_MULTI_MODEL={} -e SAGEMAKER_SAFE_PORT_RANGE={} "
+            "-e SAGEMAKER_TFS_WAIT_TIME_SECONDS={} "
             "python_service:app").format(self._gunicorn_worker_class,
                                          self._gunicorn_workers, self._gunicorn_threads,
                                          python_path_option, ",".join(python_path_content),
                                          self._tfs_grpc_port_range, self._tfs_rest_port_range,
                                          self._tfs_enable_multi_model_endpoint,
-                                         self._sagemaker_port_range)
+                                         self._sagemaker_port_range,
+                                         self._tfs_wait_time_seconds)
 
         log.info("gunicorn command: {}".format(gunicorn_command))
         self._gunicorn_command = gunicorn_command
@@ -328,22 +328,9 @@ class ServiceManager(object):
                 return
 
     def _wait_for_tfs(self):
-        # Wait until tfs server is up and running
-        while True:
-            try:
-                tfs_ready_count = 0
-                for i in range(self._tfs_instance_count):
-                    tfs_url = "http://localhost:{}/v1/models/{}/metadata" \
-                        .format(self._tfs_rest_port[i], self._tfs_default_model_name)
-                    log.info("Trying to connect with model server \n {}".format(tfs_url))
-                    response = requests.get(tfs_url)
-                    logging.info(response)
-                    if response.status_code == 200:
-                        tfs_ready_count += 1
-                if tfs_ready_count == self._tfs_instance_count:
-                    break
-            except requests.exceptions.ConnectionError:
-                time.sleep(30)
+        for i in range(self._tfs_instance_count):
+            tfs_utils.wait_for_model(self._tfs_rest_port[i],
+                                     self._tfs_default_model_name, self._tfs_wait_time_seconds)
 
     @contextmanager
     def _timeout(self, seconds):
@@ -422,19 +409,18 @@ class ServiceManager(object):
         self._state = "starting"
         signal.signal(signal.SIGTERM, self._stop)
 
+        if self._tfs_enable_batching:
+            log.info("batching is enabled")
+            tfs_utils.create_batching_config(self._tfs_batching_config_path)
+
         if self._tfs_enable_multi_model_endpoint:
             log.info("multi-model endpoint is enabled, TFS model servers will be started later")
         else:
             self._create_tfs_config()
             self._start_tfs()
-            with self._timeout(seconds=self._tfs_wait_time):
-                self._wait_for_tfs()
+            self._wait_for_tfs()
 
         self._create_nginx_config()
-
-        if self._tfs_enable_batching:
-            log.info("batching is enabled")
-            tfs_utils.create_batching_config(self._tfs_batching_config_path)
 
         if self._use_gunicorn:
             self._setup_gunicorn()
