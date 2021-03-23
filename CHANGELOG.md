@@ -1,5 +1,29 @@
 # Changelog
 
+## v1.8.0 (2021-03-23)
+
+### Features
+
+ * expose tunable parameters to support multiple tfs
+ * universal requirements.txt and inference.py
+
+### Bug Fixes and Other Changes
+
+ * To fix python sdk repo localmode tfs tests failing issue
+ * Fix TFS Deploy codebuild issue
+ * Remove the 1s lock for inference
+ * install boto3
+ * extending the serve.py with GUNICORN workers and threads
+ * adding isnumeric filter to find_model_versions function.
+ * return information of all models
+ * Support multiple Accept types
+
+### Documentation Changes
+
+ * fix typo in README.md
+ * updating readme with the right context object
+ * fix broken link in README
+
 ## v1.7.0 (2020-07-29)
 
 ### Features
