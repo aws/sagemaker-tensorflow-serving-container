@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.8.1 (2021-04-07)
+
+### Bug Fixes and Other Changes
+
+ * set OMP_NUM_THREADS default value to 1
+ * Wait tfs before starting gunicorn
+
 ## v1.8.0 (2021-03-23)
 
 ### Features
