@@ -34,6 +34,7 @@ CODE_DIR = "/opt/ml/{}/code".format(MODEL_DIR)
 PYTHON_LIB_PATH = os.path.join(CODE_DIR, "lib")
 REQUIREMENTS_PATH = os.path.join(CODE_DIR, "requirements.txt")
 INFERENCE_PATH = os.path.join(CODE_DIR, "inference.py")
+GUNICORN_CONFIGURATION_PATH = os.path.join(CODE_DIR, "gunicorn_config.py")
 
 
 class ServiceManager(object):
@@ -171,6 +172,7 @@ class ServiceManager(object):
         if self._enable_python_service:
             lib_path_exists = os.path.exists(PYTHON_LIB_PATH)
             requirements_exists = os.path.exists(REQUIREMENTS_PATH)
+
             python_path_content = ["/opt/ml/model/code"]
             python_path_option = "--pythonpath "
 
@@ -193,12 +195,14 @@ class ServiceManager(object):
 
         gunicorn_command = (
             "gunicorn -b unix:/tmp/gunicorn.sock -k {} --chdir /sagemaker "
-            "--workers {} --threads {} "
+            "--workers {} --threads {}"
+            "{}"
             "{}{} -e TFS_GRPC_PORT_RANGE={} -e TFS_REST_PORT_RANGE={} "
             "-e SAGEMAKER_MULTI_MODEL={} -e SAGEMAKER_SAFE_PORT_RANGE={} "
             "-e SAGEMAKER_TFS_WAIT_TIME_SECONDS={} "
             "python_service:app").format(self._gunicorn_worker_class,
                                          self._gunicorn_workers, self._gunicorn_threads,
+                                         self._build_gunicorn_config_file_option(),
                                          python_path_option, ",".join(python_path_content),
                                          self._tfs_grpc_port_range, self._tfs_rest_port_range,
                                          self._tfs_enable_multi_model_endpoint,
@@ -207,6 +211,14 @@ class ServiceManager(object):
 
         log.info("gunicorn command: {}".format(gunicorn_command))
         self._gunicorn_command = gunicorn_command
+
+    def _build_gunicorn_config_file_option(self):
+        gunicorn_config_file_exists = os.path.exists(GUNICORN_CONFIGURATION_PATH)
+
+        if gunicorn_config_file_exists:
+            return "-c {}".format(GUNICORN_CONFIGURATION_PATH)
+
+        return ""
 
     def _download_scripts(self, bucket, prefix):
         log.info("checking boto session region ...")
