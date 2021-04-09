@@ -201,7 +201,7 @@ class ServiceManager(object):
             "-e SAGEMAKER_TFS_WAIT_TIME_SECONDS={} "
             "python_service:app").format(self._gunicorn_worker_class,
                                          self._gunicorn_workers, self._gunicorn_threads,
-                                         self._build_gunicorn_config_file_option(),
+                                         self._use_gunicorn_config_file_option(),
                                          python_path_option, ",".join(python_path_content),
                                          self._tfs_grpc_port_range, self._tfs_rest_port_range,
                                          self._tfs_enable_multi_model_endpoint,
@@ -211,10 +211,11 @@ class ServiceManager(object):
         log.info("gunicorn command: {}".format(gunicorn_command))
         self._gunicorn_command = gunicorn_command
 
-    def _build_gunicorn_config_file_option(self):
+    def _use_gunicorn_config_file_option(self):
         gunicorn_config_file_exists = os.path.exists(GUNICORN_CONFIGURATION_PATH)
 
         if gunicorn_config_file_exists:
+            log.info("using the following config file: {}".format(GUNICORN_CONFIGURATION_PATH))
             return "-c {}".format(GUNICORN_CONFIGURATION_PATH)
 
         return ""
