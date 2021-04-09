@@ -71,6 +71,40 @@ def container(request, docker_base_name, tag, runtime_config):
         subprocess.check_call("docker rm -f sagemaker-tensorflow-serving-test".split())
 
 
+@pytest.fixture(scope="module", autouse=True, params=[True, False])
+def container(request, docker_base_name, tag, runtime_config):
+    try:
+        if request.param:
+            batching_config = " -e SAGEMAKER_TFS_ENABLE_BATCHING=true"
+        else:
+            batching_config = ""
+        command = (
+            "docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080"
+            " --mount type=volume,source=model_volume,target=/opt/ml/model,readonly"
+            " -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info"
+            " -e SAGEMAKER_BIND_TO_PORT=8080"
+            " {}"
+            " {}:{} serve"
+        ).format(runtime_config, batching_config, docker_base_name, tag)
+
+        proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
+
+        attempts = 0
+
+        while attempts < 40:
+            time.sleep(3)
+            try:
+                res_code = requests.get("http://localhost:8080/ping").status_code
+                if res_code == 200:
+                    break
+            except:
+                attempts += 1
+                pass
+
+        yield proc.pid
+    finally:
+        subprocess.check_call("docker rm -f sagemaker-tensorflow-serving-test".split())
+        
 def make_request(data, content_type="application/json", method="predict", version=None):
     custom_attributes = "tfs-model-name=half_plus_three,tfs-method={}".format(method)
     if version:
