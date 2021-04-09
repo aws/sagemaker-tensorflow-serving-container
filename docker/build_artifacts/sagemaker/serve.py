@@ -172,7 +172,6 @@ class ServiceManager(object):
         if self._enable_python_service:
             lib_path_exists = os.path.exists(PYTHON_LIB_PATH)
             requirements_exists = os.path.exists(REQUIREMENTS_PATH)
-
             python_path_content = ["/opt/ml/model/code"]
             python_path_option = "--pythonpath "
 
@@ -195,8 +194,8 @@ class ServiceManager(object):
 
         gunicorn_command = (
             "gunicorn -b unix:/tmp/gunicorn.sock -k {} --chdir /sagemaker "
-            "--workers {} --threads {}"
-            "{}"
+            "--workers {} --threads {} "
+            "{} "
             "{}{} -e TFS_GRPC_PORT_RANGE={} -e TFS_REST_PORT_RANGE={} "
             "-e SAGEMAKER_MULTI_MODEL={} -e SAGEMAKER_SAFE_PORT_RANGE={} "
             "-e SAGEMAKER_TFS_WAIT_TIME_SECONDS={} "
