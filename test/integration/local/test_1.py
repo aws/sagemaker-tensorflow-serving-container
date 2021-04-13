@@ -25,6 +25,7 @@ def container(request, docker_base_name, tag, runtime_config):
             " -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info"
             " -e SAGEMAKER_BIND_TO_PORT=8080"
             " -e SAGEMAKER_TFS_INSTANCE_COUNT=3"
+            " -e SAGEMAKER_GUNICORN_WORKERS=2"
             " {}"
             " {}"
             " {}:{} serve"
