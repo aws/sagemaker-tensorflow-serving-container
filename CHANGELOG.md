@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.2 (2021-04-13)
+
+### Bug Fixes and Other Changes
+
+ * Update test_container.py
+
 ## v1.8.1 (2021-04-07)
 
 ### Bug Fixes and Other Changes
