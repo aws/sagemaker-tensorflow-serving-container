@@ -7,7 +7,7 @@ import time
 import pytest
 import requests
 
-BASE_URL = "http://localhost:8080/invocations"
+BASE_URL = "http://localhost:8090/invocations"
 
 
 @pytest.fixture(scope="module", autouse=True, params=[True, False])
@@ -20,10 +20,10 @@ def container(request, docker_base_name, tag, runtime_config):
             batching_config = ""
             port_config = ""
         command = (
-            "docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080"
+            "docker run {}--name sagemaker-tensorflow-serving-test -p 8090:8090"
             " --mount type=volume,source=model_volume,target=/opt/ml/model,readonly"
             " -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info"
-            " -e SAGEMAKER_BIND_TO_PORT=8080"
+            " -e SAGEMAKER_BIND_TO_PORT=8090"
             " -e SAGEMAKER_TFS_INSTANCE_COUNT=8"
             " -e SAGEMAKER_GUNICORN_WORKERS=36"
             " -e SAGEMAKER_TFS_INTER_OP_PARALLELISM=1"
@@ -40,7 +40,7 @@ def container(request, docker_base_name, tag, runtime_config):
         while attempts < 40:
             time.sleep(3)
             try:
-                res_code = requests.get("http://localhost:8080/ping").status_code
+                res_code = requests.get("http://localhost:8090/ping").status_code
                 if res_code == 200:
                     break
             except:
