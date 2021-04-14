@@ -16,7 +16,7 @@ phases:
       - tox -e jshint,flake8,pylint
 
       # build images
-      # - ./scripts/build-all.sh
+      - ./scripts/build-all.sh
 
       # run local tests
       - tox -e py37 -- test/integration/local --framework-version 2.1
