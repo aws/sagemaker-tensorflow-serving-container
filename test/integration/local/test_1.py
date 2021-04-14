@@ -33,7 +33,7 @@ def container(request, docker_base_name, tag, runtime_config):
             port_config = ""
         command = (
             "docker run {}--name sagemaker-tensorflow-serving-test -p 8090:8090"
-            " --mount type=volume1,source=model_volume1,target=/opt/ml/model,readonly"
+            " --mount type=volume,source=model_volume1,target=/opt/ml/model,readonly"
             " -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info"
             " -e SAGEMAKER_BIND_TO_PORT=8090"
             " -e SAGEMAKER_TFS_INSTANCE_COUNT=8"
