@@ -32,7 +32,7 @@ def volume():
             "--opt device={} --opt o=bind".format(model_dir).split())
         yield model_dir
     finally:
-        subprocess.check_call("docker volume rm model_volume".split())
+        subprocess.check_call("docker volume rm multi_tfs_model_volume".split())
 
 
 @pytest.fixture(scope="module", autouse=True, params=[True, False])
