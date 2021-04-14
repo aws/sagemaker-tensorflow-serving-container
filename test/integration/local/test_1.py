@@ -7,7 +7,7 @@ import time
 import pytest
 import requests
 
-BASE_URL = "http://localhost:8090/invocations"
+BASE_URL = "http://localhost:8080/invocations"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -27,23 +27,21 @@ def container(request, docker_base_name, tag, runtime_config):
     try:
         if request.param:
             batching_config = " -e SAGEMAKER_TFS_ENABLE_BATCHING=true"
-            port_config = " -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999"
         else:
             batching_config = ""
-            port_config = ""
         command = (
-            "docker run {}--name sagemaker-tensorflow-serving-test -p 8090:8090"
+            "docker run {}--name sagemaker-tensorflow-serving-test -p 8080:8080"
             " --mount type=volume,source=model_volume1,target=/opt/ml/model,readonly"
             " -e SAGEMAKER_TFS_NGINX_LOGLEVEL=info"
-            " -e SAGEMAKER_BIND_TO_PORT=8090"
+            " -e SAGEMAKER_BIND_TO_PORT=8080"
+            " -e SAGEMAKER_SAFE_PORT_RANGE=9000-9999"
             " -e SAGEMAKER_TFS_INSTANCE_COUNT=8"
             " -e SAGEMAKER_GUNICORN_WORKERS=36"
             " -e SAGEMAKER_TFS_INTER_OP_PARALLELISM=1"
             " -e SAGEMAKER_TFS_INTRA_OP_PARALLELISM=1"
             " {}"
-            " {}"
             " {}:{} serve"
-        ).format(runtime_config, batching_config, port_config, docker_base_name, tag)
+        ).format(runtime_config, batching_config, docker_base_name, tag)
 
         proc = subprocess.Popen(command.split(), stdout=sys.stdout, stderr=subprocess.STDOUT)
 
@@ -52,7 +50,7 @@ def container(request, docker_base_name, tag, runtime_config):
         while attempts < 40:
             time.sleep(3)
             try:
-                res_code = requests.get("http://localhost:8090/ping").status_code
+                res_code = requests.get("http://localhost:8080/ping").status_code
                 if res_code == 200:
                     break
             except:
