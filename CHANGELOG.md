@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.8.3 (2021-04-26)
+
+### Bug Fixes and Other Changes
+
+ * Create test_multi_tfs.py
+
 ## v1.8.2 (2021-04-13)
 
 ### Bug Fixes and Other Changes
