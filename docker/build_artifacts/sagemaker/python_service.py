@@ -98,13 +98,8 @@ class PythonServiceResource:
             data = json.loads(req.stream.read().decode("utf-8"))
             self._handle_load_model_post(res, data)
 
-    def _parse_sagemaker_port_range(self, port_range):
-        lower, upper = port_range.split('-')
-        lower = int(lower)
-        upper = int(upper)
-        if lower == upper:
-            return [lower]
-        return [lower + 2 * i for i in range(TFS_INSTANCE_COUNT)]
+    def _parse_sagemaker_port_range(self, string_ports):
+        return map(int, string_ports.split('-'))
 
     def _pick_port(self, ports):
         return str(random.choice(ports))

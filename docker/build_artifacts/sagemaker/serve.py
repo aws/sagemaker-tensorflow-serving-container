@@ -17,6 +17,7 @@ import os
 import re
 import signal
 import subprocess
+import random
 import tfs_utils
 
 from contextlib import contextmanager
@@ -41,6 +42,8 @@ class ServiceManager(object):
         self._state = "initializing"
         self._nginx = None
         self._tfs = []
+        self._tfs_grpc_port = []
+        self._tfs_rest_port = []
         self._gunicorn = None
         self._gunicorn_command = None
         self._enable_python_service = False
@@ -89,30 +92,33 @@ class ServiceManager(object):
             parts = self._sagemaker_port_range.split("-")
             low = int(parts[0])
             hi = int(parts[1])
-            self._tfs_grpc_port = []
-            self._tfs_rest_port = []
             if low + 2 * self._tfs_instance_count > hi:
                 raise ValueError("not enough ports available in SAGEMAKER_SAFE_PORT_RANGE ({})"
                                  .format(self._sagemaker_port_range))
-            self._tfs_grpc_port_range = "{}-{}".format(low,
-                                                       low + 2 * self._tfs_instance_count)
-            self._tfs_rest_port_range = "{}-{}".format(low + 1,
-                                                       low + 2 * self._tfs_instance_count + 1)
-            for i in range(self._tfs_instance_count):
-                self._tfs_grpc_port.append(str(low + 2 * i))
-                self._tfs_rest_port.append(str(low + 2 * i + 1))
-            # set environment variable for python service
-            os.environ["TFS_GRPC_PORT_RANGE"] = self._tfs_grpc_port_range
-            os.environ["TFS_REST_PORT_RANGE"] = self._tfs_rest_port_range
+            # split ports range here for grpc and rest port
+            rest_port = low
+            grpc_port = (low + hi) // 2
+
+            self._tfs_grpc_port = self._get_random_ports(rest_port, grpc_port)
+            self._tfs_rest_port = self._get_random_ports(grpc_port, hi)
+            self._tfs_grpc_port_range = self._concat_ports(self._tfs_grpc_port)
+            self._tfs_rest_port_range = self._concat_ports(self._tfs_rest_port)
         else:
-            # just use the standard default ports
-            self._tfs_grpc_port = ["9000"]
-            self._tfs_rest_port = ["8501"]
-            self._tfs_grpc_port_range = "9000-9000"
-            self._tfs_rest_port_range = "8501-8501"
-            # set environment variable for python service
-            os.environ["TFS_GRPC_PORT_RANGE"] = self._tfs_grpc_port_range
-            os.environ["TFS_REST_PORT_RANGE"] = self._tfs_rest_port_range
+            if self._tfs_instance_count > 1:
+                self._tfs_grpc_port = self._get_random_ports(9000, 9999)
+                self._tfs_rest_port = self._get_random_ports(8500, 9000)
+                self._tfs_grpc_port_range = self._concat_ports(self._tfs_grpc_port)
+                self._tfs_rest_port_range = self._concat_ports(self._tfs_rest_port)
+            else:
+                # just use the standard default ports
+                self._tfs_grpc_port = ["9000"]
+                self._tfs_rest_port = ["8501"]
+                self._tfs_grpc_port_range = "9000"
+                self._tfs_rest_port_range = "8501"
+
+        # set environment variable for python service
+        os.environ["TFS_GRPC_PORT_RANGE"] = self._tfs_grpc_port_range
+        os.environ["TFS_REST_PORT_RANGE"] = self._tfs_rest_port_range
 
     def _need_python_service(self):
         if os.path.exists(INFERENCE_PATH):
@@ -120,6 +126,14 @@ class ServiceManager(object):
         if os.environ.get("SAGEMAKER_MULTI_MODEL_UNIVERSAL_BUCKET") \
                 and os.environ.get("SAGEMAKER_MULTI_MODEL_UNIVERSAL_PREFIX"):
             self._enable_python_service = True
+
+    def _get_random_ports(self, low, hi):
+        return random.sample(range(low, hi), self._tfs_instance_count)
+
+    def _concat_ports(self, ports):
+        str_ports = [str(port) for port in ports]
+        concat_str_ports = "-".join(str_ports)
+        return concat_str_ports
 
     def _create_tfs_config(self):
         models = tfs_utils.find_models()
