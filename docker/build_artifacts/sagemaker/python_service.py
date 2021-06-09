@@ -69,8 +69,10 @@ class PythonServiceResource:
             # during the _handle_load_model_post()
             self.model_handlers = {}
         else:
-            self._tfs_grpc_ports = self._reconstruct_sagemaker_selected_ports(TFS_GRPC_SELECTED_PORTS)
-            self._tfs_rest_ports = self._reconstruct_sagemaker_selected_ports(TFS_REST_SELECTED_PORTS)
+            self._tfs_grpc_ports = self._reconstruct_sagemaker_selected_ports(
+                TFS_GRPC_SELECTED_PORTS)
+            self._tfs_rest_ports = self._reconstruct_sagemaker_selected_ports(
+                TFS_REST_SELECTED_PORTS)
 
             self._channels = {}
             for grpc_port in self._tfs_grpc_ports:

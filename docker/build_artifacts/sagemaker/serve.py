@@ -97,9 +97,9 @@ class ServiceManager(object):
             # select non-overlapping grpc and rest ports based on tfs instance count
             # record the init and end value in order to reconstruct them in python service
             self._tfs_grpc_selected_ports = "{}-{}".format(low,
-                                                       low + 2 * self._tfs_instance_count)
+                                                           low + 2 * self._tfs_instance_count)
             self._tfs_rest_selected_ports = "{}-{}".format(low + 1,
-                                                       low + 2 * self._tfs_instance_count + 1)
+                                                           low + 2 * self._tfs_instance_count + 1)
             for i in range(self._tfs_instance_count):
                 self._tfs_grpc_port.append(str(low + 2 * i))
                 self._tfs_rest_port.append(str(low + 2 * i + 1))
@@ -199,7 +199,8 @@ class ServiceManager(object):
             "python_service:app").format(self._gunicorn_worker_class,
                                          self._gunicorn_workers, self._gunicorn_threads,
                                          python_path_option, ",".join(python_path_content),
-                                         self._tfs_grpc_selected_ports, self._tfs_rest_selected_ports,
+                                         self._tfs_grpc_selected_ports,
+                                         self._tfs_rest_selected_ports,
                                          self._tfs_enable_multi_model_endpoint,
                                          self._sagemaker_port_range,
                                          self._tfs_wait_time_seconds)
