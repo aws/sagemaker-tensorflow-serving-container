@@ -31,8 +31,8 @@ INFERENCE_SCRIPT_PATH = f"/opt/ml/{MODEL_DIR}/code/inference.py"
 
 SAGEMAKER_BATCHING_ENABLED = os.environ.get("SAGEMAKER_TFS_ENABLE_BATCHING", "false").lower()
 MODEL_CONFIG_FILE_PATH = "/sagemaker/model-config.cfg"
-TFS_GRPC_PORT_RANGE = os.environ.get("TFS_GRPC_PORT_RANGE")
-TFS_REST_PORT_RANGE = os.environ.get("TFS_REST_PORT_RANGE")
+TFS_GRPC_SELECTED_PORTS = os.environ.get("TFS_GRPC_SELECTED_PORTS")
+TFS_REST_SELECTED_PORTS = os.environ.get("TFS_REST_SELECTED_PORTS")
 SAGEMAKER_TFS_PORT_RANGE = os.environ.get("SAGEMAKER_SAFE_PORT_RANGE")
 TFS_INSTANCE_COUNT = int(os.environ.get("SAGEMAKER_TFS_INSTANCE_COUNT", "1"))
 
@@ -69,8 +69,8 @@ class PythonServiceResource:
             # during the _handle_load_model_post()
             self.model_handlers = {}
         else:
-            self._tfs_grpc_ports = self._parse_sagemaker_port_range(TFS_GRPC_PORT_RANGE)
-            self._tfs_rest_ports = self._parse_sagemaker_port_range(TFS_REST_PORT_RANGE)
+            self._tfs_grpc_ports = self._reconstruct_sagemaker_selected_ports(TFS_GRPC_SELECTED_PORTS)
+            self._tfs_rest_ports = self._reconstruct_sagemaker_selected_ports(TFS_REST_SELECTED_PORTS)
 
             self._channels = {}
             for grpc_port in self._tfs_grpc_ports:
@@ -98,8 +98,8 @@ class PythonServiceResource:
             data = json.loads(req.stream.read().decode("utf-8"))
             self._handle_load_model_post(res, data)
 
-    def _parse_sagemaker_port_range(self, port_range):
-        lower, upper = port_range.split('-')
+    def _reconstruct_sagemaker_selected_ports(self, selected_ports):
+        lower, upper = selected_ports.split('-')
         lower = int(lower)
         upper = int(upper)
         if lower == upper:
