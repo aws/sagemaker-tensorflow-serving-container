@@ -31,8 +31,8 @@ INFERENCE_SCRIPT_PATH = f"/opt/ml/{MODEL_DIR}/code/inference.py"
 
 SAGEMAKER_BATCHING_ENABLED = os.environ.get("SAGEMAKER_TFS_ENABLE_BATCHING", "false").lower()
 MODEL_CONFIG_FILE_PATH = "/sagemaker/model-config.cfg"
-TFS_GRPC_PORT_RANGE = os.environ.get("TFS_GRPC_PORT_RANGE")
-TFS_REST_PORT_RANGE = os.environ.get("TFS_REST_PORT_RANGE")
+TFS_GRPC_PORT = os.environ.get("TFS_GRPC_PORT")
+TFS_REST_PORT = os.environ.get("TFS_REST_PORT")
 SAGEMAKER_TFS_PORT_RANGE = os.environ.get("SAGEMAKER_SAFE_PORT_RANGE")
 TFS_INSTANCE_COUNT = int(os.environ.get("SAGEMAKER_TFS_INSTANCE_COUNT", "1"))
 
@@ -69,11 +69,11 @@ class PythonServiceResource:
             # during the _handle_load_model_post()
             self.model_handlers = {}
         else:
-            self._tfs_grpc_ports = self._parse_sagemaker_port_range(TFS_GRPC_PORT_RANGE)
-            self._tfs_rest_ports = self._parse_sagemaker_port_range(TFS_REST_PORT_RANGE)
+            self._tfs_grpc_port = self._parse_concat_port(TFS_GRPC_PORT)
+            self._tfs_rest_port = self._parse_concat_port(TFS_REST_PORT)
 
             self._channels = {}
-            for grpc_port in self._tfs_grpc_ports:
+            for grpc_port in self._tfs_grpc_port:
                 # Initialize grpc channel here so gunicorn worker could have mapping
                 # between each grpc port and channel
                 self._setup_channel(grpc_port)
@@ -98,13 +98,8 @@ class PythonServiceResource:
             data = json.loads(req.stream.read().decode("utf-8"))
             self._handle_load_model_post(res, data)
 
-    def _parse_sagemaker_port_range(self, port_range):
-        lower, upper = port_range.split('-')
-        lower = int(lower)
-        upper = int(upper)
-        if lower == upper:
-            return [lower]
-        return [lower + i for i in range(TFS_INSTANCE_COUNT)]
+    def _parse_concat_port(self, concat_port):
+        return concat_port.split(",")
 
     def _pick_port(self, ports):
         return str(random.choice(ports))
@@ -250,8 +245,8 @@ class PythonServiceResource:
                 })
         else:
             # Randomly pick port used for routing incoming request.
-            grpc_port = self._pick_port(self._tfs_grpc_ports)
-            rest_port = self._pick_port(self._tfs_rest_ports)
+            grpc_port = self._pick_port(self._tfs_grpc_port)
+            rest_port = self._pick_port(self._tfs_rest_port)
             data, context = tfs_utils.parse_request(req, rest_port, grpc_port,
                                                     self._tfs_default_model_name,
                                                     channel=self._channels[int(grpc_port)])

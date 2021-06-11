@@ -95,24 +95,23 @@ class ServiceManager(object):
                 raise ValueError("not enough ports available in SAGEMAKER_SAFE_PORT_RANGE ({})"
                                  .format(self._sagemaker_port_range))
             # select non-overlapping grpc and rest ports based on tfs instance count
-            # record the init and end value in order to reconstruct them in python service
-            self._tfs_grpc_port_range = "{}-{}".format(low,
-                                                       low + self._tfs_instance_count)
-            self._tfs_rest_port_range = "{}-{}".format(low + self._tfs_instance_count,
-                                                       low + 2 * self._tfs_instance_count)
             for i in range(self._tfs_instance_count):
-                self._tfs_grpc_port.append(str(low + i))
-                self._tfs_rest_port.append(str(low + self._tfs_instance_count + i))
+                self._tfs_grpc_port.append(str(low + 2 * i))
+                self._tfs_rest_port.append(str(low + 2 * i + 1))
+            # concat selected ports respectively in order to pass them to python service
+            self._tfs_grpc_concat_port = self._concat_port(self._tfs_grpc_port)
+            self._tfs_rest_concat_port = self._concat_port(self._tfs_rest_port)
         else:
             # just use the standard default ports
             self._tfs_grpc_port = ["9000"]
             self._tfs_rest_port = ["8501"]
-            self._tfs_grpc_port_range = "9000-9000"
-            self._tfs_rest_port_range = "8501-8501"
+            # provide single concat port here for default case
+            self._tfs_grpc_concat_port = "9000"
+            self._tfs_rest_concat_port = "8501"
 
         # set environment variable for python service
-        os.environ["TFS_GRPC_PORT_RANGE"] = self._tfs_grpc_port_range
-        os.environ["TFS_REST_PORT_RANGE"] = self._tfs_rest_port_range
+        os.environ["TFS_GRPC_PORT"] = self._tfs_grpc_concat_port
+        os.environ["TFS_REST_PORT"] = self._tfs_rest_concat_port
 
     def _need_python_service(self):
         if os.path.exists(INFERENCE_PATH):
@@ -120,6 +119,11 @@ class ServiceManager(object):
         if os.environ.get("SAGEMAKER_MULTI_MODEL_UNIVERSAL_BUCKET") \
                 and os.environ.get("SAGEMAKER_MULTI_MODEL_UNIVERSAL_PREFIX"):
             self._enable_python_service = True
+
+    def _concat_port(self, ports):
+        str_ports = [str(port) for port in ports]
+        concat_str_ports = ",".join(str_ports)
+        return concat_str_ports
 
     def _create_tfs_config(self):
         models = tfs_utils.find_models()
@@ -194,13 +198,13 @@ class ServiceManager(object):
         gunicorn_command = (
             "gunicorn -b unix:/tmp/gunicorn.sock -k {} --chdir /sagemaker "
             "--workers {} --threads {} "
-            "{}{} -e TFS_GRPC_PORT_RANGE={} -e TFS_REST_PORT_RANGE={} "
+            "{}{} -e TFS_GRPC_PORT={} -e TFS_REST_PORT={} "
             "-e SAGEMAKER_MULTI_MODEL={} -e SAGEMAKER_SAFE_PORT_RANGE={} "
             "-e SAGEMAKER_TFS_WAIT_TIME_SECONDS={} "
             "python_service:app").format(self._gunicorn_worker_class,
                                          self._gunicorn_workers, self._gunicorn_threads,
                                          python_path_option, ",".join(python_path_content),
-                                         self._tfs_grpc_port_range, self._tfs_rest_port_range,
+                                         self._tfs_grpc_concat_port, self._tfs_rest_concat_port,
                                          self._tfs_enable_multi_model_endpoint,
                                          self._sagemaker_port_range,
                                          self._tfs_wait_time_seconds)
