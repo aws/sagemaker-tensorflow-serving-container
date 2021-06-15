@@ -31,8 +31,8 @@ INFERENCE_SCRIPT_PATH = f"/opt/ml/{MODEL_DIR}/code/inference.py"
 
 SAGEMAKER_BATCHING_ENABLED = os.environ.get("SAGEMAKER_TFS_ENABLE_BATCHING", "false").lower()
 MODEL_CONFIG_FILE_PATH = "/sagemaker/model-config.cfg"
-TFS_GRPC_PORT_RANGE = os.environ.get("TFS_GRPC_PORT_RANGE")
-TFS_REST_PORT_RANGE = os.environ.get("TFS_REST_PORT_RANGE")
+TFS_GRPC_PORTS = os.environ.get("TFS_GRPC_PORTS")
+TFS_REST_PORTS = os.environ.get("TFS_REST_PORTS")
 SAGEMAKER_TFS_PORT_RANGE = os.environ.get("SAGEMAKER_SAFE_PORT_RANGE")
 TFS_INSTANCE_COUNT = int(os.environ.get("SAGEMAKER_TFS_INSTANCE_COUNT", "1"))
 
@@ -69,8 +69,8 @@ class PythonServiceResource:
             # during the _handle_load_model_post()
             self.model_handlers = {}
         else:
-            self._tfs_grpc_ports = self._parse_sagemaker_port_range(TFS_GRPC_PORT_RANGE)
-            self._tfs_rest_ports = self._parse_sagemaker_port_range(TFS_REST_PORT_RANGE)
+            self._tfs_grpc_ports = self._parse_concat_ports(TFS_GRPC_PORTS)
+            self._tfs_rest_ports = self._parse_concat_ports(TFS_REST_PORTS)
 
             self._channels = {}
             for grpc_port in self._tfs_grpc_ports:
@@ -98,16 +98,11 @@ class PythonServiceResource:
             data = json.loads(req.stream.read().decode("utf-8"))
             self._handle_load_model_post(res, data)
 
-    def _parse_sagemaker_port_range(self, port_range):
-        lower, upper = port_range.split('-')
-        lower = int(lower)
-        upper = int(upper)
-        if lower == upper:
-            return [lower]
-        return [lower + 2 * i for i in range(TFS_INSTANCE_COUNT)]
+    def _parse_concat_ports(self, concat_ports):
+        return concat_ports.split(",")
 
     def _pick_port(self, ports):
-        return str(random.choice(ports))
+        return random.choice(ports)
 
     def _parse_sagemaker_port_range_mme(self, port_range):
         lower, upper = port_range.split('-')
@@ -254,7 +249,7 @@ class PythonServiceResource:
             rest_port = self._pick_port(self._tfs_rest_ports)
             data, context = tfs_utils.parse_request(req, rest_port, grpc_port,
                                                     self._tfs_default_model_name,
-                                                    channel=self._channels[int(grpc_port)])
+                                                    channel=self._channels[grpc_port])
 
         try:
             res.status = falcon.HTTP_200
