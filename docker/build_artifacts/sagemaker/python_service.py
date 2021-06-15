@@ -102,7 +102,7 @@ class PythonServiceResource:
         return concat_ports.split(",")
 
     def _pick_port(self, ports):
-        return str(random.choice(ports))
+        return random.choice(ports)
 
     def _parse_sagemaker_port_range_mme(self, port_range):
         lower, upper = port_range.split('-')
@@ -249,7 +249,7 @@ class PythonServiceResource:
             rest_port = self._pick_port(self._tfs_rest_ports)
             data, context = tfs_utils.parse_request(req, rest_port, grpc_port,
                                                     self._tfs_default_model_name,
-                                                    channel=self._channels[int(grpc_port)])
+                                                    channel=self._channels[grpc_port])
 
         try:
             res.status = falcon.HTTP_200
