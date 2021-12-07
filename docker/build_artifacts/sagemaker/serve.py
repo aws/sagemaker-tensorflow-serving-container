@@ -159,7 +159,7 @@ class ServiceManager(object):
 
         log.info("tensorflow serving model config: \n%s\n", config)
 
-        with open(self._tfs_config_path, "w") as f:
+        with open(self._tfs_config_path, "w", encoding="utf-8") as f:
             f.write(config)
 
     def _setup_gunicorn(self):
@@ -258,11 +258,11 @@ class ServiceManager(object):
         config = pattern.sub(lambda x: template_values[x.group(1)], template)
         log.info("nginx config: \n%s\n", config)
 
-        with open("/sagemaker/nginx.conf", "w") as f:
+        with open("/sagemaker/nginx.conf", "w", encoding="utf-8") as f:
             f.write(config)
 
     def _read_nginx_template(self):
-        with open("/sagemaker/nginx.conf.template", "r") as f:
+        with open("/sagemaker/nginx.conf.template", "r", encoding="utf-8") as f:
             template = f.read()
             if not template:
                 raise ValueError("failed to read nginx.conf.template")
