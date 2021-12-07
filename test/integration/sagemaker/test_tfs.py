@@ -177,9 +177,8 @@ def test_resnet_with_inference_handler(
     boto_session, image_uri, instance_type, resnet_model_tar_path, framework_version
 ):
     if Version(framework_version) >= Version("2.6"):
-        pytest.skip(
-            "The inference script based test currently uses v1 compat features, making it incompatible with TF>=2.6"
-        )
+        pytest.skip("The inference script currently uses v1 compat features, making it incompatible with TF>=2.6")
+
     sagemaker_session = sagemaker.Session(boto_session=boto_session)
     model_data = sagemaker_session.upload_data(
         path=resnet_model_tar_path, key_prefix=os.path.join("tensorflow-inference", "resnet")
