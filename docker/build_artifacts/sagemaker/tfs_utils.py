@@ -41,7 +41,7 @@ def parse_request(req, rest_port, grpc_port, default_model_name, model_name=None
     tfs_uri = make_tfs_uri(rest_port, tfs_attributes, default_model_name, model_name)
 
     if not model_name:
-        model_name = tfs_attributes.get("tfs-model-name")
+        model_name = tfs_attributes.get("tfs-model-name") or default_model_name
 
     context = Context(model_name,
                       tfs_attributes.get("tfs-model-version"),
@@ -220,7 +220,7 @@ def create_batching_config(batching_config_file):
         config += "%s { value: %s }\n" % (batching_parameter.key, batching_parameter.value)
 
     log.info("batching config: \n%s\n", config)
-    with open(batching_config_file, "w") as f:
+    with open(batching_config_file, "w", encoding="utf-8") as f:
         f.write(config)
 
 
