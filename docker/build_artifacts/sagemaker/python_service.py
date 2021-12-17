@@ -26,7 +26,7 @@ from multi_model_utils import lock, MultiModelException
 import tfs_utils
 
 SAGEMAKER_MULTI_MODEL_ENABLED = os.environ.get("SAGEMAKER_MULTI_MODEL", "false").lower() == "true"
-MODEL_DIR = "models" if SAGEMAKER_MULTI_MODEL_ENABLED else "model"
+MODEL_DIR = "" if SAGEMAKER_MULTI_MODEL_ENABLED else "model"
 INFERENCE_SCRIPT_PATH = f"/opt/ml/{MODEL_DIR}/code/inference.py"
 
 SAGEMAKER_BATCHING_ENABLED = os.environ.get("SAGEMAKER_TFS_ENABLE_BATCHING", "false").lower()
@@ -79,12 +79,15 @@ class PythonServiceResource:
                 self._setup_channel(grpc_port)
 
         if os.path.exists(INFERENCE_SCRIPT_PATH):
+            log.info("Inference script found at path {}".format(INFERENCE_SCRIPT_PATH))
+            log.info("Inference script exists, importing handlers.")
             # Single-Model Mode & Multi-Model Mode both use one inference.py
             self._handler, self._input_handler, self._output_handler = self._import_handlers()
             self._handlers = self._make_handler(self._handler,
                                                 self._input_handler,
                                                 self._output_handler)
         else:
+            log.info("Inference script does not exist, using default handlers.")
             self._handlers = default_handler
 
         self._tfs_enable_batching = SAGEMAKER_BATCHING_ENABLED == "true"
