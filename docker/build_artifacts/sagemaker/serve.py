@@ -63,9 +63,9 @@ class ServiceManager(object):
         self._tfs_inter_op_parallelism = os.environ.get("SAGEMAKER_TFS_INTER_OP_PARALLELISM", 0)
         self._tfs_intra_op_parallelism = os.environ.get("SAGEMAKER_TFS_INTRA_OP_PARALLELISM", 0)
         self._gunicorn_worker_class = os.environ.get("SAGEMAKER_GUNICORN_WORKER_CLASS", "gevent")
-        self._gunicorn_setup_timeout_seconds = os.environ.get(
+        self._gunicorn_setup_timeout_seconds = int(os.environ.get(
             "SAGEMAKER_GUNICORN_SETUP_TIMEOUT_SECONDS", 30
-        )
+        ))
 
         if os.environ.get("OMP_NUM_THREADS") is None:
             os.environ["OMP_NUM_THREADS"] = "1"
