@@ -43,7 +43,7 @@ For notebook examples, see: [Amazon SageMaker Examples](https://github.com/awsla
 4. [Pre/Post-Processing](#pre/post-processing)
 5. [Deploying a TensorFlow Serving Model](#deploying-a-tensorflow-serving-model)
 6. [Enable Batching](#enabling-batching)
-7. [Other Configurable Environment Variables](#other-configurable-environment-variables)
+7. [Configurable SageMaker Environment Variables](#configurable-sagemaker-environment-variables)
 8. [Deploying to Multi-Model Endpoint](#deploying-to-multi-model-endpoint)
 
 ## Getting Started
@@ -614,14 +614,21 @@ SAGEMAKER_TFS_NUM_BATCH_THREADS="16"
 SAGEMAKER_TFS_MAX_ENQUEUED_BATCHES="10000"
 ```
 
-## Other Configurable Environment Variables
+## Configurable SageMaker Environment Variables
 The following environment variables can be set on a SageMaker Model or Transform Job if further configuration is required:
 
 ```bash
 # Configures the logging level for GUnicorn.
-# Valid values can be found here: https://docs.gunicorn.org/en/stable/settings.html#loglevel
+# When looking to set this environment variable, please refer to:
+# https://docs.gunicorn.org/en/stable/settings.html#loglevel
 # Defaults to "info"
 SAGEMAKER_GUNICORN_LOGLEVEL="debug"
+
+# Configures how long a GUnicorn worker may be silent before it is killed and restarted.
+# When looking to set this environment variable, please refer to:
+# https://docs.gunicorn.org/en/stable/settings.html#timeout
+# Defaults to 30.
+SAGEMAKER_GUNICORN_TIMEOUT_SECONDS="60"
 
 # Configures how long to wait in seconds for GUnicorn
 # to finish starting up before timing out.
