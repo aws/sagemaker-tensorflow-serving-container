@@ -64,9 +64,12 @@ class ServiceManager(object):
         self._tfs_inter_op_parallelism = os.environ.get("SAGEMAKER_TFS_INTER_OP_PARALLELISM", 0)
         self._tfs_intra_op_parallelism = os.environ.get("SAGEMAKER_TFS_INTRA_OP_PARALLELISM", 0)
         self._gunicorn_worker_class = os.environ.get("SAGEMAKER_GUNICORN_WORKER_CLASS", "gevent")
-        self._gunicorn_setup_timeout_seconds = int(os.environ.get(
-            "SAGEMAKER_GUNICORN_SETUP_TIMEOUT_SECONDS", 30
-        ))
+        self._gunicorn_timeout_seconds = int(
+            os.environ.get("SAGEMAKER_GUNICORN_TIMEOUT_SECONDS", 30)
+        )
+        self._gunicorn_setup_timeout_seconds = int(
+            os.environ.get("SAGEMAKER_GUNICORN_SETUP_TIMEOUT_SECONDS", 30)
+        )
 
         if os.environ.get("OMP_NUM_THREADS") is None:
             os.environ["OMP_NUM_THREADS"] = "1"
@@ -205,7 +208,7 @@ class ServiceManager(object):
 
         gunicorn_command = (
             "gunicorn -b unix:/tmp/gunicorn.sock -k {} --chdir /sagemaker "
-            "--workers {} --threads {} --log-level {} "
+            "--workers {} --threads {} --log-level {} --timeout {} "
             "{}{} -e TFS_GRPC_PORTS={} -e TFS_REST_PORTS={} "
             "-e SAGEMAKER_MULTI_MODEL={} -e SAGEMAKER_SAFE_PORT_RANGE={} "
             "-e SAGEMAKER_TFS_WAIT_TIME_SECONDS={} "
@@ -215,6 +218,8 @@ class ServiceManager(object):
             self._gunicorn_workers,
             self._gunicorn_threads,
             self._gunicorn_loglevel,
+            self._gunicorn_timeout_seconds,
+            self._gunicorn_setup_timeout_seconds,
             python_path_option,
             ",".join(python_path_content),
             self._tfs_grpc_concat_ports,
