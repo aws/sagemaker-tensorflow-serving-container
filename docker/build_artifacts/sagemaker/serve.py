@@ -219,7 +219,6 @@ class ServiceManager(object):
             self._gunicorn_threads,
             self._gunicorn_loglevel,
             self._gunicorn_timeout_seconds,
-            self._gunicorn_setup_timeout_seconds,
             python_path_option,
             ",".join(python_path_content),
             self._tfs_grpc_concat_ports,
