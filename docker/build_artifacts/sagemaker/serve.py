@@ -67,9 +67,6 @@ class ServiceManager(object):
         self._gunicorn_timeout_seconds = int(
             os.environ.get("SAGEMAKER_GUNICORN_TIMEOUT_SECONDS", 30)
         )
-        self._gunicorn_setup_timeout_seconds = int(
-            os.environ.get("SAGEMAKER_GUNICORN_SETUP_TIMEOUT_SECONDS", 30)
-        )
 
         if os.environ.get("OMP_NUM_THREADS") is None:
             os.environ["OMP_NUM_THREADS"] = "1"
@@ -458,7 +455,7 @@ class ServiceManager(object):
             self._setup_gunicorn()
             self._start_gunicorn()
             # make sure gunicorn is up
-            with self._timeout(seconds=self._gunicorn_setup_timeout_seconds):
+            with self._timeout(seconds=self._gunicorn_timeout_seconds):
                 self._wait_for_gunicorn()
 
         self._start_nginx()

@@ -629,11 +629,6 @@ SAGEMAKER_GUNICORN_LOGLEVEL="debug"
 # https://docs.gunicorn.org/en/stable/settings.html#timeout
 # Defaults to 30.
 SAGEMAKER_GUNICORN_TIMEOUT_SECONDS="60"
-
-# Configures how long to wait in seconds for GUnicorn
-# to finish starting up before timing out.
-# Defaults to 30.
-SAGEMAKER_GUNICORN_SETUP_TIMEOUT_SECONDS="60"
 ```
 
 ## Deploying to Multi-Model Endpoint
