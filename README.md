@@ -618,13 +618,13 @@ SAGEMAKER_TFS_MAX_ENQUEUED_BATCHES="10000"
 The following environment variables can be set on a SageMaker Model or Transform Job if further configuration is required:
 
 [Configures](https://docs.gunicorn.org/en/stable/settings.html#loglevel)
-the logging level for GUnicorn.
+the logging level for Gunicorn.
 ```bash
 # Defaults to "info"
 SAGEMAKER_GUNICORN_LOGLEVEL="debug"
 ```
 [Configures](https://docs.gunicorn.org/en/stable/settings.html#timeout)
-how long a GUnicorn worker may be silent before it is killed and restarted.
+how long a Gunicorn worker may be silent before it is killed and restarted.
 ```bash
 # Defaults to 30.
 SAGEMAKER_GUNICORN_TIMEOUT_SECONDS="60"
