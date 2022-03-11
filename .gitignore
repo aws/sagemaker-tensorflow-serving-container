@@ -2,3 +2,6 @@ __pycache__
 .tox/
 log.txt
 .idea/
+node_modules/
+package.json
+package-lock.json

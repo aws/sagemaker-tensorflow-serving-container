@@ -42,7 +42,9 @@ For notebook examples, see: [Amazon SageMaker Examples](https://github.com/awsla
 3. [Running the tests](#running-the-tests)
 4. [Pre/Post-Processing](#pre/post-processing)
 5. [Deploying a TensorFlow Serving Model](#deploying-a-tensorflow-serving-model)
-6. [Deploying to Multi-Model Endpoint](#deploying-to-multi-model-endpoint)
+6. [Enable Batching](#enabling-batching)
+7. [Configurable SageMaker Environment Variables](#configurable-sagemaker-environment-variables)
+8. [Deploying to Multi-Model Endpoint](#deploying-to-multi-model-endpoint)
 
 ## Getting Started
 
@@ -610,6 +612,22 @@ SAGEMAKER_TFS_NUM_BATCH_THREADS="16"
 # Defaults to number of CPUs for real-time inference,
 # or arbitrarily large for batch transform (because batch transform).
 SAGEMAKER_TFS_MAX_ENQUEUED_BATCHES="10000"
+```
+
+## Configurable SageMaker Environment Variables
+The following environment variables can be set on a SageMaker Model or Transform Job if further configuration is required:
+
+[Configures](https://docs.gunicorn.org/en/stable/settings.html#loglevel)
+the logging level for Gunicorn.
+```bash
+# Defaults to "info"
+SAGEMAKER_GUNICORN_LOGLEVEL="debug"
+```
+[Configures](https://docs.gunicorn.org/en/stable/settings.html#timeout)
+how long a Gunicorn worker may be silent before it is killed and restarted.
+```bash
+# Defaults to 30.
+SAGEMAKER_GUNICORN_TIMEOUT_SECONDS="60"
 ```
 
 ## Deploying to Multi-Model Endpoint
