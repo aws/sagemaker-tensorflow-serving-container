@@ -75,7 +75,7 @@ class ServiceManager(object):
         if self._gunicorn_timeout_seconds > self._nginx_proxy_read_timeout_seconds:
             self._nginx_proxy_read_timeout_seconds = self._gunicorn_timeout_seconds
             log.info("GUnicorn timeout was higher than Nginx proxy read timeout." + \
-                     "Setting Nginx proxy read timeout to match GUnicorn: " + \
+                     " Setting Nginx proxy read timeout to match GUnicorn: " + \
                      f"{self._nginx_proxy_read_timeout_seconds} seconds.")
 
         if os.environ.get("OMP_NUM_THREADS") is None:
