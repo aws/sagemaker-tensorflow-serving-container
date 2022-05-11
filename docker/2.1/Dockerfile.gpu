@@ -10,7 +10,8 @@ ARG TFS_URL=https://tensorflow-aws.s3-us-west-2.amazonaws.com/2.1/Serving/GPU/te
 
 ENV NCCL_VERSION=2.4.7-1+cuda10.1
 ENV CUDNN_VERSION=7.6.2.24-1+cuda10.1
-ENV TF_TENSORRT_VERSION=6.0.1
+ENV TF_TENSORRT_VERSION=5.0.2
+ENV TF_TENSORRT_LIB_VERSION=6.0.1
 
 # See http://bugs.python.org/issue19846
 ENV LANG=C.UTF-8
@@ -25,6 +26,21 @@ ENV MODEL_NAME=model
 # Fix for the interactive mode during an install in step 21
 ENV DEBIAN_FRONTEND=noninteractive
 
+# https://forums.developer.nvidia.com/t/notice-cuda-linux-repository-key-rotation/212771
+# Fix cuda repo's GPG key. Nvidia is no longer updating the machine-learning repo.
+# Need to manually pull and install necessary debs to continue using these versions.
+RUN rm /etc/apt/sources.list.d/cuda.list \
+&& rm /etc/apt/sources.list.d/nvidia-ml.list \
+&& apt-key del 7fa2af80 \
+&& apt-get update && apt-get install -y --no-install-recommends wget \
+&& wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-keyring_1.0-1_all.deb \
+&& dpkg -i cuda-keyring_1.0-1_all.deb \
+&& wget https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/libcudnn7_${CUDNN_VERSION}_amd64.deb \
+&& dpkg -i libcudnn7_${CUDNN_VERSION}_amd64.deb \
+&& wget https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/libnccl2_${NCCL_VERSION}_amd64.deb \
+&& dpkg -i libnccl2_${NCCL_VERSION}_amd64.deb \
+&& rm *.deb
+
 # allow unauthenticated and allow downgrades for special libcublas library
 RUN apt-get update \
  && apt-get install -y --no-install-recommends --allow-unauthenticated --allow-downgrades\
@@ -37,8 +53,6 @@ RUN apt-get update \
     #cuda-cublas-dev not available with 10-1, install libcublas instead
     libcublas10=10.1.0.105-1 \
     libcublas-dev=10.1.0.105-1 \
-    libcudnn7=${CUDNN_VERSION} \
-    libnccl2=${NCCL_VERSION} \
     libgomp1 \
     curl \
     git \
@@ -51,21 +65,6 @@ RUN apt-get update \
     python3-setuptools \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
-
-# The 'apt-get install' of nvinfer-runtime-trt-repo-ubuntu1804-4.0.1-ga-cuda10.0
-# adds a new list which contains libnvinfer library, so it needs another
-# 'apt-get update' to retrieve that list before it can actually install the
-# library.
-# We don't install libnvinfer-dev since we don't need to build against TensorRT,
-# and libnvinfer4 doesn't contain libnvinfer.a static library.
-RUN apt-get update \
-# nvinfer-runtime-trt-repo doesn't have a 1804-cuda10.1 version yet. see:
-# https://developer.download.nvidia.cn/compute/machine-learning/repos/ubuntu1804/x86_64/
- && apt-get install -y --no-install-recommends nvinfer-runtime-trt-repo-ubuntu1804-5.0.2-ga-cuda10.0 \
- && apt-get update \
- && apt-get install -y --no-install-recommends libnvinfer6=${TF_TENSORRT_VERSION}-1+cuda10.1 \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/* 
 
 RUN ${PIP} --no-cache-dir install --upgrade \
     pip \
@@ -86,6 +85,17 @@ RUN apt-get update \
     nginx \
     nginx-module-njs \
  && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+# https://forums.developer.nvidia.com/t/notice-cuda-linux-repository-key-rotation/212771
+# Nvidia is no longer updating the machine-learning repo.
+# Need to manually pull and install necessary debs to continue using these versions.
+# nvinfer-runtime-trt-repo doesn't have a 1804-cuda10.1 version.
+RUN wget https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/nvinfer-runtime-trt-repo-ubuntu1804-${TF_TENSORRT_VERSION}-ga-cuda10.0_1-1_amd64.deb \
+ && dpkg -i nvinfer-runtime-trt-repo-ubuntu1804-${TF_TENSORRT_VERSION}-ga-cuda10.0_1-1_amd64.deb \
+ && wget https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/libnvinfer6_${TF_TENSORRT_LIB_VERSION}-1+cuda10.1_amd64.deb \
+ && dpkg -i libnvinfer6_${TF_TENSORRT_LIB_VERSION}-1+cuda10.1_amd64.deb \
+ && rm *.deb \
  && rm -rf /var/lib/apt/lists/*
 
 # cython, falcon, gunicorn, grpc
