@@ -71,8 +71,15 @@ class ServiceManager(object):
             os.environ.get("SAGEMAKER_NGINX_PROXY_READ_TIMEOUT_SECONDS", 60))
 
         # Nginx proxy read timeout should not be less than the GUnicorn timeout. If it is, this
-        # can result in upstream timed out errors.
+        # can result in upstream time out errors.
         if self._gunicorn_timeout_seconds > self._nginx_proxy_read_timeout_seconds:
+            log.info(
+                "GUnicorn timeout was higher than Nginx proxy read timeout."
+                " Setting Nginx proxy read timeout from {} seconds to {} seconds"
+                " to match GUnicorn timeout.".format(
+                    self._nginx_proxy_read_timeout_seconds, self._gunicorn_timeout_seconds
+                )
+            )
             self._nginx_proxy_read_timeout_seconds = self._gunicorn_timeout_seconds
             log.info("GUnicorn timeout was higher than Nginx proxy read timeout."
                      " Setting Nginx proxy read timeout to match GUnicorn: "
