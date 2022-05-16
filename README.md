@@ -629,6 +629,15 @@ how long a Gunicorn worker may be silent before it is killed and restarted.
 # Defaults to 30.
 SAGEMAKER_GUNICORN_TIMEOUT_SECONDS="60"
 ```
+[Configures](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout)
+the timeout for reading a response from the proxied server.
+Note: If SAGEMAKER_GUNICORN_TIMEOUT_SECONDS is greater, 
+SAGEMAKER_NGINX_PROXY_READ_TIMEOUT_SECONDS will be set to the 
+value of SAGEMAKER_GUNICORN_TIMEOUT_SECONDS.
+```bash
+# Defaults to 60.
+SAGEMAKER_NGINX_PROXY_READ_TIMEOUT_SECONDS="120"
+```
 
 ## Deploying to Multi-Model Endpoint
 
