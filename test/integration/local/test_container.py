@@ -133,7 +133,6 @@ def test_predict_instance_jsonlines_input_error():
     Will still produce error - but error should be 'Type: String is not of expected type: float'
     """
     x = {"instances": ["]["]}
-
     y = make_request(json.dumps(x))
     assert (
         "error" in y
