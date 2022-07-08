@@ -127,6 +127,22 @@ def test_predict_two_instances():
     assert y == {"predictions": [[3.5, 4.0, 5.5], [3.5, 4.0, 5.5]]}
 
 
+def test_predict_instance_jsonlines_input_error():
+    """
+    Test with input that previously triggered jsonlines code in tensorflowServing.js
+    Will still produce error - but error should be 'Type: String is not of expected type: float'
+    """
+    x = {"instances": ["]["]}
+
+    y = make_request(json.dumps(x))
+    assert (
+        "error" in y
+        and y["error"]
+        == "Failed to process element: 0 of 'instances' list. Error: Invalid argument:"
+        + ' JSON Value: "][" Type: String is not of expected type: float'
+    )
+
+
 def test_predict_jsons_json_content_type():
     x = "[1.0, 2.0, 5.0]\n[1.0, 2.0, 5.0]"
     y = make_request(x)

@@ -140,7 +140,9 @@ function parse_custom_attributes(r) {
 function json_request(r) {
     var data = r.requestBody
 
-    if (is_json_lines(data)) {
+    if (is_tfs_json(data)) {
+        tfs_json_request(r, data)
+    } else if (is_json_lines(data)) {
         json_lines_request(r, data)
     } else if (is_tfs_json(data)) {
         tfs_json_request(r, data)
