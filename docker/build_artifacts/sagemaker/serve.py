@@ -435,7 +435,7 @@ class ServiceManager(object):
             worker_env = os.environ.copy()
             worker_env["CUDA_VISIBLE_DEVICES"] = str(instance_id%num_gpus)
             p = subprocess.Popen(cmd.split(), env=worker_env)
-            log.info("started tensorflow serving (pid: {}) on GPU {}".format(p.pid, instance_id%num_gpus))
+            log.info("started tensorflow serving (pid: {}) on GPU: {}".format(p.pid, instance_id%num_gpus))
         else:
             # cpu and single gpu
             p = subprocess.Popen(cmd.split())
