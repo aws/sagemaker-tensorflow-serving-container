@@ -311,7 +311,7 @@ class ServiceManager(object):
     def _get_number_of_gpu_on_host(self):
         try:
             n = len(subprocess.check_output(['nvidia-smi', '-L'])
-                .decode('utf-8').strip().split('\n'))
+                    .decode('utf-8').strip().split('\n'))
         except subprocess.CalledProcessError:
             n = 0
 
@@ -437,7 +437,7 @@ class ServiceManager(object):
             worker_env["CUDA_VISIBLE_DEVICES"] = str(instance_id % num_gpus)
             p = subprocess.Popen(cmd.split(), env=worker_env)
             log.info("started tensorflow serving (pid: {}) on GPU {}"
-                .format(p.pid, instance_id % num_gpus))
+                     .format(p.pid, instance_id % num_gpus))
         else:
             # cpu and single gpu
             p = subprocess.Popen(cmd.split())
