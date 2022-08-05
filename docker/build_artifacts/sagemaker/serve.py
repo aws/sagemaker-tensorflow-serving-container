@@ -313,7 +313,7 @@ class ServiceManager(object):
         if nvidia_smi_exist:
             return len(subprocess.check_output(['nvidia-smi', '-L'])
                        .decode('utf-8').strip().split('\n'))
-    
+
         return 0
 
     def _calculate_per_process_gpu_memory_fraction(self):
