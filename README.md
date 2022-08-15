@@ -164,8 +164,6 @@ For example:
 
 ## Pre/Post-Processing
 
-**NOTE: There is currently no support for pre-/post-processing with multi-model containers.**
-
 SageMaker TensorFlow Serving Container supports the following Content-Types for requests:
 
 * `application/json` (default)
@@ -672,7 +670,7 @@ Only 90% of the ports will be utilized and each loaded model will be allocated w
 For example, if the ``SAGEMAKER_SAFE_PORT_RANGE`` is between 9000 to 9999, the maximum number of models that can be loaded to the endpoint at the same time would be 499 ((9999 - 9000) * 0.9 / 2).
 
 ### Using Multi-Model Endpoint with Pre/Post-Processing
-Multi-Model Endpoint can be used together with Pre/Post-Processing. Each model will need its own ``inference.py`` otherwise default handlers will be used. An example of the directory structure of Multi-Model Endpoint and Pre/Post-Processing would look like this:
+Multi-Model Endpoint can be used together with Pre/Post-Processing. Each model can either have its own ``inference.py`` or use a universal ``inference.py``. If both model-specific and universal ``inference.py`` files are provided, then the model-specific ``inference.py`` file is used. If both files are absent, then the default handlers will be used. An example of the directory structure of Multi-Model Endpoint with a model-specific ``inference.py`` file would look like this:
 
         /opt/ml/models/model1/model
             |--[model_version_number]
@@ -687,7 +685,20 @@ Multi-Model Endpoint can be used together with Pre/Post-Processing. Each model w
                 |--lib
                     |--external_module
                 |--inference.py
+Another example with of the directory structure of Multi-Model Endpoint with a universal ``inference.py`` file is as follows:
 
+        /opt/ml/models/model1/model
+            |--[model_version_number]
+                |--variables
+                |--saved_model.pb
+        /opt/ml/models/model2/model
+            |--[model_version_number]
+                |--assets
+                |--variables
+                |--saved_model.pb
+        code
+            |--requirements.txt
+            |--inference.py
 ## Contributing
 
 Please read [CONTRIBUTING.md](https://github.com/aws/sagemaker-tensorflow-serving-container/blob/master/CONTRIBUTING.md)
