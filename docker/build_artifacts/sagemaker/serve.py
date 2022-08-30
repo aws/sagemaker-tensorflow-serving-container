@@ -28,8 +28,8 @@ JS_PING = "js_content tensorflowServing.ping"
 JS_INVOCATIONS = "js_content tensorflowServing.invocations"
 GUNICORN_PING = "proxy_pass http://gunicorn_upstream/ping"
 GUNICORN_INVOCATIONS = "proxy_pass http://gunicorn_upstream/invocations"
-MODEL_DIR = "" if os.environ.get("SAGEMAKER_MULTI_MODEL", "False").lower() == "true" else "model"
-CODE_DIR = f"/opt/ml/{MODEL_DIR}/code"
+MODEL_DIR = "" if os.environ.get("SAGEMAKER_MULTI_MODEL", "False").lower() == "true" else "model/"
+CODE_DIR = f"/opt/ml/{MODEL_DIR}code"
 PYTHON_LIB_PATH = os.path.join(CODE_DIR, "lib")
 REQUIREMENTS_PATH = os.path.join(CODE_DIR, "requirements.txt")
 INFERENCE_PATH = os.path.join(CODE_DIR, "inference.py")
