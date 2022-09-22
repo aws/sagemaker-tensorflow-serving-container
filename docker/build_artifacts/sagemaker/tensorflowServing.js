@@ -68,7 +68,6 @@ function tfs_json_request(r, json) {
         method: 'POST',
         body: json
     }
-
     var accept = r.headersIn.Accept
     function callback (reply) {
         var body = reply.responseBody
