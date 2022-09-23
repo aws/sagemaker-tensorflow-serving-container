@@ -75,7 +75,6 @@ function tfs_json_request(r, json) {
             // "fix" broken json escaping in \'instances\' message
             body = body.replace("\\'instances\\'", "'instances'")
         }
-
         if (accept != undefined) {
             var content_types = accept.trim().replace(" ", "").split(",")
             if (content_types.includes('application/jsonlines') || content_types.includes('application/json')) {
