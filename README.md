@@ -179,7 +179,8 @@ The container will convert data in these formats to [TensorFlow Serving REST API
 and will send these requests to the default serving signature of your SavedModel bundle.
 
 You can also add customized Python code to process your input and output data. To use this feature, you need to:
-1. Add a python file named `inference.py` to the code directory inside your model archive.
+1. Add a python file named `inference.py` to the `code` directory inside your model archive.
+2. If you want to use a universal `inference.py` file with a multi-model endpoint, then include it in the `code` directory at the s3 URI where the model archives are stored.
 2. In `inference.py`, implement either a pair of `input_handler` and `output_handler` functions or a single `handler` function. Note that if `handler` function is implemented, `input_handler` and `output_handler` will be ignored.
 
 To implement pre/post-processing handler(s), you will need to make use of the `Context` object created by Python service. The `Context` is a `namedtuple` with following attributes:
@@ -357,35 +358,36 @@ def _process_output(data, context):
 
 You can also bring in external dependencies to help with your data processing. There are 2 ways to do this:
 1. If your model archive contains `code/requirements.txt`, the container will install the Python dependencies at runtime using `pip install -r`.
+2. If you invoke a multi-model endpoint, only the universal `requirements.txt` file's Python dependencies will be installed at runtime. Dependencies specified in any `requirements.txt` file present in a model archive will not be installed.
 2. If you are working in a network-isolation situation or if you don't want to install dependencies at runtime everytime your Endpoint starts or Batch Transform job runs, you may want to put pre-downloaded dependencies under `code/lib` directory in your model archive, the container will then add the modules to the Python path. Note that if both `code/lib` and `code/requirements.txt` are present in the model archive, the `requirements.txt` will be ignored.
 
 Your untarred model directory structure may look like this if you are using `requirements.txt`:
 
-        model1
+        /opt/ml/models/model1/model
             |--[model_version_number]
                 |--variables
                 |--saved_model.pb
-        model2
+        /opt/ml/models/model2/model
             |--[model_version_number]
                 |--assets
                 |--variables
                 |--saved_model.pb
-        code
+        /opt/ml/code
             |--inference.py
             |--requirements.txt
 
 Your untarred model directory structure may look like this if you have downloaded modules under `code/lib`:
 
-        model1
+        /opt/ml/models/model1/model
             |--[model_version_number]
                 |--variables
                 |--saved_model.pb
-        model2
+        /opt/ml/models/model2/model
             |--[model_version_number]
                 |--assets
                 |--variables
                 |--saved_model.pb
-        code
+        /opt/ml/code
             |--lib
                 |--external_module
             |--inference.py
@@ -696,7 +698,7 @@ Another example with of the directory structure of Multi-Model Endpoint with a u
                 |--assets
                 |--variables
                 |--saved_model.pb
-        code
+        /opt/ml/code
             |--requirements.txt
             |--inference.py
 ## Contributing

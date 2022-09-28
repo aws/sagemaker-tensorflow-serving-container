@@ -81,7 +81,7 @@ def models():
     for MODEL_NAME in MODEL_NAMES:
         model_data = {
             "model_name": MODEL_NAME,
-            "url": "/opt/ml/{}/model".format(MODEL_NAME)
+            "url": "/opt/ml/models/{}/model".format(MODEL_NAME)
         }
         make_load_model_request(json.dumps(model_data))
     return MODEL_NAMES

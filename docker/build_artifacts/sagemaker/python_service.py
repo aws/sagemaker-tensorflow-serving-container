@@ -226,8 +226,8 @@ class PythonServiceResource:
             )
 
     def _import_custom_modules(self, model_name):
-        inference_script_path = "/opt/ml/{}/model/code/inference.py".format(model_name)
-        python_lib_path = "/opt/ml/{}/model/code/lib".format(model_name)
+        inference_script_path = "/opt/ml/models/{}/model/code/inference.py".format(model_name)
+        python_lib_path = "/opt/ml/models/{}/model/code/lib".format(model_name)
         if os.path.exists(python_lib_path):
             log.info("add Python code library path")
             sys.path.append(python_lib_path)
@@ -281,7 +281,7 @@ class PythonServiceResource:
             res.status = falcon.HTTP_200
             handlers = self._handlers
             if SAGEMAKER_MULTI_MODEL_ENABLED and model_name in self.model_handlers:
-                inference_script_path = "/opt/ml/{}/model/code/" \
+                inference_script_path = "/opt/ml/models/{}/model/code/" \
                                         "inference.py".format(model_name)
                 log.info("Inference script found at path {}.".format(inference_script_path))
                 log.info("Inference script exists, importing handlers.")
