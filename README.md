@@ -363,31 +363,33 @@ You can also bring in external dependencies to help with your data processing. T
 
 Your untarred model directory structure may look like this if you are using `requirements.txt`:
 
-        /opt/ml/models/model1/model
-            |--[model_version_number]
-                |--variables
-                |--saved_model.pb
-        /opt/ml/models/model2/model
+        model1
             |--[model_version_number]
                 |--assets
                 |--variables
                 |--saved_model.pb
-        /opt/ml/code
+        model2
+            |--[model_version_number]
+                |--assets
+                |--variables
+                |--saved_model.pb
+        code
             |--inference.py
             |--requirements.txt
 
 Your untarred model directory structure may look like this if you have downloaded modules under `code/lib`:
 
-        /opt/ml/models/model1/model
-            |--[model_version_number]
-                |--variables
-                |--saved_model.pb
-        /opt/ml/models/model2/model
+        model1
             |--[model_version_number]
                 |--assets
                 |--variables
                 |--saved_model.pb
-        /opt/ml/code
+        model2
+            |--[model_version_number]
+                |--assets
+                |--variables
+                |--saved_model.pb
+        code
             |--lib
                 |--external_module
             |--inference.py
@@ -674,11 +676,12 @@ For example, if the ``SAGEMAKER_SAFE_PORT_RANGE`` is between 9000 to 9999, the m
 ### Using Multi-Model Endpoint with Pre/Post-Processing
 Multi-Model Endpoint can be used together with Pre/Post-Processing. Each model can either have its own ``inference.py`` or use a universal ``inference.py``. If both model-specific and universal ``inference.py`` files are provided, then the model-specific ``inference.py`` file is used. If both files are absent, then the default handlers will be used. An example of the directory structure of Multi-Model Endpoint with a model-specific ``inference.py`` file would look like this:
 
-        /opt/ml/models/model1/model
+        model1
             |--[model_version_number]
+                |--assets
                 |--variables
                 |--saved_model.pb
-        /opt/ml/models/model2/model
+        model2
             |--[model_version_number]
                 |--assets
                 |--variables
@@ -689,16 +692,17 @@ Multi-Model Endpoint can be used together with Pre/Post-Processing. Each model c
                 |--inference.py
 Another example with of the directory structure of Multi-Model Endpoint with a universal ``inference.py`` file is as follows:
 
-        /opt/ml/models/model1/model
-            |--[model_version_number]
-                |--variables
-                |--saved_model.pb
-        /opt/ml/models/model2/model
+        model1
             |--[model_version_number]
                 |--assets
                 |--variables
                 |--saved_model.pb
-        /opt/ml/code
+        model2
+            |--[model_version_number]
+                |--assets
+                |--variables
+                |--saved_model.pb
+        code
             |--requirements.txt
             |--inference.py
 ## Contributing
