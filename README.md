@@ -1,3 +1,8 @@
+# ![image](https://user-images.githubusercontent.com/56273942/202568467-0ee721bb-1424-4efd-88fc-31b4f2a59dc6.png) DEPRECATED
+
+## Announcement:
+As of September 13th, 2023, this repository is deprecated. The contents of this repository will remain available but we will no longer provide updates or accept new contributions and pull requests.
+
 # <img alt="SageMaker" src="branding/icon/sagemaker-banner.png" height="100">
 
 # SageMaker TensorFlow Serving Container
