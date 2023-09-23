@@ -102,32 +102,34 @@ class ServiceManager(object):
 
         self._use_gunicorn = self._enable_python_service or self._tfs_enable_multi_model_endpoint
 
+        self._tfs_grpc_ports = []
+        self._tfs_rest_ports = []
+        _tfs_grpc_port_low   = 9000
         if self._sagemaker_port_range is not None:
             parts = self._sagemaker_port_range.split("-")
-            low = int(parts[0])
-            hi = int(parts[1])
-            self._tfs_grpc_ports = []
-            self._tfs_rest_ports = []
-            if low + 2 * self._tfs_instance_count > hi:
+            _tfs_grpc_port_low = int(parts[0])
+            _tfs_grpc_port_hi  = int(parts[1])
+
+            if _tfs_grpc_port_low + 2 * self._tfs_instance_count > _tfs_grpc_port_hi:
                 raise ValueError(
                     "not enough ports available in SAGEMAKER_SAFE_PORT_RANGE ({})".format(
                         self._sagemaker_port_range
                     )
                 )
+
+        if self._tfs_instance_count > 1:
             # select non-overlapping grpc and rest ports based on tfs instance count
             for i in range(self._tfs_instance_count):
-                self._tfs_grpc_ports.append(str(low + 2 * i))
-                self._tfs_rest_ports.append(str(low + 2 * i + 1))
-            # concat selected ports respectively in order to pass them to python service
-            self._tfs_grpc_concat_ports = self._concat_ports(self._tfs_grpc_ports)
-            self._tfs_rest_concat_ports = self._concat_ports(self._tfs_rest_ports)
+                self._tfs_grpc_ports.append(str(_tfs_grpc_port_low + 2 * i))
+                self._tfs_rest_ports.append(str(_tfs_grpc_port_low + 2 * i + 1))
         else:
-            # just use the standard default ports
-            self._tfs_grpc_ports = ["9000"]
-            self._tfs_rest_ports = ["8501"]
-            # provide single concat port here for default case
-            self._tfs_grpc_concat_ports = "9000"
-            self._tfs_rest_concat_ports = "8501"
+            # use default grpc and rest port
+            self._tfs_grpc_ports.append(str(_tfs_grpc_port_low))
+            self._tfs_rest_ports.append("8501")
+
+        # concat selected ports respectively in order to pass them to python service
+        self._tfs_grpc_concat_ports = self._concat_ports(self._tfs_grpc_ports)
+        self._tfs_rest_concat_ports = self._concat_ports(self._tfs_rest_ports)
 
         # set environment variable for python service
         os.environ["TFS_GRPC_PORTS"] = self._tfs_grpc_concat_ports
